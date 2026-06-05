@@ -1,6 +1,6 @@
 {
-  "comment": "frames[] index == world GID (0..8). Tweak sx,sy,sw,sh on a 16px grid; sheet is 307×163.",
-  "tile_px": 16,
+  "comment": "frames[] index == world GID (0..16). Tweak sx,sy,sw,sh on a 128px grid; sheet is 1024x1024.",
+  "tile_px": 128,
   "sprite_sheet": "overworld-spritesheet.png",
   "frames": [
     {
@@ -8,60 +8,116 @@
       "comment": "GIDEmpty — nothing drawn (transparent over clear color)"
     },
     {
-      "sx": 171,
-      "sy": 86,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDGrass — brown overworld walkable ground"
+      "sx": 0,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDGrass — green walkable ground"
     },
     {
-      "sx": 18,
-      "sy": 52,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDWall — brown mountain / solid"
+      "sx": 128,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWall — solid stone wall"
     },
     {
-      "sx": 18,
-      "sy": 35,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDCracked — distinct 16×16; breaks to grass in-world"
+      "sx": 256,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDCracked — cracked brick wall"
     },
     {
-      "sx": 69,
-      "sy": 18,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDDoor — stairs / floor warp tile"
+      "sx": 640,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDDoor — staircase dungeon entrance"
     },
     {
-      "sx": 120,
-      "sy": 86,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDWater"
+      "sx": 128,
+      "sy": 256,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWater — blue water"
     },
     {
-      "sx": 35,
-      "sy": 18,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDLock — locked door tile until key"
+      "sx": 512,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDLock — locked door iron gate"
     },
     {
-      "sx": 69,
-      "sy": 86,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDFloor2 — alternate floor (green palette ground)"
+      "sx": 768,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDFloor2 — alternate dungeon brick floor"
     },
     {
-      "sx": 120,
-      "sy": 18,
-      "sw": 16,
-      "sh": 16,
-      "comment": "GIDTree — bomb-destroyable; breaks like GIDCracked"
+      "sx": 384,
+      "sy": 0,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDTree — forest pine tree"
+    },
+    {
+      "sx": 384,
+      "sy": 256,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreTop — water with top grass shore"
+    },
+    {
+      "sx": 384,
+      "sy": 768,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreBottom — water with bottom grass shore"
+    },
+    {
+      "sx": 256,
+      "sy": 512,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreLeft — water with left grass shore"
+    },
+    {
+      "sx": 640,
+      "sy": 512,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreRight — water with right grass shore"
+    },
+    {
+      "sx": 256,
+      "sy": 128,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreNE — water with grass shore in North-East corner"
+    },
+    {
+      "sx": 128,
+      "sy": 128,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreNW — water with grass shore in North-West corner"
+    },
+    {
+      "sx": 256,
+      "sy": 768,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreSW — water with grass shore in South-West corner"
+    },
+    {
+      "sx": 640,
+      "sy": 256,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreSE — water with grass shore in South-East corner"
     }
   ]
 }

@@ -2,21 +2,21 @@
   "sprite_sheet": "legendofzelda_items_sheet.png",
   "frames": [
     {
-      "sx": 160,
-      "sy": 119,
-      "sw": 17,
-      "sh": 17,
+      "sx": 70,
+      "sy": 70,
+      "sw": 160,
+      "sh": 160,
       "dw": 12,
       "dh": 12,
       "ox": 0,
       "oy": 0,
-      "comment": "PickupCoin — four columns across the sheet; tune sx,sy,sw,sh to real frames"
+      "comment": "PickupCoin"
     },
     {
-      "sx": 240,
-      "sy": 39,
-      "sw": 16,
-      "sh": 16,
+      "sx": 680,
+      "sy": 245,
+      "sw": 200,
+      "sh": 200,
       "dw": 12,
       "dh": 12,
       "ox": 0,
@@ -24,10 +24,10 @@
       "comment": "PickupHeart"
     },
     {
-      "sx": 200,
-      "sy": 0,
-      "sw": 16,
-      "sh": 16,
+      "sx": 90,
+      "sy": 560,
+      "sw": 310,
+      "sh": 380,
       "dw": 12,
       "dh": 12,
       "ox": 0,
@@ -35,10 +35,10 @@
       "comment": "PickupBomb"
     },
     {
-      "sx": 279,
-      "sy": 38,
-      "sw": 18,
-      "sh": 18,
+      "sx": 430,
+      "sy": 600,
+      "sw": 140,
+      "sh": 320,
       "dw": 12,
       "dh": 12,
       "ox": 0,
@@ -46,10 +46,10 @@
       "comment": "PickupSmallKey"
     },
     {
-      "sx": 119,
-      "sy": 0,
-      "sw": 18,
-      "sh": 18,
+      "sx": 750,
+      "sy": 450,
+      "sw": 150,
+      "sh": 480,
       "dw": 12,
       "dh": 12,
       "ox": 0,

@@ -87,6 +87,16 @@ var tileDefs = map[int]TileDef{
 	GIDLock:   {GID: GIDLock, Name: "lock", OpenableByKey: true, SwatchColor: color.RGBA{0x6a, 0x2a, 0x7a, 0xff}},
 	GIDFloor2: {GID: GIDFloor2, Name: "floor2", Solid: false, SwatchColor: color.RGBA{0x3a, 0x3a, 0x44, 0xff}},
 	GIDTree:   {GID: GIDTree, Name: "tree", DamageKinds: []DamageKind{DamageFire}, SwatchColor: color.RGBA{0x2d, 0x5a, 0x2a, 0xff}},
+
+	// Water shore transition tiles (solid water block behavior)
+	GIDWaterShoreTop:    {GID: GIDWaterShoreTop, Name: "water_shore_top", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreBottom: {GID: GIDWaterShoreBottom, Name: "water_shore_bottom", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreLeft:   {GID: GIDWaterShoreLeft, Name: "water_shore_left", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreRight:  {GID: GIDWaterShoreRight, Name: "water_shore_right", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreNE:     {GID: GIDWaterShoreNE, Name: "water_shore_ne", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreNW:     {GID: GIDWaterShoreNW, Name: "water_shore_nw", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreSW:     {GID: GIDWaterShoreSW, Name: "water_shore_sw", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreSE:     {GID: GIDWaterShoreSE, Name: "water_shore_se", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
 }
 
 // TileDefOf returns the registered definition for a GID. When the GID is

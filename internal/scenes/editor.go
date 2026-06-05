@@ -52,6 +52,8 @@ var (
 	editorBrushPalette = []int{
 		world.GIDGrass, world.GIDWall, world.GIDCracked, world.GIDDoor,
 		world.GIDWater, world.GIDLock, world.GIDFloor2, world.GIDTree, world.GIDEmpty,
+		world.GIDWaterShoreTop, world.GIDWaterShoreBottom, world.GIDWaterShoreLeft, world.GIDWaterShoreRight,
+		world.GIDWaterShoreNE, world.GIDWaterShoreNW, world.GIDWaterShoreSW, world.GIDWaterShoreSE,
 	}
 	editorMarkerTypes = []string{"spawn", "enemy", "pickup", "door", "shrine"}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].

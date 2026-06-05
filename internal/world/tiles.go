@@ -14,6 +14,16 @@ const (
 	GIDLock    = 6 // locked door until small key
 	GIDFloor2  = 7
 	GIDTree    = 8
+	
+	// Water shore transition tiles
+	GIDWaterShoreTop    = 9
+	GIDWaterShoreBottom = 10
+	GIDWaterShoreLeft   = 11
+	GIDWaterShoreRight  = 12
+	GIDWaterShoreNE     = 13
+	GIDWaterShoreNW     = 14
+	GIDWaterShoreSW     = 15
+	GIDWaterShoreSE     = 16
 )
 
 // SolidAt reads collision from the TileDef registry. Destroyable tiles
