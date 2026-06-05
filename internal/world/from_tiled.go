@@ -38,6 +38,7 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 		Stats:          stats,
 		HP:             stats.MaxHP(),
 	}
+	autoTileWater(w)
 	if val, ok := tiled.MapPropFloat(m, "light_level"); ok {
 		w.HasAmbientLightOverride = true
 		w.AmbientLightOverride = val
@@ -133,3 +134,64 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 
 	return w, nil
 }
+
+func autoTileWater(w *World) {
+	originalTiles := append([]int(nil), w.Tiles...)
+
+	isLand := func(tx, ty int) bool {
+		if tx < 0 || tx >= w.MapW || ty < 0 || ty >= w.MapH {
+			return true // out of bounds is treated as land/grass
+		}
+		gid := originalTiles[ty*w.MapW+tx]
+		return gid != GIDWater && (gid < GIDWaterShoreTop || gid > GIDWaterShoreSEInner)
+	}
+
+	for ty := 0; ty < w.MapH; ty++ {
+		for tx := 0; tx < w.MapW; tx++ {
+			idx := ty*w.MapW + tx
+			if originalTiles[idx] != GIDWater {
+				continue
+			}
+
+			top := isLand(tx, ty-1)
+			bottom := isLand(tx, ty+1)
+			left := isLand(tx-1, ty)
+			right := isLand(tx+1, ty)
+
+			tl := isLand(tx-1, ty-1)
+			tr := isLand(tx+1, ty-1)
+			bl := isLand(tx-1, ty+1)
+			br := isLand(tx+1, ty+1)
+
+			// 1. Convex (outer) corners: Grass on two adjacent sides
+			if top && left {
+				w.Tiles[idx] = GIDWaterShoreNW
+			} else if top && right {
+				w.Tiles[idx] = GIDWaterShoreNE
+			} else if bottom && left {
+				w.Tiles[idx] = GIDWaterShoreSW
+			} else if bottom && right {
+				w.Tiles[idx] = GIDWaterShoreSE
+			// 2. Straight shores: Grass on one side
+			} else if top {
+				w.Tiles[idx] = GIDWaterShoreTop
+			} else if bottom {
+				w.Tiles[idx] = GIDWaterShoreBottom
+			} else if left {
+				w.Tiles[idx] = GIDWaterShoreLeft
+			} else if right {
+				w.Tiles[idx] = GIDWaterShoreRight
+			// 3. Concave (inner) corners: Grass diagonally only
+			} else if tl {
+				w.Tiles[idx] = GIDWaterShoreNWInner
+			} else if tr {
+				w.Tiles[idx] = GIDWaterShoreNEInner
+			} else if bl {
+				w.Tiles[idx] = GIDWaterShoreSWInner
+			} else if br {
+				w.Tiles[idx] = GIDWaterShoreSEInner
+			}
+		}
+	}
+}
+

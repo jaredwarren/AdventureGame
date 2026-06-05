@@ -25,6 +25,7 @@ const (
 	ActionDodge
 	ActionSprint // HELD, not edge-triggered.
 	ActionInteract
+	ActionItemMenu // opens / closes item selection overlay
 
 	// Meta / UI.
 	ActionPause

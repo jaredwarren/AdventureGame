@@ -26,3 +26,7 @@ var OverworldTilePNG []byte
 
 //go:embed tile_atlas.json
 var TileAtlasJSON []byte
+
+//go:embed lake_island_scene.png
+var LakeIslandScenePNG []byte
+

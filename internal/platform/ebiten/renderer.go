@@ -27,7 +27,7 @@ import (
 
 // useTileSprites enables PNG tile rendering (overworld-spritesheet.png +
 // tile_atlas.json). When false, tiles use TileSwatchColor fills only.
-const useTileSprites = true
+const useTileSprites = false
 
 // pickupFallbackPx is the draw size used when the atlas is unavailable; it
 // matches the atlas's authored default (see defaultPickupDst).
@@ -149,7 +149,7 @@ func (r *Renderer) DrawTileScreen(gid int, x, y, dw, dh float32) {
 		return
 	}
 	if !useTileSprites || gid == world.GIDEmpty {
-		vector.FillRect(r.screen, x, y, dw, dh, r.TileSwatchColor(gid), false)
+		r.drawVectorTile(r.screen, gid, x, y, dw, dh)
 		return
 	}
 	atlas, err := r.assets.Atlas(services.AtlasTile)
@@ -211,8 +211,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 			if useTileSprites {
 				r.drawTile(gid, x, y)
 			} else {
-				c := r.TileSwatchColor(gid)
-				vector.FillRect(screen, x, y, world.TileSize, world.TileSize, c, false)
+				r.drawVectorTile(screen, gid, x, y, world.TileSize, world.TileSize)
 			}
 		}
 	}
@@ -344,40 +343,317 @@ func (r *Renderer) fallbackTile(gid int, wx, wy float32) {
 // drawPickup renders one pickup entity using the pickup atlas. (ox,oy) are
 // the camera offsets; (p.X,p.Y) is world space.
 func (r *Renderer) drawPickup(p world.Pickup, ox, oy float64) {
-	px, py := p.X-ox, p.Y-oy
+	px := float32(p.X - ox)
+	py := float32(p.Y - oy)
+	w := float32(p.W)
+	h := float32(p.H)
 
-	atlas, err := r.assets.Atlas(services.AtlasPickup)
-	if err != nil || atlas == nil {
-		r.pickupFallback(px, py)
-		return
+	switch p.Kind {
+	case world.PickupCoin:
+		cx, cy := px+w*0.5, py+h*0.5
+		rad := w * 0.5
+		// Body: Filled gold circle
+		vector.FillCircle(r.screen, cx, cy, rad, color.RGBA{0xff, 0xd7, 0x00, 0xff}, true)
+		// Border: Orange/brown thin circular stroke
+		vector.StrokeCircle(r.screen, cx, cy, rad-0.5, 1, color.RGBA{0xd8, 0x7a, 0x00, 0xff}, true)
+		// Detail: vertical slot line in center
+		vector.StrokeLine(r.screen, cx, cy-rad*0.5, cx, cy+rad*0.5, 1, color.RGBA{0xd8, 0x7a, 0x00, 0xff}, true)
+
+	case world.PickupHeart:
+		// Heart shape using vector.Path
+		path := &vector.Path{}
+		path.MoveTo(px+w*0.5, py+h*0.35)
+		path.QuadTo(px+w*0.1, py+h*0.05, px+w*0.1, py+h*0.48)
+		path.LineTo(px+w*0.5, py+h*0.95)
+		path.LineTo(px+w*0.9, py+h*0.48)
+		path.QuadTo(px+w*0.9, py+h*0.05, px+w*0.5, py+h*0.35)
+		path.Close()
+
+		drawPath(r.screen, path, color.RGBA{0xe0, 0x30, 0x30, 0xff}, true, 0)
+		drawPath(r.screen, path, color.RGBA{0x90, 0x10, 0x10, 0xff}, false, 1)
+
+	case world.PickupBomb:
+		// Body: Dark/black circle
+		cx, cy := px+w*0.5, py+h*0.6
+		rad := w * 0.35
+		vector.FillCircle(r.screen, cx, cy, rad, color.RGBA{0x1a, 0x1a, 0x1a, 0xff}, true)
+		vector.StrokeCircle(r.screen, cx, cy, rad, 1, color.RGBA{0x33, 0x33, 0x33, 0xff}, true)
+		// Fuse nozzle: Grey rectangle
+		vector.FillRect(r.screen, px+w*0.4, py+h*0.2, w*0.2, h*0.1, color.RGBA{0x80, 0x80, 0x80, 0xff}, false)
+		// Fuse line: curved line
+		vector.StrokeLine(r.screen, px+w*0.5, py+h*0.2, px+w*0.7, py+h*0.05, 1.2, color.RGBA{0xd0, 0xc0, 0x90, 0xff}, true)
+		// Spark: small orange circle
+		vector.FillCircle(r.screen, px+w*0.7, py+h*0.05, 1.5, color.RGBA{0xff, 0x50, 0x00, 0xff}, true)
+
+	case world.PickupSmallKey:
+		// Handle/Head: hollow gold circle
+		vector.StrokeCircle(r.screen, px+w*0.5, py+h*0.25, w*0.2, 1.5, color.RGBA{0xff, 0xd7, 0x00, 0xff}, true)
+		// Stem/Shaft: gold rectangle
+		vector.FillRect(r.screen, px+w*0.45, py+h*0.45, w*0.1, h*0.4, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
+		// Teeth: two gold rectangles
+		vector.FillRect(r.screen, px+w*0.55, py+h*0.6, w*0.15, h*0.08, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
+		vector.FillRect(r.screen, px+w*0.55, py+h*0.75, w*0.15, h*0.08, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
+
+	case world.PickupTorch:
+		// Handle: brown rectangle
+		vector.FillRect(r.screen, px+w*0.42, py+h*0.45, w*0.16, h*0.5, color.RGBA{0x8b, 0x5a, 0x2b, 0xff}, false)
+		// Nozzle: grey rect
+		vector.FillRect(r.screen, px+w*0.35, py+h*0.38, w*0.3, h*0.08, color.RGBA{0x4a, 0x4a, 0x4a, 0xff}, false)
+		// Flame (outer): red teardrop path
+		flame := &vector.Path{}
+		flame.MoveTo(px+w*0.5, py+h*0.05)
+		flame.QuadTo(px+w*0.2, py+h*0.3, px+w*0.3, py+h*0.38)
+		flame.LineTo(px+w*0.7, py+h*0.38)
+		flame.QuadTo(px+w*0.8, py+h*0.3, px+w*0.5, py+h*0.05)
+		flame.Close()
+		drawPath(r.screen, flame, color.RGBA{0xff, 0x3b, 0x00, 0xff}, true, 0)
+		// Flame (inner): orange teardrop path
+		innerFlame := &vector.Path{}
+		innerFlame.MoveTo(px+w*0.5, py+h*0.15)
+		innerFlame.QuadTo(px+w*0.3, py+h*0.3, px+w*0.35, py+h*0.38)
+		innerFlame.LineTo(px+w*0.65, py+h*0.38)
+		innerFlame.QuadTo(px+w*0.7, py+h*0.3, px+w*0.5, py+h*0.15)
+		innerFlame.Close()
+		drawPath(r.screen, innerFlame, color.RGBA{0xff, 0xa5, 0x00, 0xff}, true, 0)
+
+	default:
+		// Fallback
+		r.pickupFallback(float64(px), float64(py))
 	}
-	idx := int(p.Kind)
-	if idx < 0 || idx >= atlas.Count() {
-		idx = 0
-	}
-	fr := atlas.Frame(idx)
-	if fr.Skip || fr.Image == nil {
-		r.pickupFallback(px, py)
-		return
-	}
-	src := NativeImage(fr.Image)
-	if src == nil {
-		r.pickupFallback(px, py)
-		return
-	}
-	b := src.Bounds()
-	sw, sh := float64(b.Dx()), float64(b.Dy())
-	if sw < 1 || sh < 1 {
-		return
-	}
-	op := &ebiten.DrawImageOptions{}
-	op.Filter = ebiten.FilterNearest
-	op.GeoM.Scale(fr.DstW/sw, fr.DstH/sh)
-	op.GeoM.Translate(px+fr.OffsetX, py+fr.OffsetY)
-	r.screen.DrawImage(src, op)
 }
 
 func (r *Renderer) pickupFallback(px, py float64) {
 	vector.FillRect(r.screen, float32(px), float32(py), pickupFallbackPx, pickupFallbackPx,
 		color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
+}
+
+func fillTriangle(dst *ebiten.Image, x1, y1, x2, y2, x3, y3 float32, clr color.Color) {
+	var path vector.Path
+	path.MoveTo(x1, y1)
+	path.LineTo(x2, y2)
+	path.LineTo(x3, y3)
+	path.Close()
+	var op vector.DrawPathOptions
+	op.ColorScale.ScaleWithColor(clr)
+	op.AntiAlias = true
+	vector.FillPath(dst, &path, nil, &op)
+}
+
+func drawPath(dst *ebiten.Image, path *vector.Path, clr color.Color, fill bool, strokeWidth float32) {
+	var op vector.DrawPathOptions
+	op.ColorScale.ScaleWithColor(clr)
+	op.AntiAlias = true
+	if fill {
+		vector.FillPath(dst, path, nil, &op)
+	} else {
+		var sop vector.StrokeOptions
+		sop.Width = strokeWidth
+		vector.StrokePath(dst, path, &sop, &op)
+	}
+}
+
+func (r *Renderer) drawVectorTile(dst *ebiten.Image, gid int, x, y, w, h float32) {
+	grassColor := color.RGBA{0x2b, 0x4a, 0x2b, 0xff}
+	waterColor := color.RGBA{0x2a, 0x4a, 0x8a, 0xff}
+	shoreLineColor := color.RGBA{0xe0, 0xd0, 0xa0, 0xff}
+
+	switch gid {
+	case world.GIDEmpty:
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x00, 0x00, 0x00, 0xff}, false)
+
+	case world.GIDGrass:
+		vector.FillRect(dst, x, y, w, h, grassColor, false)
+		// Draw stylized grass blades
+		vector.StrokeLine(dst, x+w*0.3, y+h*0.7, x+w*0.3, y+h*0.4, 1, color.RGBA{0x3e, 0x6e, 0x3e, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.3, y+h*0.7, x+w*0.45, y+h*0.5, 1, color.RGBA{0x3e, 0x6e, 0x3e, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.7, y+h*0.5, x+w*0.7, y+h*0.2, 1, color.RGBA{0x3e, 0x6e, 0x3e, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.7, y+h*0.5, x+w*0.8, y+h*0.3, 1, color.RGBA{0x3e, 0x6e, 0x3e, 0xff}, false)
+
+	case world.GIDWall:
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x40, 0x40, 0x50, 0xff}, false)
+		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x60, 0x60, 0x70, 0xff}, false)
+		// Horizontal brick line
+		vector.StrokeLine(dst, x, y+h*0.5, x+w, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
+		// Vertical brick lines
+		vector.StrokeLine(dst, x+w*0.5, y, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.25, y+h*0.5, x+w*0.25, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.75, y+h*0.5, x+w*0.75, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
+
+	case world.GIDCracked:
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x6b, 0x4a, 0x2a, 0xff}, false)
+		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x8b, 0x6a, 0x4a, 0xff}, false)
+		// Jagged cracks
+		vector.StrokeLine(dst, x+w*0.2, y+h*0.2, x+w*0.5, y+h*0.4, 1.2, color.RGBA{0x20, 0x10, 0x08, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.5, y+h*0.4, x+w*0.4, y+h*0.7, 1.2, color.RGBA{0x20, 0x10, 0x08, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.4, y+h*0.7, x+w*0.8, y+h*0.8, 1.2, color.RGBA{0x20, 0x10, 0x08, 0xff}, false)
+
+	case world.GIDDoor:
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x3a, 0x5a, 0x3a, 0xff}, false)
+		// Door arch
+		vector.FillRect(dst, x+w*0.2, y+h*0.2, w*0.6, h*0.8, color.RGBA{0x15, 0x25, 0x15, 0xff}, false)
+		vector.StrokeRect(dst, x+w*0.2, y+h*0.2, w*0.6, h*0.8, 1, color.RGBA{0xe0, 0xc0, 0x30, 0xff}, false)
+
+	case world.GIDWater:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		// Waves
+		vector.StrokeLine(dst, x+w*0.2, y+h*0.3, x+w*0.4, y+h*0.3, 1, color.RGBA{0x4a, 0x6a, 0xaa, 0xff}, false)
+		vector.StrokeLine(dst, x+w*0.5, y+h*0.7, x+w*0.8, y+h*0.7, 1, color.RGBA{0x4a, 0x6a, 0xaa, 0xff}, false)
+
+	case world.GIDLock:
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x6a, 0x2a, 0x7a, 0xff}, false)
+		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x8a, 0x4a, 0x9a, 0xff}, false)
+		// Gold keyhole lock
+		vector.FillCircle(dst, x+w*0.5, y+h*0.4, w*0.18, color.RGBA{0xff, 0xd7, 0x00, 0xff}, true)
+		vector.FillRect(dst, x+w*0.42, y+h*0.4, w*0.16, h*0.3, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
+		vector.FillCircle(dst, x+w*0.5, y+h*0.4, w*0.07, color.RGBA{0, 0, 0, 255}, true)
+		vector.FillRect(dst, x+w*0.47, y+h*0.42, w*0.06, h*0.18, color.RGBA{0, 0, 0, 255}, false)
+
+	case world.GIDFloor2:
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x3a, 0x3a, 0x44, 0xff}, false)
+		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x4a, 0x4a, 0x54, 0xff}, false)
+		vector.StrokeRect(dst, x+w*0.25, y+h*0.25, w*0.5, h*0.5, 1, color.RGBA{0x2a, 0x2a, 0x34, 0xff}, false)
+
+	case world.GIDTree:
+		vector.FillRect(dst, x, y, w, h, grassColor, false)
+		vector.FillRect(dst, x+w*0.4, y+h*0.6, w*0.2, h*0.3, color.RGBA{0x6b, 0x4a, 0x2a, 0xff}, false)
+		vector.FillCircle(dst, x+w*0.5, y+h*0.4, w*0.3, color.RGBA{0x2d, 0x7a, 0x2a, 0xff}, true)
+		vector.StrokeCircle(dst, x+w*0.5, y+h*0.4, w*0.3, 1, color.RGBA{0x1d, 0x5a, 0x1a, 0xff}, true)
+
+	// Straight shores
+	case world.GIDWaterShoreTop:
+		vector.FillRect(dst, x, y, w, h*0.5, grassColor, false)
+		vector.FillRect(dst, x, y+h*0.5, w, h*0.5, waterColor, false)
+		vector.StrokeLine(dst, x, y+h*0.5, x+w, y+h*0.5, 1, shoreLineColor, false)
+	case world.GIDWaterShoreBottom:
+		vector.FillRect(dst, x, y, w, h*0.5, waterColor, false)
+		vector.FillRect(dst, x, y+h*0.5, w, h*0.5, grassColor, false)
+		vector.StrokeLine(dst, x, y+h*0.5, x+w, y+h*0.5, 1, shoreLineColor, false)
+	case world.GIDWaterShoreLeft:
+		vector.FillRect(dst, x, y, w*0.5, h, grassColor, false)
+		vector.FillRect(dst, x+w*0.5, y, w*0.5, h, waterColor, false)
+		vector.StrokeLine(dst, x+w*0.5, y, x+w*0.5, y+h, 1, shoreLineColor, false)
+	case world.GIDWaterShoreRight:
+		vector.FillRect(dst, x, y, w*0.5, h, waterColor, false)
+		vector.FillRect(dst, x+w*0.5, y, w*0.5, h, grassColor, false)
+		vector.StrokeLine(dst, x+w*0.5, y, x+w*0.5, y+h, 1, shoreLineColor, false)
+
+	// Convex outer corners
+	case world.GIDWaterShoreNW:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x, y)
+		path.LineTo(x+w, y)
+		path.LineTo(x+w, y+h*0.5)
+		path.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
+		path.LineTo(x, y+h)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w, y+h*0.5)
+		linePath.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	case world.GIDWaterShoreNE:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x, y)
+		path.LineTo(x+w, y)
+		path.LineTo(x+w, y+h)
+		path.LineTo(x+w*0.5, y+h)
+		path.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w*0.5, y+h)
+		linePath.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	case world.GIDWaterShoreSW:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x, y)
+		path.LineTo(x+w*0.5, y)
+		path.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
+		path.LineTo(x+w, y+h)
+		path.LineTo(x, y+h)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w*0.5, y)
+		linePath.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	case world.GIDWaterShoreSE:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x+w*0.5, y)
+		path.LineTo(x+w, y)
+		path.LineTo(x+w, y+h)
+		path.LineTo(x, y+h)
+		path.LineTo(x, y+h*0.5)
+		path.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x, y+h*0.5)
+		linePath.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	// Concave inner corners
+	case world.GIDWaterShoreNWInner:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x, y)
+		path.LineTo(x+w*0.5, y)
+		path.QuadTo(x, y, x, y+h*0.5)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w*0.5, y)
+		linePath.QuadTo(x, y, x, y+h*0.5)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	case world.GIDWaterShoreNEInner:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x+w, y)
+		path.LineTo(x+w, y+h*0.5)
+		path.QuadTo(x+w, y, x+w*0.5, y)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w, y+h*0.5)
+		linePath.QuadTo(x+w, y, x+w*0.5, y)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	case world.GIDWaterShoreSWInner:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x, y+h)
+		path.LineTo(x+w*0.5, y+h)
+		path.QuadTo(x, y+h, x, y+h*0.5)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w*0.5, y+h)
+		linePath.QuadTo(x, y+h, x, y+h*0.5)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	case world.GIDWaterShoreSEInner:
+		vector.FillRect(dst, x, y, w, h, waterColor, false)
+		var path vector.Path
+		path.MoveTo(x+w, y+h)
+		path.LineTo(x+w, y+h*0.5)
+		path.QuadTo(x+w, y+h, x+w*0.5, y+h)
+		path.Close()
+		drawPath(dst, &path, grassColor, true, 0)
+		var linePath vector.Path
+		linePath.MoveTo(x+w, y+h*0.5)
+		linePath.QuadTo(x+w, y+h, x+w*0.5, y+h)
+		drawPath(dst, &linePath, shoreLineColor, false, 1)
+
+	default:
+		// Fallback to TileSwatchColor
+		vector.FillRect(dst, x, y, w, h, r.TileSwatchColor(gid), false)
+	}
 }

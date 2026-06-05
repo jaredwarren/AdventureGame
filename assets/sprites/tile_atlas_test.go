@@ -9,21 +9,25 @@ import (
 )
 
 func TestTileAtlasRectsWithinOverworldPNG(t *testing.T) {
-	img, _, err := image.Decode(bytes.NewReader(OverworldTilePNG))
+	overworldImg, _, err := image.Decode(bytes.NewReader(OverworldTilePNG))
 	if err != nil {
 		t.Fatalf("decode OverworldTilePNG: %v", err)
 	}
-	b := img.Bounds()
+	lakeImg, _, err := image.Decode(bytes.NewReader(LakeIslandScenePNG))
+	if err != nil {
+		t.Fatalf("decode LakeIslandScenePNG: %v", err)
+	}
 
 	var doc struct {
 		SpriteSheet string `json:"sprite_sheet"`
 		TilePx      int    `json:"tile_px"`
 		Frames      []struct {
-			Skip bool `json:"skip"`
-			SX   int  `json:"sx"`
-			SY   int  `json:"sy"`
-			SW   int  `json:"sw"`
-			SH   int  `json:"sh"`
+			Skip        bool   `json:"skip"`
+			SpriteSheet string `json:"sprite_sheet"`
+			SX          int    `json:"sx"`
+			SY          int    `json:"sy"`
+			SW          int    `json:"sw"`
+			SH          int    `json:"sh"`
 		} `json:"frames"`
 	}
 	if err := json.Unmarshal(TileAtlasJSON, &doc); err != nil {
@@ -32,8 +36,8 @@ func TestTileAtlasRectsWithinOverworldPNG(t *testing.T) {
 	if doc.SpriteSheet != TileSpriteSheetFile {
 		t.Fatalf("atlas sprite_sheet %q must match %q", doc.SpriteSheet, TileSpriteSheetFile)
 	}
-	if len(doc.Frames) != 17 {
-		t.Fatalf("expected 17 frames (GID 0..16), got %d", len(doc.Frames))
+	if len(doc.Frames) != 21 {
+		t.Fatalf("expected 21 frames (GID 0..20), got %d", len(doc.Frames))
 	}
 	for i, fr := range doc.Frames {
 		if fr.Skip {
@@ -42,6 +46,11 @@ func TestTileAtlasRectsWithinOverworldPNG(t *testing.T) {
 		if fr.SW < 1 || fr.SH < 1 {
 			t.Fatalf("frame %d: sw/sh must be >= 1 unless skip", i)
 		}
+		currentImg := overworldImg
+		if fr.SpriteSheet == "lake_island_scene.png" {
+			currentImg = lakeImg
+		}
+		b := currentImg.Bounds()
 		r := image.Rect(fr.SX, fr.SY, fr.SX+fr.SW, fr.SY+fr.SH)
 		if !r.In(b) {
 			t.Fatalf("frame %d rect %v not inside sheet bounds %v", i, r, b)

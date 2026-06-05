@@ -30,6 +30,7 @@ var actionNames = map[services.Action]string{
 	services.ActionDodge:    "Dodge",
 	services.ActionSprint:   "Sprint",
 	services.ActionInteract: "Interact",
+	services.ActionItemMenu: "ItemMenu",
 
 	services.ActionPause:   "Pause",
 	services.ActionConfirm: "Confirm",

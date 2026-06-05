@@ -115,11 +115,12 @@ type tileAtlasFile struct {
 	SpriteSheet string `json:"sprite_sheet"`
 	TilePx      int    `json:"tile_px"`
 	Frames      []struct {
-		Skip bool `json:"skip"`
-		SX   int  `json:"sx"`
-		SY   int  `json:"sy"`
-		SW   int  `json:"sw"`
-		SH   int  `json:"sh"`
+		Skip        bool   `json:"skip"`
+		SpriteSheet string `json:"sprite_sheet"`
+		SX          int    `json:"sx"`
+		SY          int    `json:"sy"`
+		SW          int    `json:"sw"`
+		SH          int    `json:"sh"`
 	} `json:"frames"`
 }
 
@@ -133,21 +134,31 @@ func loadTileAtlas() (services.Atlas, error) {
 	}
 	sheet, err := decodeSheet(sprites.OverworldTilePNG)
 	if err != nil {
+		fmt.Printf("Warning/Error: decode OverworldTilePNG: %v\n", err)
 		return nil, fmt.Errorf("tile atlas: %w", err)
 	}
-	b := sheet.Bounds()
+	lakeSheet, err := decodeSheet(sprites.LakeIslandScenePNG)
+	if err != nil {
+		fmt.Printf("Warning/Error: decode LakeIslandScenePNG: %v\n", err)
+		return nil, fmt.Errorf("tile atlas lake: %w", err)
+	}
 	frames := make([]services.AtlasFrame, len(doc.Frames))
 	for i, fr := range doc.Frames {
 		if fr.Skip || fr.SW < 1 || fr.SH < 1 {
 			frames[i] = services.AtlasFrame{Skip: true}
 			continue
 		}
+		currentSheet := sheet
+		if fr.SpriteSheet == "lake_island_scene.png" {
+			currentSheet = lakeSheet
+		}
+		b := currentSheet.Bounds()
 		r := image.Rect(fr.SX, fr.SY, fr.SX+fr.SW, fr.SY+fr.SH)
 		if !r.In(b) {
 			frames[i] = services.AtlasFrame{Skip: true}
 			continue
 		}
-		sub, ok := sheet.SubImage(r).(*ebiten.Image)
+		sub, ok := currentSheet.SubImage(r).(*ebiten.Image)
 		if !ok {
 			frames[i] = services.AtlasFrame{Skip: true}
 			continue

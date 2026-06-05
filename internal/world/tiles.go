@@ -24,6 +24,12 @@ const (
 	GIDWaterShoreNW     = 14
 	GIDWaterShoreSW     = 15
 	GIDWaterShoreSE     = 16
+	
+	// Inner (concave) water shore transition tiles
+	GIDWaterShoreNEInner = 17
+	GIDWaterShoreNWInner = 18
+	GIDWaterShoreSWInner = 19
+	GIDWaterShoreSEInner = 20
 )
 
 // SolidAt reads collision from the TileDef registry. Destroyable tiles

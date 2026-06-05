@@ -54,6 +54,7 @@ var (
 		world.GIDWater, world.GIDLock, world.GIDFloor2, world.GIDTree, world.GIDEmpty,
 		world.GIDWaterShoreTop, world.GIDWaterShoreBottom, world.GIDWaterShoreLeft, world.GIDWaterShoreRight,
 		world.GIDWaterShoreNE, world.GIDWaterShoreNW, world.GIDWaterShoreSW, world.GIDWaterShoreSE,
+		world.GIDWaterShoreNEInner, world.GIDWaterShoreNWInner, world.GIDWaterShoreSWInner, world.GIDWaterShoreSEInner,
 	}
 	editorMarkerTypes = []string{"spawn", "enemy", "pickup", "door", "shrine"}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].
@@ -135,6 +136,9 @@ func (s *EditorScene) rebuild(ctx GameContext) {
 		return
 	}
 	s.errMsg = ""
+	w.HasAmbientLightOverride = true
+	w.AmbientLightOverride = 1.0
+	w.TimeOfDay = 3000
 	ctx.Session().World = w
 	cam := ctx.Renderer().Camera()
 	cam.X, cam.Y = 0, 0

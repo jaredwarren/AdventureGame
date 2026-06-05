@@ -97,6 +97,12 @@ var tileDefs = map[int]TileDef{
 	GIDWaterShoreNW:     {GID: GIDWaterShoreNW, Name: "water_shore_nw", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
 	GIDWaterShoreSW:     {GID: GIDWaterShoreSW, Name: "water_shore_sw", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
 	GIDWaterShoreSE:     {GID: GIDWaterShoreSE, Name: "water_shore_se", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+
+	// Inner (concave) water shore transition tiles
+	GIDWaterShoreNEInner: {GID: GIDWaterShoreNEInner, Name: "water_shore_ne_inner", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreNWInner: {GID: GIDWaterShoreNWInner, Name: "water_shore_nw_inner", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreSWInner: {GID: GIDWaterShoreSWInner, Name: "water_shore_sw_inner", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
+	GIDWaterShoreSEInner: {GID: GIDWaterShoreSEInner, Name: "water_shore_se_inner", Solid: true, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
 }
 
 // TileDefOf returns the registered definition for a GID. When the GID is

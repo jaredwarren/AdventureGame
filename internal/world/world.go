@@ -27,6 +27,14 @@ const TileSize = 16
 // MaxBombsCarry is the inventory cap for bomb pickups (see Bombs, PickupBomb).
 const MaxBombsCarry = 8
 
+// ItemSlot identifies which item is currently active in the player's secondary slot.
+type ItemSlot int
+
+const (
+	ItemSlotBomb  ItemSlot = iota // default
+	ItemSlotTorch
+)
+
 // ClampBombsCarry clamps n to [0, MaxBombsCarry] for save load and pickups.
 func ClampBombsCarry(n int) int {
 	if n < 0 {
@@ -155,9 +163,10 @@ type World struct {
 	Currency int
 	// Bombs is how many bomb items the player holds; pickups increment (capped at
 	// MaxBombsCarry), placing a bomb decrements (see TryDamageFaceTile(DamageBomb)).
-	Bombs int
-	HasTorch bool
-	SmallKey int
+	Bombs        int
+	HasTorch     bool
+	SmallKey     int
+	SelectedItem ItemSlot
 
 	// Tick is the sim-frame counter; incremented by systems.TimersSystem so
 	// other systems can key periodic effects off a world-owned clock.

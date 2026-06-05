@@ -93,3 +93,69 @@ func TestBuildFromTiled_NonPersistentPickupIgnoresCollectedSet(t *testing.T) {
 		t.Errorf("expected empty PersistentSaveKey for non-persistent pickup")
 	}
 }
+
+func TestAutoTileWater(t *testing.T) {
+	// Create a custom 4x4 map with some grass (1) and water (5)
+	// Grid structure:
+	// Grass Grass Grass Grass
+	// Grass Water Water Grass
+	// Grass Grass Grass Grass
+	// Grass Grass Grass Grass
+	//
+	// The water tile at (1, 1) has grass on the top, left, bottom, but wait:
+	// Let's design a custom grid:
+	// Grass, Grass, Grass, Grass
+	// Grass, Water, Water, Water
+	// Grass, Water, Water, Water
+	// Grass, Grass, Grass, Grass
+	
+	m := &tiled.Map{
+		Width:      4,
+		Height:     4,
+		TileWidth:  16,
+		TileHeight: 16,
+		Layers: []tiled.Layer{
+			{
+				Name: "ground",
+				Type: "tilelayer",
+				Data: []int{
+					1, 1, 1, 1, // Row 0
+					1, 5, 5, 1, // Row 1
+					1, 5, 5, 1, // Row 2
+					1, 1, 1, 1, // Row 3
+				},
+			},
+		},
+	}
+
+	w, err := BuildFromTiled(m, "testmap", progression.DefaultStats(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Verify coordinates:
+	// Row 1, Col 1 (index 5): Water tile surrounded by grass on top (1,0) and left (0,1).
+	// NW Corner -> GIDWaterShoreNW (14)
+	if w.Tiles[5] != GIDWaterShoreNW {
+		t.Errorf("w.Tiles[5] = %d, want GIDWaterShoreNW (%d)", w.Tiles[5], GIDWaterShoreNW)
+	}
+
+	// Row 1, Col 2 (index 6): Water tile surrounded by grass on top (2,0) and right (3,1).
+	// NE Corner -> GIDWaterShoreNE (13)
+	if w.Tiles[6] != GIDWaterShoreNE {
+		t.Errorf("w.Tiles[6] = %d, want GIDWaterShoreNE (%d)", w.Tiles[6], GIDWaterShoreNE)
+	}
+
+	// Row 2, Col 1 (index 9): Water tile surrounded by grass on bottom (1,3) and left (0,2).
+	// SW Corner -> GIDWaterShoreSW (15)
+	if w.Tiles[9] != GIDWaterShoreSW {
+		t.Errorf("w.Tiles[9] = %d, want GIDWaterShoreSW (%d)", w.Tiles[9], GIDWaterShoreSW)
+	}
+
+	// Row 2, Col 2 (index 10): Water tile surrounded by grass on bottom (2,3) and right (3,2).
+	// SE Corner -> GIDWaterShoreSE (16)
+	if w.Tiles[10] != GIDWaterShoreSE {
+		t.Errorf("w.Tiles[10] = %d, want GIDWaterShoreSE (%d)", w.Tiles[10], GIDWaterShoreSE)
+	}
+}
+

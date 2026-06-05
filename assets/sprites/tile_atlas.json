@@ -1,5 +1,5 @@
 {
-  "comment": "frames[] index == world GID (0..16). Tweak sx,sy,sw,sh on a 128px grid; sheet is 1024x1024.",
+  "comment": "frames[] index == world GID (0..20). Tweak sx,sy,sw,sh on a 128px grid; sheet is 1024x1024.",
   "tile_px": 128,
   "sprite_sheet": "overworld-spritesheet.png",
   "frames": [
@@ -36,8 +36,9 @@
       "comment": "GIDDoor — staircase dungeon entrance"
     },
     {
-      "sx": 128,
-      "sy": 256,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 448,
+      "sy": 136,
       "sw": 128,
       "sh": 128,
       "comment": "GIDWater — blue water"
@@ -64,60 +65,100 @@
       "comment": "GIDTree — forest pine tree"
     },
     {
-      "sx": 384,
-      "sy": 256,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 448,
+      "sy": 53,
       "sw": 128,
       "sh": 128,
       "comment": "GIDWaterShoreTop — water with top grass shore"
     },
     {
-      "sx": 384,
-      "sy": 768,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 448,
+      "sy": 872,
       "sw": 128,
       "sh": 128,
       "comment": "GIDWaterShoreBottom — water with bottom grass shore"
     },
     {
-      "sx": 256,
-      "sy": 512,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 35,
+      "sy": 448,
       "sw": 128,
       "sh": 128,
       "comment": "GIDWaterShoreLeft — water with left grass shore"
     },
     {
-      "sx": 640,
-      "sy": 512,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 863,
+      "sy": 448,
       "sw": 128,
       "sh": 128,
       "comment": "GIDWaterShoreRight — water with right grass shore"
     },
     {
-      "sx": 256,
-      "sy": 128,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 798,
+      "sy": 102,
       "sw": 128,
       "sh": 128,
-      "comment": "GIDWaterShoreNE — water with grass shore in North-East corner"
+      "comment": "GIDWaterShoreNE — water with grass shore in North-East corner (convex)"
     },
     {
-      "sx": 128,
-      "sy": 128,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 95,
+      "sy": 111,
       "sw": 128,
       "sh": 128,
-      "comment": "GIDWaterShoreNW — water with grass shore in North-West corner"
+      "comment": "GIDWaterShoreNW — water with grass shore in North-West corner (convex)"
     },
     {
-      "sx": 256,
-      "sy": 768,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 86,
+      "sy": 798,
       "sw": 128,
       "sh": 128,
-      "comment": "GIDWaterShoreSW — water with grass shore in South-West corner"
+      "comment": "GIDWaterShoreSW — water with grass shore in South-West corner (convex)"
     },
     {
-      "sx": 640,
-      "sy": 256,
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 803,
+      "sy": 808,
       "sw": 128,
       "sh": 128,
-      "comment": "GIDWaterShoreSE — water with grass shore in South-East corner"
+      "comment": "GIDWaterShoreSE — water with grass shore in South-East corner (convex)"
+    },
+    {
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 593,
+      "sy": 275,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreNEInner — water with concave shore in North-East corner"
+    },
+    {
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 292,
+      "sy": 285,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreNWInner — water with concave shore in North-West corner"
+    },
+    {
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 290,
+      "sy": 600,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreSWInner — water with concave shore in South-West corner"
+    },
+    {
+      "sprite_sheet": "lake_island_scene.png",
+      "sx": 611,
+      "sy": 600,
+      "sw": 128,
+      "sh": 128,
+      "comment": "GIDWaterShoreSEInner — water with concave shore in South-East corner"
     }
   ]
 }

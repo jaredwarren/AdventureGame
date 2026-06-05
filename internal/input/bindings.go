@@ -58,6 +58,7 @@ func DefaultBindings() *Bindings {
 			ActionName(services.ActionDodge):    {"Alt"},
 			ActionName(services.ActionSprint):   {"Shift"},
 			ActionName(services.ActionInteract): {"E"},
+			ActionName(services.ActionItemMenu): {"Tab"},
 
 			ActionName(services.ActionPause):   {"P"},
 			ActionName(services.ActionConfirm): {"Enter"},

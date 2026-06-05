@@ -43,13 +43,25 @@ func DrawHUD(r services.Renderer, w *world.World, sess *Session) {
 	r.DrawText(200, y, fmt.Sprintf("coin %d", w.Currency))
 	r.DrawText(200, y+16, fmt.Sprintf("key %d", w.SmallKey))
 	r.DrawText(200, y+32, fmt.Sprintf("%d,%d", int(w.Player.X), int(w.Player.Y)))
-	invX := 260
-	if w.Bombs > 0 {
-		r.DrawText(invX, y, fmt.Sprintf("bomb x%d/%d", w.Bombs, world.MaxBombsCarry))
-		invX += 88
+	// Item slot pill boxes — selected slot gets bright border, unselected gets dim.
+	const pillW, pillH float32 = 52, 12
+	const pillGap float32 = 4
+	px := float32(260)
+	drawSlot := func(label string, selected bool) {
+		var border color.RGBA
+		if selected {
+			border = color.RGBA{0xff, 0xff, 0xff, 0xff}
+		} else {
+			border = color.RGBA{0x60, 0x60, 0x60, 0xff}
+		}
+		r.FillRect(px, float32(y)-1, pillW, pillH, color.RGBA{0x10, 0x10, 0x18, 0xcc})
+		r.StrokeRect(px, float32(y)-1, pillW, pillH, 1, border)
+		r.DrawText(int(px)+3, y, label)
+		px += pillW + pillGap
 	}
+	drawSlot(fmt.Sprintf("BOMB %d/%d", w.Bombs, world.MaxBombsCarry), w.SelectedItem == world.ItemSlotBomb)
 	if w.HasTorch {
-		r.DrawText(invX, y, "torch")
+		drawSlot("TORCH", w.SelectedItem == world.ItemSlotTorch)
 	}
 
 	barW := 60
@@ -123,4 +135,59 @@ func DrawDebugOverlay(r services.Renderer, sess *Session, sceneID SceneID, extra
 	}
 	line("foes %d/%d pkup %d doors %d shr %d", nEnLive, nEn, nPick, len(w.Doors), len(w.Shrines))
 	line("weekly %d", sess.WeeklySeed)
+}
+
+// DrawItemMenu renders the item selection overlay. cursor is the index into
+// the visible slot list (bomb always first, torch second if owned).
+func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
+	if w == nil {
+		return
+	}
+
+	const panelX, panelY float32 = 72, 52
+	const panelW, panelH float32 = 176, 120
+	r.FillRect(panelX, panelY, panelW, panelH, color.RGBA{0x08, 0x0a, 0x14, 0xe0})
+	r.StrokeRect(panelX, panelY, panelW, panelH, 1, color.RGBA{0x80, 0x80, 0xa0, 0xff})
+
+	tx := int(panelX) + 8
+	r.DrawText(tx+44, int(panelY)+6, "ITEMS")
+
+	// Build slot list.
+	type slot struct {
+		label string
+		kind  world.ItemSlot
+	}
+	slots := []slot{
+		{fmt.Sprintf("BOMB  x%d/%d", w.Bombs, world.MaxBombsCarry), world.ItemSlotBomb},
+	}
+	if w.HasTorch {
+		slots = append(slots, slot{"TORCH", world.ItemSlotTorch})
+	}
+
+	lineY := int(panelY) + 22
+	for i, sl := range slots {
+		prefix := "  "
+		if i == cursor {
+			prefix = "> "
+			r.FillRect(panelX+4, float32(lineY)-1, panelW-8, 12, color.RGBA{0x20, 0x28, 0x40, 0xff})
+		}
+		r.DrawText(tx, lineY, prefix+sl.label)
+		lineY += 14
+	}
+
+	// Divider.
+	divY := float32(lineY) + 2
+	r.StrokeLine(panelX+4, divY, panelX+panelW-4, divY, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
+
+	// Stats block.
+	infoY := int(divY) + 6
+	r.DrawText(tx, infoY, fmt.Sprintf("HP %d/%d   Stam %d/%d", w.HP, w.MaxHP(), w.Player.Stamina, w.MaxStamina()))
+	infoY += 12
+	r.DrawText(tx, infoY, fmt.Sprintf("Coins %d   Keys %d", w.Currency, w.SmallKey))
+	infoY += 12
+	st := w.Stats
+	r.DrawText(tx, infoY, fmt.Sprintf("V%d R%d M%d W%d F%d", st.Vitality, st.Resolve, st.Might, st.Wits, st.Fortune))
+
+	// Footer hint.
+	r.DrawText(tx, int(panelY)+int(panelH)-14, "up/dn select  Enter confirm  Esc close")
 }

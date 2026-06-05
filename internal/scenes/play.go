@@ -40,6 +40,9 @@ type PlayScene struct {
 	pipeline  *systems.Pipeline
 	particles []*Particle
 	bombs     []*ActiveBomb
+
+	showItemMenu   bool
+	itemMenuCursor int
 }
 
 func newPlayScene() Scene {
@@ -82,6 +85,17 @@ func (s *PlayScene) Update(ctx GameContext) error {
 
 	w := sess.World
 	if w == nil {
+		return nil
+	}
+
+	// Item menu intercepts all gameplay input while open.
+	if in.JustPressed(services.ActionItemMenu) && !s.showItemMenu {
+		s.showItemMenu = true
+		s.itemMenuCursor = int(w.SelectedItem)
+		return nil
+	}
+	if s.showItemMenu {
+		s.handleItemMenu(ctx, w)
 		return nil
 	}
 
@@ -185,8 +199,8 @@ func (s *PlayScene) Update(ctx GameContext) error {
 		s.particles = append(s.particles, NewDustParticle(rx, ry))
 	}
 
-	// Ambient ember particles if player has torch (or is swinging torch)
-	if w.HasTorch && rand.Float64() < 0.25 {
+	// Ambient ember particles only when torch is the active item.
+	if w.HasTorch && w.SelectedItem == world.ItemSlotTorch && rand.Float64() < 0.25 {
 		pr := w.PlayerRect()
 		px := pr.X + pr.W*0.5
 		py := pr.Y + pr.H*0.5
@@ -231,57 +245,12 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 			ctx.Audio().Play("swing.wav", 0.2)
 		}
 	}
-	if in.JustPressed(services.ActionBomb) && w.Bombs > 0 {
-		pc := w.PlayerRect()
-		cx := pc.X + pc.W*0.5
-		cy := pc.Y + pc.H*0.5
-		tx := int(cx / world.TileSize)
-		ty := int(cy / world.TileSize)
-		switch w.Player.Dir {
-		case world.DirDown:
-			ty++
-		case world.DirUp:
-			ty--
-		case world.DirLeft:
-			tx--
-		case world.DirRight:
-			tx++
-		}
-
-		bx := float64(tx*world.TileSize) + world.TileSize*0.5
-		by := float64(ty*world.TileSize) + world.TileSize*0.5
-
-		// Only drop if there isn't already a bomb at this tile
-		alreadyBomb := false
-		for _, b := range s.bombs {
-			if b.TX == tx && b.TY == ty {
-				alreadyBomb = true
-				break
-			}
-		}
-
-		if !alreadyBomb {
-			w.Bombs--
-			s.bombs = append(s.bombs, &ActiveBomb{
-				X:     bx,
-				Y:     by,
-				TX:    tx,
-				TY:    ty,
-				Timer: 90, // 1.5 seconds
-			})
-			ctx.Audio().Play("swing.wav", 0.15)
-		}
-	}
-	if in.JustPressed(services.ActionTorch) {
-		if w.TrySwingTorch() {
-			ctx.Audio().Play("swing.wav", 0.22)
-			// Spawn a few embers in front of player
-			pc := w.PlayerRect()
-			cx := pc.X + pc.W*0.5
-			cy := pc.Y + pc.H*0.5
-			for k := 0; k < 5; k++ {
-				s.particles = append(s.particles, NewEmberParticle(cx, cy))
-			}
+	if in.JustPressed(services.ActionBomb) {
+		switch w.SelectedItem {
+		case world.ItemSlotBomb:
+			s.tryDropBomb(ctx, w)
+		case world.ItemSlotTorch:
+			s.trySwingTorch(ctx, w)
 		}
 	}
 
@@ -289,6 +258,81 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 		w.Player.Stamina -= 20
 		w.Player.DodgeTimer = 20
 		s.dodgeImpulse = 12
+	}
+}
+
+func (s *PlayScene) tryDropBomb(ctx GameContext, w *world.World) {
+	if w.Bombs <= 0 {
+		return
+	}
+	pc := w.PlayerRect()
+	cx := pc.X + pc.W*0.5
+	cy := pc.Y + pc.H*0.5
+	tx := int(cx / world.TileSize)
+	ty := int(cy / world.TileSize)
+	switch w.Player.Dir {
+	case world.DirDown:
+		ty++
+	case world.DirUp:
+		ty--
+	case world.DirLeft:
+		tx--
+	case world.DirRight:
+		tx++
+	}
+	bx := float64(tx*world.TileSize) + world.TileSize*0.5
+	by := float64(ty*world.TileSize) + world.TileSize*0.5
+	for _, b := range s.bombs {
+		if b.TX == tx && b.TY == ty {
+			return
+		}
+	}
+	w.Bombs--
+	s.bombs = append(s.bombs, &ActiveBomb{X: bx, Y: by, TX: tx, TY: ty, Timer: 90})
+	ctx.Audio().Play("swing.wav", 0.15)
+}
+
+func (s *PlayScene) trySwingTorch(ctx GameContext, w *world.World) {
+	if !w.HasTorch {
+		return
+	}
+	if w.TrySwingTorch() {
+		ctx.Audio().Play("swing.wav", 0.22)
+		pc := w.PlayerRect()
+		cx := pc.X + pc.W*0.5
+		cy := pc.Y + pc.H*0.5
+		for k := 0; k < 5; k++ {
+			s.particles = append(s.particles, NewEmberParticle(cx, cy))
+		}
+	}
+}
+
+func (s *PlayScene) handleItemMenu(ctx GameContext, w *world.World) {
+	in := ctx.Input()
+
+	// Build ordered slot list based on what player owns.
+	slots := []world.ItemSlot{world.ItemSlotBomb}
+	if w.HasTorch {
+		slots = append(slots, world.ItemSlotTorch)
+	}
+
+	// Clamp cursor to valid range.
+	if s.itemMenuCursor >= len(slots) {
+		s.itemMenuCursor = len(slots) - 1
+	}
+
+	if in.JustPressed(services.ActionMoveUp) && s.itemMenuCursor > 0 {
+		s.itemMenuCursor--
+	}
+	if in.JustPressed(services.ActionMoveDown) && s.itemMenuCursor < len(slots)-1 {
+		s.itemMenuCursor++
+	}
+	if in.JustPressed(services.ActionConfirm) {
+		w.SelectedItem = slots[s.itemMenuCursor]
+		s.showItemMenu = false
+	}
+	if in.JustPressed(services.ActionCancel) || in.JustPressed(services.ActionItemMenu) {
+		s.showItemMenu = false
 	}
 }
 
@@ -497,6 +541,9 @@ func (s *PlayScene) Draw(ctx GameContext) {
 		}
 
 		DrawHUD(r, sess.World, sess)
+		if s.showItemMenu {
+			DrawItemMenu(r, sess.World, s.itemMenuCursor)
+		}
 		if sess.ShowDebugOverlay {
 			DrawDebugOverlay(r, sess, s.ID(), DebugOverlayExtras{
 				HitStop:      s.hitStop,
