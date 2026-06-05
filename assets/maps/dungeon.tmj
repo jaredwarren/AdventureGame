@@ -10,6 +10,13 @@
   "tiledversion": "1.10.2",
   "orientation": "orthogonal",
   "renderorder": "right-down",
+  "properties": [
+    {
+      "name": "light_level",
+      "type": "float",
+      "value": 0.3
+    }
+  ],
   "layers": [
     {
       "id": 1,

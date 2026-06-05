@@ -71,9 +71,23 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 				IsBoss:  e.IsBoss,
 			})
 		}
-		if okTile, key := w.TryDamageFaceTile(world.DamageFire); okTile {
-			tryPush(bus, TileDestroyedEvent{SaveKey: key})
+		// Try to ignite a tree in front of us
+		pc := w.PlayerRect()
+		cx := pc.X + pc.W*0.5
+		cy := pc.Y + pc.H*0.5
+		tx := int(cx / world.TileSize)
+		ty := int(cy / world.TileSize)
+		switch w.Player.Dir {
+		case world.DirDown:
+			ty++
+		case world.DirUp:
+			ty--
+		case world.DirLeft:
+			tx--
+		case world.DirRight:
+			tx++
 		}
+		_ = w.TryIgniteTree(tx, ty)
 		return nil
 	}
 	return nil

@@ -48,6 +48,7 @@ type GameSave struct {
 	OpenedLockTileKeys []string `json:"opened_lock_tiles,omitempty"`
 
 	ReduceScreenShake bool `json:"reduce_screen_shake"`
+	TimeOfDay         int  `json:"time_of_day"`
 }
 
 const defaultPath = "save.json"

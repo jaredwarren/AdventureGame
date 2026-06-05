@@ -170,6 +170,8 @@ func TestCombatSystem_EmitsHitAndKillFlags(t *testing.T) {
 
 // TestCombatSystem_TorchBurnsFaceTile verifies fire damage in front of the
 // player during an active torch swing.
+// TestCombatSystem_TorchBurnsFaceTile verifies that swinging a torch ignites
+// the facing tree, which burns over time and finally breaks via TimersSystem.
 func TestCombatSystem_TorchBurnsFaceTile(t *testing.T) {
 	w := newTestWorld()
 	w.Player.Dir = world.DirRight
@@ -185,9 +187,31 @@ func TestCombatSystem_TorchBurnsFaceTile(t *testing.T) {
 	if err := (systems.CombatSystem{}).Update(w, &bus, 0); err != nil {
 		t.Fatalf("CombatSystem: %v", err)
 	}
-	if !w.DestroyedTiles[idx] {
-		t.Fatal("expected tree tile destroyed")
+
+	// The tree should be ignited (not immediately destroyed)
+	if w.DestroyedTiles[idx] {
+		t.Fatal("tree should not be destroyed immediately upon torch hit")
 	}
+	if len(w.Flames) != 1 || w.Flames[0].TX != tx || w.Flames[0].TY != ty {
+		t.Fatalf("expected 1 active flame at (%d, %d), got %+v", tx, ty, w.Flames)
+	}
+
+	// Tick TimersSystem for 90 frames to finish burning
+	timers := systems.TimersSystem{}
+	for i := 0; i < 90; i++ {
+		if err := timers.Update(w, &bus, 1.0/60); err != nil {
+			t.Fatalf("TimersSystem failed on tick %d: %v", i, err)
+		}
+	}
+
+	// Now the tree must be destroyed
+	if !w.DestroyedTiles[idx] {
+		t.Fatal("expected tree tile destroyed after 90 ticks of burning")
+	}
+	if len(w.Flames) != 0 {
+		t.Fatalf("expected active flames cleared, got %+v", w.Flames)
+	}
+
 	evs := bus.Drain()
 	var sawTile bool
 	for _, ev := range evs {
@@ -320,3 +344,46 @@ func TestPipeline_DefaultOrderMatchesLegacy(t *testing.T) {
 		t.Errorf("Swing = %d, want 6 (pipeline ordering broken?)", w.Player.Swing)
 	}
 }
+
+func TestTimersSystem_FlamePlayerContactDamage(t *testing.T) {
+	w := newTestWorld()
+	// Set player position to overlap with tile (1, 1)
+	w.Player.X = 16
+	w.Player.Y = 16
+	// Add an active flame at (1, 1)
+	w.Flames = []world.ActiveFlame{
+		{
+			X:     24,
+			Y:     24,
+			TX:    1,
+			TY:    1,
+			Timer: 50,
+		},
+	}
+	w.HP = 5
+	w.Player.Invuln = 0
+
+	var bus systems.EventBus
+	timers := systems.TimersSystem{}
+	if err := timers.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("TimersSystem failed: %v", err)
+	}
+
+	if w.HP != 4 {
+		t.Errorf("expected HP to be 4 after flame contact, got %d", w.HP)
+	}
+	if w.Player.Invuln != 45 {
+		t.Errorf("expected Player.Invuln to be 45, got %d", w.Player.Invuln)
+	}
+	evs := bus.Drain()
+	var sawHurt bool
+	for _, ev := range evs {
+		if _, ok := ev.(systems.PlayerHurtEvent); ok {
+			sawHurt = true
+		}
+	}
+	if !sawHurt {
+		t.Errorf("expected PlayerHurtEvent, got %+v", evs)
+	}
+}
+

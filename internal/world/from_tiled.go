@@ -38,6 +38,13 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 		Stats:          stats,
 		HP:             stats.MaxHP(),
 	}
+	if val, ok := tiled.MapPropFloat(m, "light_level"); ok {
+		w.HasAmbientLightOverride = true
+		w.AmbientLightOverride = val
+	} else if val, ok := tiled.MapPropFloat(m, "ambient_light"); ok {
+		w.HasAmbientLightOverride = true
+		w.AmbientLightOverride = val
+	}
 	if w.TileW != TileSize || w.TileH != TileSize {
 		return nil, fmt.Errorf("expected %dx%d tiles", TileSize, TileSize)
 	}

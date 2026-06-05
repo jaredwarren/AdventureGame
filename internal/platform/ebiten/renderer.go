@@ -265,7 +265,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 	}
 
 	// Apply Night Overlay Shader
-	if w.TimeOfDay < 1200 || w.TimeOfDay >= 9600 {
+	if (w.HasAmbientLightOverride && w.AmbientLightOverride < 1.0) || w.TimeOfDay < 1200 || w.TimeOfDay >= 9600 {
 		mult := w.LightMultiplier()
 		alpha := float32((1.0 - mult) * 1.175)
 		if alpha > 0.94 {

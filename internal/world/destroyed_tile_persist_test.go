@@ -68,3 +68,47 @@ func TestApplyDestroyedTiles_IgnoresNonDestroyable(t *testing.T) {
 		t.Fatal("should not mark non-destroyable tile")
 	}
 }
+
+func TestBreakTileAt(t *testing.T) {
+	t.Parallel()
+	w := &World{
+		MapID: "m",
+		MapW:  3,
+		MapH:  3,
+		Tiles: []int{
+			GIDGrass, GIDGrass, GIDGrass,
+			GIDGrass, GIDCracked, GIDGrass,
+			GIDGrass, GIDGrass, GIDGrass,
+		},
+		DestroyedTiles: make(map[int]bool),
+	}
+
+	// 1. Break out of bounds
+	if ok, _ := w.BreakTileAt(-1, 0, DamageBomb); ok {
+		t.Fatal("expected out of bounds break to fail")
+	}
+
+	// 2. Break non-destroyable tile (Grass)
+	if ok, _ := w.BreakTileAt(0, 0, DamageBomb); ok {
+		t.Fatal("expected breaking grass to fail")
+	}
+
+	// 3. Break destroyable tile (Cracked)
+	ok, key := w.BreakTileAt(1, 1, DamageBomb)
+	if !ok {
+		t.Fatal("expected breaking cracked tile to succeed")
+	}
+	expectedKey := MapTilePersistKey("m", 1, 1)
+	if key != expectedKey {
+		t.Fatalf("expected key %q, got %q", expectedKey, key)
+	}
+	if !w.DestroyedTiles[w.tileIndex(1, 1)] {
+		t.Fatal("expected cracked tile to be marked destroyed")
+	}
+
+	// 4. Break already destroyed tile
+	if ok, _ := w.BreakTileAt(1, 1, DamageBomb); ok {
+		t.Fatal("expected breaking already destroyed tile to fail")
+	}
+}
+

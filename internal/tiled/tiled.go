@@ -28,6 +28,7 @@ type Map struct {
 	NextLayerID      int             `json:"nextlayerid,omitempty"`
 	NextObjectID     int             `json:"nextobjectid,omitempty"`
 	Tilesets         json.RawMessage `json:"tilesets"`
+	Properties       []Property      `json:"properties,omitempty"`
 }
 
 type Layer struct {
@@ -184,4 +185,38 @@ func ObjPropBool(o *Object, key string) (bool, bool) {
 		}
 	}
 	return false, false
+}
+
+func MapProp(m *Map, key string) (string, bool) {
+	for _, p := range m.Properties {
+		if p.Name == key {
+			switch v := p.Value.(type) {
+			case string:
+				return v, true
+			default:
+				return fmt.Sprint(v), true
+			}
+		}
+	}
+	return "", false
+}
+
+func MapPropFloat(m *Map, key string) (float64, bool) {
+	for _, p := range m.Properties {
+		if p.Name != key {
+			continue
+		}
+		switch v := p.Value.(type) {
+		case float64:
+			return v, true
+		case int:
+			return float64(v), true
+		case string:
+			var f float64
+			if _, err := fmt.Sscanf(v, "%f", &f); err == nil {
+				return f, true
+			}
+		}
+	}
+	return 0, false
 }

@@ -166,6 +166,13 @@ type World struct {
 	// TimeOfDay is the current frame in the 14,400 frame cycle (4 minutes).
 	TimeOfDay int
 
+	// HasAmbientLightOverride is true if the map specified a custom light level override
+	HasAmbientLightOverride bool
+	AmbientLightOverride    float64
+
+	// Flames is the list of currently active fires burning tiles (e.g. trees)
+	Flames []ActiveFlame
+
 	// DoorCooldown counts down while >0 (systems.TimersSystem); while non-
 	// zero, scenes should skip door warp checks so the player does not
 	// immediately re-trigger the door they spawned on after a map
@@ -580,6 +587,9 @@ func (w *World) IsNight() bool {
 }
 
 func (w *World) LightMultiplier() float64 {
+	if w.HasAmbientLightOverride {
+		return w.AmbientLightOverride
+	}
 	t := float64(w.TimeOfDay)
 	if t >= 0 && t < 1200 {
 		return 0.2 + (t/1200.0)*0.8
@@ -592,3 +602,62 @@ func (w *World) LightMultiplier() float64 {
 	}
 	return 0.2
 }
+
+// BreakTileAt breaks the tile at tx, ty with the given damage kind.
+func (w *World) BreakTileAt(tx, ty int, kind DamageKind) (ok bool, saveKey string) {
+	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
+		return false, ""
+	}
+	idx := w.tileIndex(tx, ty)
+	if w.DestroyedTiles != nil && w.DestroyedTiles[idx] {
+		return false, ""
+	}
+	g := w.gidAt(tx, ty)
+	def := TileDefOf(g)
+	if !def.AcceptsDamage(kind) {
+		return false, ""
+	}
+	if w.DestroyedTiles == nil {
+		w.DestroyedTiles = make(map[int]bool)
+	}
+	w.DestroyedTiles[idx] = true
+	return true, MapTilePersistKey(w.MapID, tx, ty)
+}
+
+type ActiveFlame struct {
+	X, Y   float64
+	TX, TY int
+	Timer  int
+}
+
+// TryIgniteTree ignites a tree tile at tx, ty. Returns true if the tree was successfully ignited.
+func (w *World) TryIgniteTree(tx, ty int) bool {
+	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
+		return false
+	}
+	idx := w.tileIndex(tx, ty)
+	if w.DestroyedTiles != nil && w.DestroyedTiles[idx] {
+		return false
+	}
+	g := w.gidAt(tx, ty)
+	if g != GIDTree {
+		return false
+	}
+	// Check if already burning
+	for _, f := range w.Flames {
+		if f.TX == tx && f.TY == ty {
+			return false
+		}
+	}
+	bx := float64(tx*TileSize) + TileSize*0.5
+	by := float64(ty*TileSize) + TileSize*0.5
+	w.Flames = append(w.Flames, ActiveFlame{
+		X:     bx,
+		Y:     by,
+		TX:    tx,
+		TY:    ty,
+		Timer: 90, // 1.5 seconds at 60fps
+	})
+	return true
+}
+

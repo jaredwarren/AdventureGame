@@ -102,6 +102,7 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 		w.Currency = sess.World.Currency
 		w.Bombs = world.ClampBombsCarry(sess.World.Bombs)
 		w.HasTorch = sess.World.HasTorch
+		w.TimeOfDay = sess.World.TimeOfDay
 		if w.HP > w.MaxHP() {
 			w.HP = w.MaxHP()
 		}
@@ -237,6 +238,7 @@ func ApplySave(sess *Session, s *save.GameSave, cam *render.Camera) {
 	if cam != nil {
 		cam.ReduceShake = s.ReduceScreenShake
 	}
+	w.TimeOfDay = s.TimeOfDay
 }
 
 // BuildSave snapshots the current World + Session into a save payload. The
@@ -266,6 +268,7 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 		Wits:              w.Stats.Wits,
 		Fortune:           w.Stats.Fortune,
 		ReduceScreenShake: reduce,
+		TimeOfDay:         w.TimeOfDay,
 	}
 	if sess != nil && len(sess.CollectedPersistentPickups) > 0 {
 		keys := make([]string, 0, len(sess.CollectedPersistentPickups))

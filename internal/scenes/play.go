@@ -17,6 +17,7 @@ package scenes
 
 import (
 	"image/color"
+	"math"
 	"math/rand"
 
 	"github.com/jaredwarren/game-test/internal/save"
@@ -25,6 +26,12 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
+type ActiveBomb struct {
+	X, Y   float64
+	TX, TY int
+	Timer  int
+}
+
 // PlayScene is the main gameplay scene.
 type PlayScene struct {
 	hitStop      int
@@ -32,12 +39,14 @@ type PlayScene struct {
 
 	pipeline  *systems.Pipeline
 	particles []*Particle
+	bombs     []*ActiveBomb
 }
 
 func newPlayScene() Scene {
 	return &PlayScene{
 		pipeline:  systems.Default(),
 		particles: make([]*Particle, 0),
+		bombs:     make([]*ActiveBomb, 0),
 	}
 }
 
@@ -78,6 +87,94 @@ func (s *PlayScene) Update(ctx GameContext) error {
 
 	// Update existing particles
 	s.particles = UpdateParticles(s.particles)
+
+	// Update active bombs
+	var activeBombs []*ActiveBomb
+	for _, b := range s.bombs {
+		b.Timer--
+		if b.Timer <= 0 {
+			// Explode!
+			if broke, saveKey := w.BreakTileAt(b.TX, b.TY, world.DamageBomb); broke {
+				ctx.Session().MarkDestroyedTile(saveKey)
+			}
+
+			// Damage nearby enemies within 32 pixels
+			for i := range w.Enemies {
+				enemy := &w.Enemies[i]
+				if enemy.HP <= 0 {
+					continue
+				}
+				ecx, ecy := enemy.Center()
+				dist := math.Hypot(ecx-b.X, ecy-b.Y)
+				if dist <= 32.0 {
+					w.DamageEnemy(i, 4) // high damage
+				}
+			}
+
+			// Audio & Camera Shake
+			ctx.Audio().Play("hit.wav", 0.3)
+			ctx.Renderer().Camera().AddShake(12, 4.5)
+
+			// Spawn explosion/debris particles
+			for k := 0; k < 16; k++ {
+				// Debris
+				s.particles = append(s.particles, NewDebrisParticle(b.X, b.Y, color.RGBA{100, 100, 100, 255}))
+				// Embers
+				angle := rand.Float64() * 2 * math.Pi
+				speed := rand.Float64()*2.0 + 1.0
+				s.particles = append(s.particles, &Particle{
+					X:      b.X,
+					Y:      b.Y,
+					VX:     math.Cos(angle) * speed,
+					VY:     math.Sin(angle) * speed,
+					Color:  color.RGBA{255, uint8(100 + rand.Intn(150)), 0, 255},
+					Type:   ParticleEmber,
+					Size:   rand.Float32()*3.0 + 1.5,
+					Life:   1.0,
+					Decay:  rand.Float64()*0.05 + 0.03,
+					Wobble: rand.Float64() * 10,
+				})
+			}
+		} else {
+			// Spawn fuse sparks at top-right of the bomb at the end of the fuse line (x + 3, y - 9)
+			if rand.Float64() < 0.6 {
+				s.particles = append(s.particles, &Particle{
+					X:      b.X + 3,
+					Y:      b.Y - 9,
+					VX:     (rand.Float64() - 0.5) * 0.5,
+					VY:     -rand.Float64()*0.5 - 0.2,
+					Color:  color.RGBA{255, uint8(180 + rand.Intn(75)), 0, 255},
+					Type:   ParticleEmber,
+					Size:   rand.Float32()*1.2 + 0.6,
+					Life:   1.0,
+					Decay:  rand.Float64()*0.05 + 0.05,
+					Wobble: rand.Float64() * 5,
+				})
+			}
+			activeBombs = append(activeBombs, b)
+		}
+	}
+	s.bombs = activeBombs
+
+	// Spawn flame particles for active flames
+	for _, f := range w.Flames {
+		if rand.Float64() < 0.4 {
+			px := f.X + (rand.Float64()-0.5)*12
+			py := f.Y + (rand.Float64()-0.5)*12
+			s.particles = append(s.particles, &Particle{
+				X:      px,
+				Y:      py,
+				VX:     (rand.Float64() - 0.5) * 0.3,
+				VY:     -rand.Float64()*0.4 - 0.4,
+				Color:  color.RGBA{255, uint8(80 + rand.Intn(120)), 0, 255},
+				Type:   ParticleEmber,
+				Size:   rand.Float32()*2.5 + 1.0,
+				Life:   1.0,
+				Decay:  rand.Float64()*0.04 + 0.02,
+				Wobble: rand.Float64() * 5,
+			})
+		}
+	}
 
 	// Ambient dust particles around player
 	if len(s.particles) < 40 && rand.Float64() < 0.15 {
@@ -134,33 +231,45 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 			ctx.Audio().Play("swing.wav", 0.2)
 		}
 	}
-	if in.JustPressed(services.ActionBomb) {
-		if broke, key := w.TryDamageFaceTile(world.DamageBomb); broke {
-			ctx.Session().MarkDestroyedTile(key)
-			ctx.Audio().Play("hit.wav", 0.25)
-			ctx.Renderer().Camera().AddShake(8, 3)
+	if in.JustPressed(services.ActionBomb) && w.Bombs > 0 {
+		pc := w.PlayerRect()
+		cx := pc.X + pc.W*0.5
+		cy := pc.Y + pc.H*0.5
+		tx := int(cx / world.TileSize)
+		ty := int(cy / world.TileSize)
+		switch w.Player.Dir {
+		case world.DirDown:
+			ty++
+		case world.DirUp:
+			ty--
+		case world.DirLeft:
+			tx--
+		case world.DirRight:
+			tx++
+		}
 
-			// Spawn grey debris particles for the broken tile
-			pc := w.PlayerRect()
-			cx := pc.X + pc.W*0.5
-			cy := pc.Y + pc.H*0.5
-			tx := int(cx / world.TileSize)
-			ty := int(cy / world.TileSize)
-			switch w.Player.Dir {
-			case world.DirDown:
-				ty++
-			case world.DirUp:
-				ty--
-			case world.DirLeft:
-				tx--
-			case world.DirRight:
-				tx++
+		bx := float64(tx*world.TileSize) + world.TileSize*0.5
+		by := float64(ty*world.TileSize) + world.TileSize*0.5
+
+		// Only drop if there isn't already a bomb at this tile
+		alreadyBomb := false
+		for _, b := range s.bombs {
+			if b.TX == tx && b.TY == ty {
+				alreadyBomb = true
+				break
 			}
-			bx := float64(tx*world.TileSize) + world.TileSize*0.5
-			by := float64(ty*world.TileSize) + world.TileSize*0.5
-			for k := 0; k < 18; k++ {
-				s.particles = append(s.particles, NewDebrisParticle(bx, by, color.RGBA{100, 100, 100, 255}))
-			}
+		}
+
+		if !alreadyBomb {
+			w.Bombs--
+			s.bombs = append(s.bombs, &ActiveBomb{
+				X:     bx,
+				Y:     by,
+				TX:    tx,
+				TY:    ty,
+				Timer: 90, // 1.5 seconds
+			})
+			ctx.Audio().Play("swing.wav", 0.15)
 		}
 	}
 	if in.JustPressed(services.ActionTorch) {
@@ -268,6 +377,15 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 			}
 		case systems.TileDestroyedEvent:
 			ctx.Session().MarkDestroyedTile(e.SaveKey)
+			if _, tx, ty, ok := world.ParseMapTilePersistKey(e.SaveKey); ok {
+				bx := float64(tx*world.TileSize) + world.TileSize*0.5
+				by := float64(ty*world.TileSize) + world.TileSize*0.5
+				for k := 0; k < 12; k++ {
+					s.particles = append(s.particles, NewDebrisParticle(bx, by, color.RGBA{60, 60, 60, 255}))
+					s.particles = append(s.particles, NewEmberParticle(bx, by))
+				}
+				ctx.Audio().Play("hit.wav", 0.2)
+			}
 		case systems.PickupEvent:
 			ctx.Session().MarkPersistentPickupCollected(e.PersistentSaveKey)
 			ctx.Audio().Play("pickup.wav", 0.25)
@@ -322,6 +440,62 @@ func (s *PlayScene) Draw(ctx GameContext) {
 	if sess.World != nil {
 		r.DrawWorld(sess.World)
 		DrawParticles(r, s.particles)
+
+		// Draw active bombs
+		cam := r.Camera()
+		ox, oy := cam.X, cam.Y
+		for _, b := range s.bombs {
+			sx := float32(b.X - ox)
+			sy := float32(b.Y - oy)
+
+			var cycleLen int
+			if b.Timer > 60 {
+				cycleLen = 20
+			} else if b.Timer > 30 {
+				cycleLen = 10
+			} else if b.Timer > 10 {
+				cycleLen = 4
+			} else {
+				cycleLen = 2
+			}
+			isFlash := (b.Timer / (cycleLen / 2)) % 2 == 0
+
+			bodyColor := color.RGBA{20, 20, 20, 255}
+			if isFlash {
+				bodyColor = color.RGBA{240, 50, 50, 255}
+			}
+
+			// Draw bomb body (rounded 10px diameter shape using overlapping rects)
+			r.FillRect(sx-5, sy-4, 10, 8, bodyColor)
+			r.FillRect(sx-4, sy-5, 8, 10, bodyColor)
+
+			// Draw fuse cap (dark grey)
+			r.FillRect(sx-2, sy-7, 4, 2, color.RGBA{60, 60, 60, 255})
+
+			// Draw fuse line (brown/grey curve)
+			r.StrokeLine(sx, sy-7, sx+3, sy-9, 1, color.RGBA{130, 110, 90, 255})
+		}
+
+		// Draw active flames
+		for _, f := range sess.World.Flames {
+			sx := float32(f.X - ox)
+			sy := float32(f.Y - oy)
+			tick := sess.World.Tick
+			flicker := (tick / 4) % 3
+
+			// Outer red flame
+			r.FillRect(sx-6, sy-3+float32(flicker), 12, 8-float32(flicker), color.RGBA{230, 50, 20, 220})
+			r.FillRect(sx-4, sy-7+float32(flicker), 8, 12-float32(flicker), color.RGBA{230, 50, 20, 220})
+
+			// Inner orange flame
+			r.FillRect(sx-4, sy-1+float32(flicker), 8, 6-float32(flicker), color.RGBA{255, 120, 20, 240})
+			r.FillRect(sx-2, sy-5+float32(flicker), 4, 10-float32(flicker), color.RGBA{255, 120, 20, 240})
+
+			// Core yellow flame
+			r.FillRect(sx-2, sy+1, 4, 3, color.RGBA{255, 220, 40, 255})
+			r.FillRect(sx-1, sy-2+float32(flicker), 2, 6-float32(flicker), color.RGBA{255, 220, 40, 255})
+		}
+
 		DrawHUD(r, sess.World, sess)
 		if sess.ShowDebugOverlay {
 			DrawDebugOverlay(r, sess, s.ID(), DebugOverlayExtras{
