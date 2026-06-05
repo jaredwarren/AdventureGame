@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sprite atlas editor</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      line-height: 1.4;
+      color: #1a1a1a;
+      background: #f4f4f5;
+    }
+    body { margin: 0 auto; max-width: 960px; padding: 1rem 1.25rem 3rem; }
+    h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
+    p.muted { color: #555; font-size: 0.9rem; margin: 0 0 1rem; }
+    fieldset {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin: 0 0 1rem;
+      background: #fff;
+    }
+    legend { padding: 0 0.35rem; font-weight: 600; }
+    label { display: inline-block; min-width: 7rem; font-size: 0.85rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; margin: 0.35rem 0; }
+    input[type="number"] { width: 5rem; font-family: ui-monospace, monospace; }
+    input[type="text"] { width: min(100%, 22rem); font-family: ui-monospace, monospace; }
+    .frame-tabs { display: flex; gap: 0.35rem; flex-wrap: wrap; margin: 0.5rem 0 0.75rem; }
+    .frame-tabs button {
+      padding: 0.35rem 0.6rem;
+      border: 1px solid #bbb;
+      border-radius: 6px;
+      background: #fafafa;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .frame-tabs button.active { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #999;
+      border-radius: 6px;
+      cursor: crosshair;
+      background: #e8e8ea;
+    }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; align-items: center; }
+    button.primary {
+      padding: 0.45rem 0.85rem;
+      border: none;
+      border-radius: 6px;
+      background: #16a34a;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary {
+      padding: 0.45rem 0.85rem;
+      border: 1px solid #888;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+    }
+    button.linkish {
+      background: none;
+      border: none;
+      color: #2563eb;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.4rem;
+    }
+    #cursorInfo, #status { font-family: ui-monospace, monospace; font-size: 0.8rem; color: #333; margin: 0.35rem 0; }
+    #status.warn { color: #b45309; }
+    #status.err { color: #b91c1c; }
+    textarea#comment {
+      width: 100%;
+      min-height: 2.5rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      box-sizing: border-box;
+    }
+    #rootDynamicFields textarea { width: min(100%, 28rem); min-height: 3rem; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+    .nudge { display: inline-flex; gap: 2px; margin-left: 0.25rem; vertical-align: middle; }
+    .nudge button { padding: 0.1rem 0.35rem; font-size: 0.75rem; cursor: pointer; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Sprite atlas editor</h1>
+  <p class="muted">
+    Load an atlas <strong>.json</strong> and matching <strong>.png</strong>. Tabs, root fields, skip, and draw-size rows appear based on what the file contains.
+    You can add <strong>skip</strong> or <strong>dw/dh/ox/oy</strong> if you start from a minimal file. Hover the canvas for pixel coordinates; optional drag-rect for crops.
+  </p>
+
+  <fieldset>
+    <legend>Files</legend>
+    <div class="row">
+      <label for="pngFile">Sprite sheet (.png)</label>
+      <input id="pngFile" type="file" accept="image/png,image/*" />
+    </div>
+    <div class="row">
+      <label for="jsonFile">Atlas (.json)</label>
+      <input id="jsonFile" type="file" accept="application/json,.json" />
+    </div>
+    <div class="row">
+      <label for="spriteSheet">sprite_sheet</label>
+      <input id="spriteSheet" type="text" spellcheck="false" placeholder="set from JSON or PNG" />
+    </div>
+    <div class="row">
+      <button type="button" class="secondary" id="btnBlankAtlas">New blank atlas (1 frame)</button>
+      <span class="muted" style="min-width:0">or load JSON — frame count and fields follow the file.</span>
+    </div>
+  </fieldset>
+
+  <fieldset id="rootFieldset" class="hidden">
+    <legend>Root fields (from JSON, besides sprite_sheet / frames)</legend>
+    <div id="rootDynamicFields"></div>
+  </fieldset>
+
+  <fieldset id="frameFieldset">
+    <legend>Frames</legend>
+    <p id="noFramesHint" class="muted">Load a JSON file or create a blank atlas to edit frames.</p>
+    <div id="frameEditor" class="hidden">
+      <div class="row" style="margin-bottom:0.5rem">
+        <button type="button" class="secondary" id="btnAddFrame">Add frame</button>
+        <button type="button" class="secondary" id="btnRemoveFrame">Remove last frame</button>
+        <span class="muted" style="min-width:0"><span id="frameCountLabel"></span></span>
+      </div>
+      <div class="row" id="rowSchemaHint" class="muted hidden"></div>
+      <div class="frame-tabs" id="frameTabs"></div>
+      <p class="muted" style="margin:0 0 0.5rem">Active crop is <strong>solid</strong>; others dashed. Skipped frames have no crop.</p>
+      <div class="row hidden" id="rowSkip">
+        <label><input id="skip" type="checkbox" /> skip (no sprite for this frame)</label>
+      </div>
+      <div class="row" id="rowCrop">
+        <label for="sx">sx</label>
+        <input id="sx" type="number" step="1" />
+        <span class="nudge"><button type="button" data-nudge="sx" data-d="-1">−</button><button type="button" data-nudge="sx" data-d="1">+</button></span>
+      </div>
+      <div class="row" id="rowSy">
+        <label for="sy">sy</label>
+        <input id="sy" type="number" step="1" />
+        <span class="nudge"><button type="button" data-nudge="sy" data-d="-1">−</button><button type="button" data-nudge="sy" data-d="1">+</button></span>
+      </div>
+      <div class="row" id="rowSw">
+        <label for="sw">sw</label>
+        <input id="sw" type="number" step="1" min="1" />
+        <span class="nudge"><button type="button" data-nudge="sw" data-d="-1">−</button><button type="button" data-nudge="sw" data-d="1">+</button></span>
+      </div>
+      <div class="row" id="rowSh">
+        <label for="sh">sh</label>
+        <input id="sh" type="number" step="1" min="1" />
+        <span class="nudge"><button type="button" data-nudge="sh" data-d="-1">−</button><button type="button" data-nudge="sh" data-d="1">+</button></span>
+      </div>
+      <div id="pickupDrawBlock" class="hidden">
+        <div class="row">
+          <label for="dw">dw</label>
+          <input id="dw" type="number" step="1" min="1" />
+        </div>
+        <div class="row">
+          <label for="dh">dh</label>
+          <input id="dh" type="number" step="1" min="1" />
+        </div>
+        <div class="row">
+          <label for="ox">ox</label>
+          <input id="ox" type="number" step="1" />
+        </div>
+        <div class="row">
+          <label for="oy">oy</label>
+          <input id="oy" type="number" step="1" />
+        </div>
+      </div>
+      <div class="row" style="flex-direction:column;align-items:stretch">
+        <label for="comment">Frame comment (optional)</label>
+        <textarea id="comment" placeholder="Stored on the frame object if non-empty"></textarea>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Canvas</legend>
+    <div class="row">
+      <label><input id="enableDrag" type="checkbox" /> Drag on canvas to set sx,sy,sw,sh (ignored when skip is on)</label>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="secondary" id="btnRedraw">Redraw</button>
+      <button type="button" class="primary" id="btnDownload">Download JSON</button>
+      <button type="button" class="secondary" id="btnCopy">Copy JSON</button>
+    </div>
+    <div id="cursorInfo">Hover canvas — image pixel: —</div>
+    <div id="status"></div>
+    <canvas id="cv" width="400" height="240"></canvas>
+  </fieldset>
+
+  <script>
+(function () {
+  const COLORS = ['#dc2626', '#16a34a', '#ca8a04', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#c2410c', '#4f46e5', '#0d9488'];
+
+  const el = (id) => document.getElementById(id);
+  const canvas = el('cv');
+  const ctx = canvas.getContext('2d');
+
+  let img = null;
+  let scale = 1;
+  let activeFrame = 0;
+  let dragStart = null;
+  let dragPreview = null;
+  let lastJsonFileName = 'atlas.json';
+
+  /** @type {{ frameSkip: boolean, frameDraw: boolean }} */
+  let schema = { frameSkip: false, frameDraw: false };
+
+  let atlas = {
+    sprite_sheet: '',
+    rootRest: {},
+    frames: [],
+  };
+
+  function setStatus(msg, kind) {
+    const s = el('status');
+    s.textContent = msg || '';
+    s.className = kind || '';
+  }
+
+  function normalizeFrame(raw) {
+    const skip = raw.skip === true;
+    return {
+      skip,
+      comment: typeof raw.comment === 'string' ? raw.comment : '',
+      sx: +raw.sx || 0,
+      sy: +raw.sy || 0,
+      sw: skip ? 16 : Math.max(1, +raw.sw || 1),
+      sh: skip ? 16 : Math.max(1, +raw.sh || 1),
+      dw: Math.max(1, +raw.dw || 12),
+      dh: Math.max(1, +raw.dh || 12),
+      ox: +raw.ox || 0,
+      oy: +raw.oy || 0,
+    };
+  }
+
+  function blankFrame() {
+    return normalizeFrame({ sx: 0, sy: 0, sw: 16, sh: 16, dw: 12, dh: 12, ox: 0, oy: 0 });
+  }
+
+  function deriveSchemaFromRawFrames(rawFrames) {
+    return {
+      frameSkip: rawFrames.some((f) => Object.prototype.hasOwnProperty.call(f, 'skip')),
+      frameDraw: rawFrames.some((f) =>
+        ['dw', 'dh', 'ox', 'oy'].some((k) => Object.prototype.hasOwnProperty.call(f, k)),
+      ),
+    };
+  }
+
+  function syncRootFromDOM() {
+    const host = el('rootDynamicFields');
+    if (!host) return;
+    atlas.rootRest = {};
+    host.querySelectorAll('[data-root-key]').forEach((inp) => {
+      const k = inp.dataset.rootKey;
+      if (inp.type === 'checkbox') atlas.rootRest[k] = inp.checked;
+      else if (inp.type === 'number') {
+        const n = parseFloat(inp.value);
+        atlas.rootRest[k] = Number.isNaN(n) ? 0 : n;
+      } else if (inp.tagName === 'TEXTAREA') atlas.rootRest[k] = inp.value;
+      else atlas.rootRest[k] = inp.value;
+    });
+  }
+
+  function buildRootFields() {
+    const host = el('rootDynamicFields');
+    host.innerHTML = '';
+    const keys = Object.keys(atlas.rootRest).sort((a, b) => a.localeCompare(b));
+    keys.forEach((k) => {
+      const v = atlas.rootRest[k];
+      const row = document.createElement('div');
+      row.className = 'row';
+      const lab = document.createElement('label');
+      lab.textContent = k;
+      lab.htmlFor = 'root-' + k.replace(/\W/g, '_');
+      row.appendChild(lab);
+
+      let input;
+      const id = 'root-' + k.replace(/\W/g, '_');
+      if (k === 'comment' || (typeof v === 'string' && v.length > 80)) {
+        input = document.createElement('textarea');
+        input.id = id;
+        input.value = typeof v === 'string' ? v : JSON.stringify(v);
+      } else if (typeof v === 'number') {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.id = id;
+        input.step = 'any';
+        input.value = v;
+      } else if (typeof v === 'boolean') {
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = id;
+        input.checked = v;
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+        input.id = id;
+        input.value = typeof v === 'object' ? JSON.stringify(v) : String(v);
+      }
+      input.dataset.rootKey = k;
+      input.addEventListener('input', () => {
+        syncRootFromDOM();
+      });
+      input.addEventListener('change', () => {
+        syncRootFromDOM();
+      });
+      row.appendChild(input);
+      host.appendChild(row);
+    });
+    el('rootFieldset').classList.toggle('hidden', keys.length === 0);
+  }
+
+  function updateChrome() {
+    const hasFrames = atlas.frames.length > 0;
+    el('noFramesHint').classList.toggle('hidden', hasFrames);
+    el('frameEditor').classList.toggle('hidden', !hasFrames);
+
+    const showSkip = schema.frameSkip || atlas.frames.some((f) => f.skip);
+    el('rowSkip').classList.toggle('hidden', !showSkip);
+    el('pickupDrawBlock').classList.toggle('hidden', !schema.frameDraw);
+
+    const cropOff = showSkip && el('skip').checked;
+    ['sx', 'sy', 'sw', 'sh'].forEach((id) => {
+      el(id).disabled = !!cropOff;
+    });
+
+    const hint = el('rowSchemaHint');
+    if (!schema.frameSkip || !schema.frameDraw) {
+      hint.classList.remove('hidden');
+      hint.innerHTML = '';
+      if (!schema.frameSkip) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'linkish';
+        b.textContent = '+ Enable per-frame skip (tile-style)';
+        b.addEventListener('click', () => {
+          schema.frameSkip = true;
+          updateChrome();
+          buildTabs();
+          formFromFrame();
+        });
+        hint.appendChild(b);
+        hint.appendChild(document.createTextNode(' '));
+      }
+      if (!schema.frameDraw) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'linkish';
+        b.textContent = '+ Enable dw/dh/ox/oy (pickup-style)';
+        b.addEventListener('click', () => {
+          schema.frameDraw = true;
+          updateChrome();
+          formFromFrame();
+        });
+        hint.appendChild(b);
+      }
+    } else {
+      hint.classList.add('hidden');
+    }
+
+    el('frameCountLabel').textContent = hasFrames ? atlas.frames.length + ' frame(s)' : '';
+  }
+
+  function tabLabel(f, i) {
+    const c = f.comment ? f.comment.replace(/\s+/g, ' ').trim() : '';
+    const short = c.length > 36 ? c.slice(0, 34) + '…' : c;
+    return short ? i + ': ' + short : i + ': frame';
+  }
+
+  function buildTabs() {
+    const tabs = el('frameTabs');
+    tabs.innerHTML = '';
+    atlas.frames.forEach((f, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      const suffix = f.skip ? ' (skip)' : '';
+      b.textContent = tabLabel(f, i) + suffix;
+      if (i === activeFrame) b.classList.add('active');
+      b.addEventListener('click', () => {
+        commitFormToFrame();
+        activeFrame = i;
+        buildTabs();
+        formFromFrame();
+        updateChrome();
+        redraw();
+      });
+      tabs.appendChild(b);
+    });
+  }
+
+  function getFrame() {
+    return atlas.frames[activeFrame];
+  }
+
+  function formFromFrame() {
+    if (!atlas.frames.length) return;
+    const f = getFrame();
+    el('skip').checked = !!f.skip;
+    ['sx', 'sy', 'sw', 'sh', 'dw', 'dh', 'ox', 'oy'].forEach((k) => {
+      el(k).value = f[k];
+    });
+    el('comment').value = f.comment || '';
+    updateChrome();
+  }
+
+  function commitFormToFrame() {
+    if (!atlas.frames.length) return;
+    const f = getFrame();
+    const num = (id, min, fallback) => {
+      const v = parseInt(el(id).value, 10);
+      if (Number.isNaN(v)) return fallback;
+      if (min != null && v < min) return min;
+      return v;
+    };
+    const showSkip = schema.frameSkip || atlas.frames.some((x) => x.skip);
+    f.skip = showSkip ? el('skip').checked : false;
+    f.sx = num('sx', null, 0);
+    f.sy = num('sy', null, 0);
+    f.sw = num('sw', 1, 1);
+    f.sh = num('sh', 1, 1);
+    f.dw = num('dw', 1, 12);
+    f.dh = num('dh', 1, 12);
+    f.ox = parseFloat(el('ox').value) || 0;
+    f.oy = parseFloat(el('oy').value) || 0;
+    f.comment = el('comment').value.trim();
+  }
+
+  function syncAtlasMeta() {
+    atlas.sprite_sheet = el('spriteSheet').value.trim();
+  }
+
+  function layoutCanvas() {
+    if (!img) return;
+    const maxW = Math.min(900, canvas.parentElement.clientWidth - 8);
+    scale = maxW / img.width;
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+  }
+
+  function imagePointFromEvent(ev) {
+    const r = canvas.getBoundingClientRect();
+    const x = (ev.clientX - r.left) * (canvas.width / r.width);
+    const y = (ev.clientY - r.top) * (canvas.height / r.height);
+    const ix = Math.floor(x / scale);
+    const iy = Math.floor(y / scale);
+    return { ix, iy, x, y };
+  }
+
+  function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!img) {
+      ctx.fillStyle = '#d4d4d8';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#52525b';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Load a PNG to preview', 12, 28);
+      return;
+    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    atlas.frames.forEach((f, i) => {
+      if (f.skip) return;
+      const c = COLORS[i % COLORS.length];
+      const x = f.sx * scale;
+      const y = f.sy * scale;
+      const w = f.sw * scale;
+      const h = f.sh * scale;
+      ctx.save();
+      ctx.lineWidth = i === activeFrame ? 2 : 1;
+      ctx.setLineDash(i === activeFrame ? [] : [6, 4]);
+      ctx.strokeStyle = c;
+      ctx.strokeRect(x + 0.5, y + 0.5, Math.max(0, w - 1), Math.max(0, h - 1));
+      ctx.fillStyle = c;
+      ctx.globalAlpha = i === activeFrame ? 0.12 : 0.06;
+      ctx.fillRect(x, y, w, h);
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+      ctx.font = '12px sans-serif';
+      ctx.fillStyle = c;
+      ctx.fillText(String(i), x + 3, y + 14);
+      ctx.restore();
+    });
+
+    if (dragPreview) {
+      const { x0, y0, x1, y1 } = dragPreview;
+      const rx = Math.min(x0, x1) * scale;
+      const ry = Math.min(y0, y1) * scale;
+      const rw = Math.abs(x1 - x0) * scale;
+      const rh = Math.abs(y1 - y0) * scale;
+      ctx.save();
+      ctx.strokeStyle = '#0f172a';
+      ctx.setLineDash([4, 3]);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rx + 0.5, ry + 0.5, Math.max(1, rw - 1), Math.max(1, rh - 1));
+      ctx.restore();
+    }
+  }
+
+  function validateFrame(f, w, h) {
+    if (f.skip) return '';
+    if (f.sw < 1 || f.sh < 1) return 'sw and sh must be ≥ 1';
+    if (f.sx < 0 || f.sy < 0 || f.sx + f.sw > w || f.sy + f.sh > h) {
+      return 'crop outside image (' + w + '×' + h + ')';
+    }
+    return '';
+  }
+
+  function validateAll() {
+    if (!atlas.frames.length) return 'No frames — load JSON or add a frame';
+    if (!img) return 'Load a PNG to validate crops';
+    const w = img.width, h = img.height;
+    for (let i = 0; i < atlas.frames.length; i++) {
+      const err = validateFrame(atlas.frames[i], w, h);
+      if (err) return 'Frame ' + i + ': ' + err;
+    }
+    return '';
+  }
+
+  function exportFrame(f) {
+    if (f.skip) {
+      const o = { skip: true };
+      if (f.comment) o.comment = f.comment;
+      return o;
+    }
+    const o = {
+      sx: f.sx, sy: f.sy, sw: f.sw, sh: f.sh,
+    };
+    if (schema.frameDraw) {
+      o.dw = f.dw;
+      o.dh = f.dh;
+      o.ox = f.ox;
+      o.oy = f.oy;
+    }
+    if (f.comment) o.comment = f.comment;
+    return o;
+  }
+
+  function toJSONText() {
+    syncRootFromDOM();
+    syncAtlasMeta();
+    commitFormToFrame();
+    const out = Object.assign({}, atlas.rootRest, {
+      sprite_sheet: atlas.sprite_sheet,
+      frames: atlas.frames.map(exportFrame),
+    });
+    return JSON.stringify(out, null, 2) + '\n';
+  }
+
+  function guessDownloadName() {
+    return lastJsonFileName || 'atlas.json';
+  }
+
+  function loadAtlasFromData(data, sourceName) {
+    if (!data.frames || !Array.isArray(data.frames)) throw new Error('missing frames[]');
+    if (data.frames.length < 1) throw new Error('frames[] empty');
+
+    const { sprite_sheet, frames: rawFrames, ...rootRest } = data;
+    atlas.sprite_sheet = typeof sprite_sheet === 'string' ? sprite_sheet : el('spriteSheet').value;
+    el('spriteSheet').value = atlas.sprite_sheet || '';
+    atlas.rootRest = rootRest;
+    schema = deriveSchemaFromRawFrames(rawFrames);
+    atlas.frames = rawFrames.map(normalizeFrame);
+    activeFrame = 0;
+    if (sourceName) lastJsonFileName = sourceName;
+
+    buildRootFields();
+    updateChrome();
+    buildTabs();
+    formFromFrame();
+    layoutCanvas();
+    redraw();
+    const err = validateAll();
+    setStatus(err ? err : 'Loaded ' + atlas.frames.length + ' frame(s)', err ? 'warn' : '');
+  }
+
+  el('btnBlankAtlas').addEventListener('click', () => {
+    atlas.rootRest = {};
+    schema = { frameSkip: false, frameDraw: false };
+    atlas.frames = [blankFrame()];
+    atlas.sprite_sheet = el('spriteSheet').value.trim() || 'sheet.png';
+    activeFrame = 0;
+    lastJsonFileName = 'atlas.json';
+    buildRootFields();
+    updateChrome();
+    buildTabs();
+    formFromFrame();
+    layoutCanvas();
+    redraw();
+    setStatus('Blank atlas (1 frame). Load PNG and enable skip/draw if needed.', '');
+  });
+
+  el('btnAddFrame').addEventListener('click', () => {
+    if (!atlas.frames.length) return;
+    commitFormToFrame();
+    const last = atlas.frames[atlas.frames.length - 1];
+    atlas.frames.push(Object.assign({}, last, { comment: '' }));
+    activeFrame = atlas.frames.length - 1;
+    buildTabs();
+    formFromFrame();
+    redraw();
+    setStatus('', '');
+  });
+
+  el('btnRemoveFrame').addEventListener('click', () => {
+    if (atlas.frames.length <= 1) return;
+    commitFormToFrame();
+    atlas.frames.pop();
+    activeFrame = Math.min(activeFrame, atlas.frames.length - 1);
+    buildTabs();
+    formFromFrame();
+    redraw();
+    setStatus('', '');
+  });
+
+  el('pngFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const i = new Image();
+    i.onload = () => {
+      URL.revokeObjectURL(url);
+      img = i;
+      if (!el('spriteSheet').value.trim()) {
+        el('spriteSheet').value = file.name;
+        atlas.sprite_sheet = file.name;
+      }
+      layoutCanvas();
+      redraw();
+      const err = validateAll();
+      setStatus(err ? err : 'PNG loaded: ' + img.width + '×' + img.height, err ? 'warn' : '');
+    };
+    i.onerror = () => {
+      URL.revokeObjectURL(url);
+      setStatus('Could not decode image', 'err');
+    };
+    i.src = url;
+  });
+
+  el('jsonFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const data = JSON.parse(String(r.result));
+        loadAtlasFromData(data, file.name);
+      } catch (err) {
+        setStatus(String(err.message || err), 'err');
+      }
+    };
+    r.readAsText(file);
+  });
+
+  el('spriteSheet').addEventListener('input', () => {
+    syncAtlasMeta();
+  });
+
+  el('skip').addEventListener('change', () => {
+    if (el('skip').checked) schema.frameSkip = true;
+    commitFormToFrame();
+    buildTabs();
+    updateChrome();
+    setStatus(validateAll() || '', validateAll() ? 'warn' : '');
+    redraw();
+  });
+
+  ['sx', 'sy', 'sw', 'sh', 'dw', 'dh', 'ox', 'oy', 'comment'].forEach((id) => {
+    el(id).addEventListener('input', () => {
+      if (['dw', 'dh', 'ox', 'oy'].includes(id)) schema.frameDraw = true;
+      commitFormToFrame();
+      const err = validateAll();
+      setStatus(err || '', err ? 'warn' : '');
+      redraw();
+    });
+  });
+
+  document.querySelectorAll('[data-nudge]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (el('skip').checked) return;
+      const key = btn.getAttribute('data-nudge');
+      const d = parseInt(btn.getAttribute('data-d'), 10);
+      const input = el(key);
+      const cur = parseInt(input.value, 10) || 0;
+      let next = cur + d;
+      if (key === 'sw' || key === 'sh' || key === 'dw' || key === 'dh') next = Math.max(1, next);
+      input.value = next;
+      input.dispatchEvent(new Event('input'));
+    });
+  });
+
+  canvas.addEventListener('mousemove', (ev) => {
+    if (!img) {
+      el('cursorInfo').textContent = 'Hover canvas — image pixel: —';
+    } else {
+      const { ix, iy } = imagePointFromEvent(ev);
+      const inside = ix >= 0 && iy >= 0 && ix < img.width && iy < img.height;
+      el('cursorInfo').textContent = inside
+        ? 'Hover canvas — image pixel: ' + ix + ', ' + iy + '  (inside ' + img.width + '×' + img.height + ')'
+        : 'Hover canvas — image pixel: ' + ix + ', ' + iy + '  (outside image)';
+    }
+    if (dragStart && el('enableDrag').checked && img && !el('skip').checked) {
+      const { ix, iy } = imagePointFromEvent(ev);
+      dragPreview = { x0: dragStart.x, y0: dragStart.y, x1: ix, y1: iy };
+      redraw();
+    }
+  });
+
+  canvas.addEventListener('mousedown', (ev) => {
+    if (!el('enableDrag').checked || !img || el('skip').checked) return;
+    const { ix, iy } = imagePointFromEvent(ev);
+    dragStart = { x: ix, y: iy };
+    dragPreview = { x0: ix, y0: iy, x1: ix, y1: iy };
+    redraw();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!dragStart || !el('enableDrag').checked || el('skip').checked) return;
+    const p = dragPreview;
+    if (p) {
+      let sx = Math.min(p.x0, p.x1);
+      let sy = Math.min(p.y0, p.y1);
+      let sw = Math.abs(p.x1 - p.x0) + 1;
+      let sh = Math.abs(p.y1 - p.y0) + 1;
+      if (img) {
+        sx = Math.max(0, Math.min(sx, img.width - 1));
+        sy = Math.max(0, Math.min(sy, img.height - 1));
+        sw = Math.max(1, Math.min(sw, img.width - sx));
+        sh = Math.max(1, Math.min(sh, img.height - sy));
+      }
+      el('sx').value = sx;
+      el('sy').value = sy;
+      el('sw').value = sw;
+      el('sh').value = sh;
+      commitFormToFrame();
+      formFromFrame();
+      const err = validateAll();
+      setStatus(err || 'Updated crop from drag', err ? 'warn' : '');
+      redraw();
+    }
+    dragStart = null;
+    dragPreview = null;
+    redraw();
+  });
+
+  el('btnRedraw').addEventListener('click', () => {
+    layoutCanvas();
+    redraw();
+  });
+
+  el('btnDownload').addEventListener('click', () => {
+    commitFormToFrame();
+    const err = validateAll();
+    if (err) {
+      setStatus('Fix errors before download: ' + err, 'err');
+      return;
+    }
+    const blob = new Blob([toJSONText()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = guessDownloadName();
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setStatus('Download started', '');
+  });
+
+  el('btnCopy').addEventListener('click', async () => {
+    commitFormToFrame();
+    const err = validateAll();
+    if (err) {
+      setStatus('Fix errors before copy: ' + err, 'err');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(toJSONText());
+      setStatus('Copied to clipboard', '');
+    } catch {
+      setStatus('Clipboard failed (browser permission)', 'err');
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (img) {
+      layoutCanvas();
+      redraw();
+    }
+  });
+
+  updateChrome();
+  redraw();
+})();
+  </script>
+</body>
+</html>
