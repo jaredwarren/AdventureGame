@@ -96,6 +96,7 @@ type Enemy struct {
 	BurnTimer int
 	BurnCD    int
 
+	Dir    Dir // facing direction for rendering
 	IsBoss bool
 }
 

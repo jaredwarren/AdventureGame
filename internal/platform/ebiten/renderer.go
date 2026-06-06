@@ -15,6 +15,7 @@ package ebitenplat
 
 import (
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -235,18 +236,11 @@ func (r *Renderer) DrawWorld(w *world.World) {
 		if e.HP <= 0 {
 			continue
 		}
-		col := color.RGBA{0xc0, 0x30, 0x30, 0xff}
-		if e.IsBoss {
-			col = color.RGBA{0x70, 0x10, 0x10, 0xff}
-		}
-		vector.FillRect(screen,
-			float32(e.X-ox), float32(e.Y-oy), 14, 12, col, false)
+		r.drawCharacter(float32(e.X-ox), float32(e.Y-oy), 14, 12, e.Dir, false, e.IsBoss)
 	}
 
 	pr := w.PlayerRect()
-	vector.FillRect(screen,
-		float32(pr.X-ox), float32(pr.Y-oy), float32(pr.W), float32(pr.H),
-		color.RGBA{0x40, 0x70, 0xff, 0xff}, false)
+	r.drawCharacter(float32(pr.X-ox), float32(pr.Y-oy), float32(pr.W), float32(pr.H), w.Player.Dir, true, false)
 
 	if hb, ok := w.SwordHitbox(); ok {
 		vector.FillRect(screen,
@@ -254,21 +248,20 @@ func (r *Renderer) DrawWorld(w *world.World) {
 			color.RGBA{0xff, 0xff, 0xff, 0x80}, false)
 	}
 
-	for _, d := range w.Doors {
-		rd := d.Rect
-		vector.FillRect(screen,
-			float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H),
-			color.RGBA{0xe0, 0x90, 0x18, 0x55}, false)
-		vector.StrokeRect(screen,
-			float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H), 2,
-			color.RGBA{0xff, 0xc8, 0x40, 0xff}, false)
+	if w.IsEditor {
+		for _, d := range w.Doors {
+			rd := d.Rect
+			vector.FillRect(screen,
+				float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H),
+				color.RGBA{0xe0, 0x90, 0x18, 0x55}, false)
+			vector.StrokeRect(screen,
+				float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H), 2,
+				color.RGBA{0xff, 0xc8, 0x40, 0xff}, false)
+		}
 	}
 
 	for _, sh := range w.Shrines {
-		rs := sh.Rect
-		vector.StrokeRect(screen,
-			float32(rs.X-ox), float32(rs.Y-oy), float32(rs.W), float32(rs.H), 2,
-			color.RGBA{0x80, 0xe0, 0xff, 0xff}, false)
+		r.drawShrine(sh, ox, oy, w.Tick)
 	}
 
 	// Apply Night Overlay Shader
@@ -517,5 +510,106 @@ func (r *Renderer) drawVectorTile(dst *ebiten.Image, gid int, x, y, w, h float32
 	}
 	// Fallback for unregistered GIDs: flat SwatchColor rect.
 	vector.FillRect(dst, x, y, w, h, r.TileSwatchColor(gid), false)
+}
+
+func (r *Renderer) drawShrine(sh world.Shrine, ox, oy float64, tick int) {
+	sx := float32(sh.Rect.X - ox)
+	sy := float32(sh.Rect.Y - oy)
+	sw := float32(sh.Rect.W)
+	shh := float32(sh.Rect.H)
+
+	// Pedestal Base Steps (14x3 at bottom)
+	r.FillRect(sx+1, sy+shh-3, sw-2, 3, color.RGBA{0x55, 0x55, 0x5a, 0xff})
+	r.FillRect(sx+2, sy+shh-6, sw-4, 3, color.RGBA{0x70, 0x70, 0x75, 0xff})
+
+	// Pedestal Pillar Shaft (6x6 in middle)
+	r.FillRect(sx+5, sy+shh-11, sw-10, 5, color.RGBA{0x80, 0x80, 0x85, 0xff})
+	
+	// Pillar side shadow and highlight lines
+	r.FillRect(sx+5, sy+shh-11, 1, 5, color.RGBA{0xa0, 0xa0, 0xa5, 0xff}) // left highlight
+	r.FillRect(sx+sw-6, sy+shh-11, 1, 5, color.RGBA{0x55, 0x55, 0x5a, 0xff}) // right shadow
+
+	// Pedestal Top Altar slab (12x2)
+	r.FillRect(sx+2, sy+shh-13, sw-4, 2, color.RGBA{0x90, 0x90, 0x98, 0xff})
+	r.FillRect(sx+2, sy+shh-13, sw-4, 1, color.RGBA{0xc0, 0xc0, 0xc8, 0xff}) // Top lip highlight
+
+	// Floating Crystal Animation (sine wave hover)
+	offsetY := float32(math.Sin(float64(tick)*0.08) * 1.5)
+	cy := sy + 2 + offsetY // center of floating area
+
+	// Soft aura glow (behind crystal)
+	vector.FillCircle(r.screen, sx+8, cy+1, 5, color.RGBA{0x00, 0xe0, 0xff, 0x33}, true)
+	vector.FillCircle(r.screen, sx+8, cy+1, 3, color.RGBA{0x00, 0xe0, 0xff, 0x55}, true)
+
+	// Draw diamond crystal path
+	var path vector.Path
+	path.MoveTo(sx+8, cy-4)
+	path.LineTo(sx+11, cy+1)
+	path.LineTo(sx+8, cy+6)
+	path.LineTo(sx+5, cy+1)
+	path.Close()
+	drawPath(r.screen, &path, color.RGBA{0x00, 0xb0, 0xe0, 0xff}, true, 0)
+	drawPath(r.screen, &path, color.RGBA{0x00, 0xe0, 0xff, 0xff}, false, 1.0)
+
+	// Core reflection: small inner white diamond
+	var corePath vector.Path
+	corePath.MoveTo(sx+8, cy-2)
+	corePath.LineTo(sx+9.5, cy+1)
+	corePath.LineTo(sx+8, cy+4)
+	corePath.LineTo(sx+6.5, cy+1)
+	corePath.Close()
+	drawPath(r.screen, &corePath, color.RGBA{0xe0, 0xfb, 0xff, 0xff}, true, 0)
+
+	// Floating spark pixels (magic glow)
+	sparkOffset1 := float32(math.Sin(float64(tick)*0.05) * 4)
+	sparkOffset2 := float32(math.Cos(float64(tick)*0.06) * 4)
+	r.FillRect(sx+3+sparkOffset1, cy-3+sparkOffset2, 1, 1, color.RGBA{0x00, 0xff, 0xff, 0xbb})
+	r.FillRect(sx+sw-4-sparkOffset2, cy-1-sparkOffset1, 1, 1, color.RGBA{0x00, 0xff, 0xff, 0x99})
+}
+
+func (r *Renderer) drawCharacter(x, y, w, h float32, dir world.Dir, isPlayer bool, isBoss bool) {
+	var baseCol color.RGBA
+	var borderCol color.RGBA
+	var eyeCol color.RGBA = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	var pupilCol color.RGBA = color.RGBA{0x00, 0x00, 0x00, 0xff}
+
+	if isPlayer {
+		baseCol = color.RGBA{0x40, 0x70, 0xff, 0xff} // vibrant blue
+		borderCol = color.RGBA{0x1b, 0x2b, 0x5a, 0xff}
+	} else {
+		if isBoss {
+			baseCol = color.RGBA{0x70, 0x10, 0x10, 0xff} // dark red
+			borderCol = color.RGBA{0x2b, 0x05, 0x05, 0xff}
+		} else {
+			baseCol = color.RGBA{0xc0, 0x30, 0x30, 0xff} // red
+			borderCol = color.RGBA{0x4a, 0x12, 0x12, 0xff}
+		}
+	}
+
+	// Main body rect
+	r.FillRect(x, y, w, h, baseCol)
+	r.StrokeRect(x, y, w, h, 1, borderCol)
+
+	// Draw details based on direction
+	switch dir {
+	case world.DirDown:
+		// Draw two eyes facing forward/down
+		r.FillRect(x+2, y+4, 2, 2, eyeCol)
+		r.FillRect(x+w-4, y+4, 2, 2, eyeCol)
+		// Pupils
+		r.FillRect(x+2, y+5, 1, 1, pupilCol)
+		r.FillRect(x+w-4, y+5, 1, 1, pupilCol)
+	case world.DirUp:
+		// Draw hair / head cover (back of head) - a dark cap at the top
+		r.FillRect(x+1, y+1, w-2, 4, borderCol)
+	case world.DirLeft:
+		// Draw eye looking left
+		r.FillRect(x+2, y+4, 2, 2, eyeCol)
+		r.FillRect(x+2, y+5, 1, 1, pupilCol)
+	case world.DirRight:
+		// Draw eye looking right
+		r.FillRect(x+w-4, y+4, 2, 2, eyeCol)
+		r.FillRect(x+w-4, y+5, 1, 1, pupilCol)
+	}
 }
 

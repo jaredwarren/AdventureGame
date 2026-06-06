@@ -81,6 +81,21 @@ func stepEnemyTowards(w *world.World, e *world.Enemy, tx, ty float64, speed floa
 	if dlen > 0.5 {
 		dx = dx / dlen * speed
 		dy = dy / dlen * speed
+
+		// Update facing direction based on movement vector
+		if math.Abs(dx) > math.Abs(dy) {
+			if dx > 0 {
+				e.Dir = world.DirRight
+			} else {
+				e.Dir = world.DirLeft
+			}
+		} else {
+			if dy > 0 {
+				e.Dir = world.DirDown
+			} else {
+				e.Dir = world.DirUp
+			}
+		}
 	} else {
 		dx, dy = 0, 0
 	}
