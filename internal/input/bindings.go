@@ -71,7 +71,8 @@ func DefaultBindings() *Bindings {
 			ActionName(services.ActionDebugToggle):       {"F3"},
 			ActionName(services.ActionToggleReduceShake): {"R"},
 
-			ActionName(services.ActionEditorToggleMode): {"Tab"},
+			ActionName(services.ActionEditorToggleMode): {"E"},
+			ActionName(services.ActionEditorTileMenu):   {"Tab"},
 			ActionName(services.ActionEditorAdd):        {"A"},
 			ActionName(services.ActionEditorDelete):     {"Delete"},
 			ActionName(services.ActionEditorNextType):   {"BracketRight"},

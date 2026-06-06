@@ -56,6 +56,7 @@ const (
 	ActionEditorBrush7
 	ActionEditorBrush8
 	ActionEditorBrushClear
+	ActionEditorTileMenu
 )
 
 // Modifier is a held modifier key (Ctrl/Shift/Alt). Kept separate from Action

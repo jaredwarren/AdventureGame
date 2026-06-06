@@ -44,6 +44,10 @@ type EditorScene struct {
 	lastPaintTY int
 
 	savedFlash int
+
+	showTileMenu   bool
+	tileMenuSelect int
+	tileMenuScroll int
 }
 
 func newEditorScene() Scene { return &EditorScene{} }
@@ -76,6 +80,9 @@ func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
 	}
 	s.selObj = -1
 	s.brushGID = world.GIDGrass
+	s.showTileMenu = false
+	s.tileMenuSelect = 0
+	s.tileMenuScroll = 0
 	return nil
 }
 
@@ -190,18 +197,7 @@ func (s *EditorScene) worldXY(ctx GameContext) (float64, float64) {
 	return float64(mx), float64(my)
 }
 
-func (s *EditorScene) paletteBrushAt(mx, my int) (int, bool) {
-	const rowY = 218
-	if my < rowY || my >= 240 {
-		return 0, false
-	}
-	sq := 320 / len(editorBrushPalette)
-	idx := mx / sq
-	if idx < 0 || idx >= len(editorBrushPalette) {
-		return 0, false
-	}
-	return editorBrushPalette[idx], true
-}
+
 
 func (s *EditorScene) newMarkerObject(wx, wy float64) tiled.Object {
 	id := s.tm.NextObjectID
@@ -280,10 +276,95 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 	}
 
+	gids := world.RegisteredTileGIDs()
+
+	// Tile selection menu input handling
+	if s.showTileMenu {
+		if in.JustPressed(services.ActionEditorTileMenu) || in.JustPressed(services.ActionCancel) {
+			s.showTileMenu = false
+			return nil
+		}
+
+		if in.JustPressed(services.ActionMoveUp) {
+			s.tileMenuSelect--
+			if s.tileMenuSelect < 0 {
+				s.tileMenuSelect = len(gids) - 1
+			}
+			if s.tileMenuSelect < s.tileMenuScroll {
+				s.tileMenuScroll = s.tileMenuSelect
+			} else if s.tileMenuSelect >= s.tileMenuScroll+7 {
+				s.tileMenuScroll = s.tileMenuSelect - 6
+			}
+		}
+		if in.JustPressed(services.ActionMoveDown) {
+			s.tileMenuSelect++
+			if s.tileMenuSelect >= len(gids) {
+				s.tileMenuSelect = 0
+			}
+			if s.tileMenuSelect < s.tileMenuScroll {
+				s.tileMenuScroll = s.tileMenuSelect
+			} else if s.tileMenuSelect >= s.tileMenuScroll+7 {
+				s.tileMenuScroll = s.tileMenuSelect - 6
+			}
+		}
+
+		if in.JustPressed(services.ActionConfirm) {
+			s.brushGID = gids[s.tileMenuSelect]
+			s.showTileMenu = false
+			return nil
+		}
+
+		if in.MouseJustPressed(services.MouseLeft) {
+			mx, my := in.CursorPosition()
+			const panelX, panelY = 70, 30
+			const panelW, panelH = 180, 180
+			const headerH = 22
+			const itemH = 20
+
+			if mx >= panelX && mx < panelX+panelW && my >= panelY && my < panelY+panelH {
+				listY := panelY + headerH
+				if my >= listY && my < listY+140 {
+					clickedRow := (my - listY) / itemH
+					clickedIndex := s.tileMenuScroll + clickedRow
+					if clickedIndex >= 0 && clickedIndex < len(gids) {
+						s.tileMenuSelect = clickedIndex
+						s.brushGID = gids[s.tileMenuSelect]
+						s.showTileMenu = false
+					}
+				}
+			} else {
+				s.showTileMenu = false
+			}
+		}
+		return nil
+	}
+
+	if s.modeTile && in.JustPressed(services.ActionEditorTileMenu) {
+		s.showTileMenu = true
+		s.tileMenuSelect = 0
+		for idx, gid := range gids {
+			if gid == s.brushGID {
+				s.tileMenuSelect = idx
+				break
+			}
+		}
+		if s.tileMenuSelect < s.tileMenuScroll || s.tileMenuSelect >= s.tileMenuScroll+7 {
+			s.tileMenuScroll = s.tileMenuSelect
+			if s.tileMenuScroll > len(gids)-7 {
+				s.tileMenuScroll = len(gids) - 7
+			}
+			if s.tileMenuScroll < 0 {
+				s.tileMenuScroll = 0
+			}
+		}
+		return nil
+	}
+
 	if in.JustPressed(services.ActionEditorToggleMode) {
 		s.modeTile = !s.modeTile
 		s.selObj = -1
 		s.dragging = false
+		s.showTileMenu = false
 	}
 
 	for i, gid := range editorBrushPalette {
@@ -302,13 +383,9 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		s.markerTypeIndex = (s.markerTypeIndex + 1) % len(editorMarkerTypes)
 	}
 
-	mx, my := in.CursorPosition()
 	wx, wy := s.worldXY(ctx)
 
 	if s.modeTile {
-		if gid, ok := s.paletteBrushAt(mx, my); ok && in.MouseJustPressed(services.MouseLeft) {
-			s.brushGID = gid
-		}
 		if in.MouseJustPressed(services.MouseRight) {
 			ground := s.tm.TileLayer("ground")
 			if ground != nil && s.tm.Width > 0 {
@@ -400,21 +477,23 @@ func (s *EditorScene) Draw(ctx GameContext) {
 
 	if s.modeTile {
 		s.drawTileGrid(ctx)
-		s.drawTilePalette(ctx)
+		if s.showTileMenu {
+			s.drawTileMenu(ctx)
+		}
 	} else {
 		s.drawMarkerOverlay(ctx)
 	}
 
 	mode := "MARKER"
 	if s.modeTile {
-		mode = "TILE"
+		mode = fmt.Sprintf("TILE (brush: %s)", world.TileDefOf(s.brushGID).Name)
 	}
 	line := fmt.Sprintf("%s map=%s", mode, s.mapID)
 	if s.errMsg != "" {
 		line += " ERR:" + s.errMsg
 	}
 	r.DrawText(4, 4, line)
-	r.DrawText(4, 16, "Tab mode  [ ] type  A add  Del  Ctrl+S save  Esc title")
+	r.DrawText(4, 16, "E mode  Tab menu  [ ] type  A add  Del  Ctrl+S save  Esc title")
 	if !s.modeTile {
 		r.DrawText(4, 28, fmt.Sprintf("new: %s", editorMarkerTypes[s.markerTypeIndex]))
 	}
@@ -440,22 +519,73 @@ func (s *EditorScene) drawTileGrid(ctx GameContext) {
 	}
 }
 
-func (s *EditorScene) drawTilePalette(ctx GameContext) {
+func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	r := ctx.Renderer()
-	n := len(editorBrushPalette)
-	sq := 320 / n
-	const rowY = 218
-	const rowH = 22
-	pad := float32(1)
-	innerW := float32(sq) - pad*2
-	innerH := float32(rowH) - pad*2
-	for i, gid := range editorBrushPalette {
-		x := float32(i * sq)
-		if gid == s.brushGID {
-			r.StrokeRect(x, rowY, float32(sq), rowH, 2, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	gids := world.RegisteredTileGIDs()
+
+	const panelX, panelY float32 = 70, 30
+	const panelW, panelH float32 = 180, 180
+	const headerH float32 = 22
+	const footerH float32 = 18
+	const rowH float32 = 20
+
+	// Draw panel background (dark semi-transparent window)
+	r.FillRect(panelX, panelY, panelW, panelH, color.RGBA{0x08, 0x0a, 0x14, 0xf0})
+	r.StrokeRect(panelX, panelY, panelW, panelH, 1, color.RGBA{0x80, 0x80, 0xa0, 0xff})
+
+	// Header Text
+	r.DrawText(int(panelX)+50, int(panelY)+6, "SELECT TILE")
+
+	// Divider below header
+	r.StrokeLine(panelX+4, panelY+headerH-2, panelX+panelW-4, panelY+headerH-2, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
+
+	// Scrollable items
+	visibleCount := 7
+	for i := 0; i < visibleCount; i++ {
+		idx := s.tileMenuScroll + i
+		if idx >= len(gids) {
+			break
 		}
-		r.DrawTileScreen(gid, x+pad, float32(rowY)+pad, innerW, innerH)
+		gid := gids[idx]
+		def := world.TileDefOf(gid)
+
+		rowY := panelY + headerH + float32(i)*rowH
+
+		// Highlight currently selected item in menu
+		if idx == s.tileMenuSelect {
+			r.FillRect(panelX+4, rowY+1, panelW-8, rowH-2, color.RGBA{0x2b, 0x4a, 0x8a, 0x80})
+			r.StrokeRect(panelX+4, rowY+1, panelW-8, rowH-2, 1, color.RGBA{0x50, 0x80, 0xff, 0xff})
+		}
+
+		// Draw tile image fallback/sprite
+		r.DrawTileScreen(gid, panelX+8, rowY+2, 16, 16)
+
+		// Draw tile name text
+		r.DrawText(int(panelX)+30, int(rowY)+4, def.Name)
 	}
+
+	// Draw scrollbar
+	if len(gids) > visibleCount {
+		trackX := panelX + panelW - 8
+		trackY := panelY + headerH + 2
+		trackH := float32(140) - 4
+		trackW := float32(4)
+
+		// Track
+		r.FillRect(trackX, trackY, trackW, trackH, color.RGBA{0x20, 0x20, 0x30, 0xff})
+
+		// Thumb
+		thumbH := trackH * float32(visibleCount) / float32(len(gids))
+		thumbY := trackY + trackH*float32(s.tileMenuScroll)/float32(len(gids))
+
+		r.FillRect(trackX, thumbY, trackW, thumbH, color.RGBA{0x80, 0x80, 0xa0, 0xff})
+	}
+
+	// Divider above footer
+	r.StrokeLine(panelX+4, panelY+panelH-footerH, panelX+panelW-4, panelY+panelH-footerH, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
+
+	// Footer hints
+	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn scroll  Enter confirm")
 }
 
 func (s *EditorScene) drawMarkerOverlay(ctx GameContext) {

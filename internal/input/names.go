@@ -57,6 +57,7 @@ var actionNames = map[services.Action]string{
 	services.ActionEditorBrush7:     "EditorBrush7",
 	services.ActionEditorBrush8:     "EditorBrush8",
 	services.ActionEditorBrushClear: "EditorBrushClear",
+	services.ActionEditorTileMenu:   "EditorTileMenu",
 }
 
 // actionByName is the reverse map (serialized name → enum). Initialized
