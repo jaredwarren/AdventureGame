@@ -22,6 +22,8 @@
 //     append to the appropriate slice.
 package world
 
+import "github.com/jaredwarren/game-test/internal/world/enemy"
+
 // EntityID is a stable identifier for one entity in one World. See
 // entity.go for allocation semantics.
 type EntityID uint32
@@ -29,16 +31,9 @@ type EntityID uint32
 // NoEntity is the zero value of EntityID; never assigned to a live entity.
 const NoEntity EntityID = 0
 
-// Enemy hitbox / behavior defaults. Previously these were magic literals
-// scattered across world.UpdateSim and systems.EnemyAISystem.
 const (
-	defaultEnemyW          = 14.0
-	defaultEnemyH          = 12.0
-	defaultEnemyHP         = 3
-	defaultEnemySeekSpeed  = 0.55
-	defaultEnemyContactDmg = 2
-	// DefaultEnemyAggroRadiusPx is the default aggro range for NewEnemy (~8 tiles at TileSize 16).
-	DefaultEnemyAggroRadiusPx = 128.0
+	defaultEnemyW = enemy.HitboxW
+	defaultEnemyH = enemy.HitboxH
 )
 
 // Pickup hitbox default. Ground pickups are 12x12 regardless of kind.

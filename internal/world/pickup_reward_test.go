@@ -24,29 +24,6 @@ func TestApplyPickupReward_CoinAndHeart(t *testing.T) {
 	}
 }
 
-func TestRegisterPickup_CustomKind(t *testing.T) {
-	custom := &PickupKind{
-		id:          200,
-		tiledName:   "custom_test",
-		toast:       "Found Custom!",
-		editorLabel: "Custom",
-		apply: func(w *World) {
-			w.Currency += 42
-		},
-	}
-	RegisterPickup(custom)
-	t.Cleanup(func() { unregisterPickup(custom) })
-
-	w := &World{}
-	w.ApplyPickupReward(custom)
-	if w.Currency != 42 {
-		t.Errorf("Currency = %d, want 42", w.Currency)
-	}
-	if PickupKindFromTiled("custom_test") != custom {
-		t.Error("expected TiledName lookup for custom pickup")
-	}
-}
-
 func TestApplyPickupReward_NilKindNoOp(t *testing.T) {
 	t.Parallel()
 	w := &World{Currency: 5}

@@ -1,4 +1,4 @@
-package world
+package tile
 
 import (
 	"fmt"
@@ -6,15 +6,13 @@ import (
 	"strings"
 )
 
-// MapTilePersistKey encodes a map tile coordinate for save/session (cracked
-// walls opened by bomb, locks opened with a key, etc.).
-// Format: map_id:tile_x:tile_y (same convention as GIDAt).
+// MapTilePersistKey encodes a map tile coordinate for save/session persistence.
+// Format: map_id:tile_x:tile_y.
 func MapTilePersistKey(mapID string, tx, ty int) string {
 	return fmt.Sprintf("%s:%d:%d", mapID, tx, ty)
 }
 
-// ParseMapTilePersistKey decodes MapTilePersistKey. Map ids containing ":"
-// are supported by treating the last two segments as tx, ty.
+// ParseMapTilePersistKey decodes MapTilePersistKey.
 func ParseMapTilePersistKey(k string) (mapID string, tx, ty int, ok bool) {
 	k = strings.TrimSpace(k)
 	parts := strings.Split(k, ":")

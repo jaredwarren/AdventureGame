@@ -16,7 +16,6 @@ package scenes
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/jaredwarren/game-test/internal/progression"
@@ -72,32 +71,16 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 
 	if opts.ReplacePersistedProgress {
 		if opts.Save != nil {
-			sess.CollectedPersistentPickups = stringSetFromSlice(opts.Save.CollectedPickupKeys)
-			sess.DestroyedTiles = stringSetFromSlice(opts.Save.DestroyedTileKeys)
-			sess.OpenedLockTiles = stringSetFromSlice(opts.Save.OpenedLockTileKeys)
-			sess.ActivatedShrines = stringSetFromSlice(opts.Save.ActivatedShrines)
+			sess.Maps = progressMapsFromSave(opts.Save)
 		} else {
-			sess.CollectedPersistentPickups = nil
-			sess.DestroyedTiles = nil
-			sess.OpenedLockTiles = nil
-			sess.ActivatedShrines = nil
+			sess.Maps = nil
 		}
 	} else if opts.Save != nil {
-		if len(opts.Save.CollectedPickupKeys) > 0 {
-			mergePickupKeys(sess, opts.Save.CollectedPickupKeys)
-		}
-		if len(opts.Save.DestroyedTileKeys) > 0 {
-			mergeDestroyedTileKeys(sess, opts.Save.DestroyedTileKeys)
-		}
-		if len(opts.Save.OpenedLockTileKeys) > 0 {
-			mergeOpenedLockKeys(sess, opts.Save.OpenedLockTileKeys)
-		}
-		if len(opts.Save.ActivatedShrines) > 0 {
-			mergeActivatedShrines(sess, opts.Save.ActivatedShrines)
-		}
+		sess.Maps = mergeSaveIntoMaps(sess.Maps, opts.Save)
 	}
 
-	w, err := world.BuildFromTiled(tm, mapID, st, sess.persistentPickupKeySet())
+	progress := sess.ProgressFor(mapID)
+	w, err := world.BuildFromTiled(tm, mapID, st, progress.collectedPickupSet())
 	if err != nil {
 		return fmt.Errorf("worldloader: build %q: %w", mapID, err)
 	}
@@ -148,9 +131,7 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 	w.DoorCooldown = 60
 
 	sess.World = w
-	world.ApplyDestroyedTiles(w, sess.DestroyedTiles)
-	world.ApplyPersistedOpenedLocks(w, sess.OpenedLockTiles)
-	world.ApplyPersistedShrines(w, sess.ActivatedShrines)
+	ApplyMapProgress(w, progress)
 
 	if opts.Save != nil && opts.Save.MapID == mapID {
 		ApplySave(sess, opts.Save, opts.Cam)
@@ -434,45 +415,8 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 		TorchBurnInterval:          w.Player.TorchBurnInterval,
 		TorchBurnDamage:            w.Player.TorchBurnDamage,
 	}
-	if sess != nil && len(sess.CollectedPersistentPickups) > 0 {
-		keys := make([]string, 0, len(sess.CollectedPersistentPickups))
-		for k := range sess.CollectedPersistentPickups {
-			if strings.TrimSpace(k) != "" {
-				keys = append(keys, k)
-			}
-		}
-		sort.Strings(keys)
-		gs.CollectedPickupKeys = keys
-	}
-	if sess != nil && len(sess.DestroyedTiles) > 0 {
-		keys := make([]string, 0, len(sess.DestroyedTiles))
-		for k := range sess.DestroyedTiles {
-			if strings.TrimSpace(k) != "" {
-				keys = append(keys, k)
-			}
-		}
-		sort.Strings(keys)
-		gs.DestroyedTileKeys = keys
-	}
-	if sess != nil && len(sess.OpenedLockTiles) > 0 {
-		keys := make([]string, 0, len(sess.OpenedLockTiles))
-		for k := range sess.OpenedLockTiles {
-			if strings.TrimSpace(k) != "" {
-				keys = append(keys, k)
-			}
-		}
-		sort.Strings(keys)
-		gs.OpenedLockTileKeys = keys
-	}
-	if sess != nil && len(sess.ActivatedShrines) > 0 {
-		keys := make([]string, 0, len(sess.ActivatedShrines))
-		for k := range sess.ActivatedShrines {
-			if strings.TrimSpace(k) != "" {
-				keys = append(keys, k)
-			}
-		}
-		sort.Strings(keys)
-		gs.ActivatedShrines = keys
+	if sess != nil {
+		flattenMapsToSave(gs, sess.Maps)
 	}
 	return gs
 }
@@ -484,84 +428,6 @@ func LoadGameFromSave(assets services.AssetCache, sess *Session, cam *render.Cam
 		return fmt.Errorf("worldloader: nil save")
 	}
 	return EnterMap(assets, sess, s.MapID, MapLoadOpts{Save: s, Cam: cam, ReplacePersistedProgress: true})
-}
-
-func stringSetFromSlice(keys []string) map[string]struct{} {
-	out := make(map[string]struct{})
-	for _, k := range keys {
-		k = strings.TrimSpace(k)
-		if k != "" {
-			out[k] = struct{}{}
-		}
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
-}
-
-func mergePickupKeys(sess *Session, keys []string) {
-	if sess == nil {
-		return
-	}
-	for _, k := range keys {
-		k = strings.TrimSpace(k)
-		if k == "" {
-			continue
-		}
-		if sess.CollectedPersistentPickups == nil {
-			sess.CollectedPersistentPickups = make(map[string]struct{})
-		}
-		sess.CollectedPersistentPickups[k] = struct{}{}
-	}
-}
-
-func mergeDestroyedTileKeys(sess *Session, keys []string) {
-	if sess == nil {
-		return
-	}
-	for _, k := range keys {
-		k = strings.TrimSpace(k)
-		if k == "" {
-			continue
-		}
-		if sess.DestroyedTiles == nil {
-			sess.DestroyedTiles = make(map[string]struct{})
-		}
-		sess.DestroyedTiles[k] = struct{}{}
-	}
-}
-
-func mergeOpenedLockKeys(sess *Session, keys []string) {
-	if sess == nil {
-		return
-	}
-	for _, k := range keys {
-		k = strings.TrimSpace(k)
-		if k == "" {
-			continue
-		}
-		if sess.OpenedLockTiles == nil {
-			sess.OpenedLockTiles = make(map[string]struct{})
-		}
-		sess.OpenedLockTiles[k] = struct{}{}
-	}
-}
-
-func mergeActivatedShrines(sess *Session, keys []string) {
-	if sess == nil {
-		return
-	}
-	for _, k := range keys {
-		k = strings.TrimSpace(k)
-		if k == "" {
-			continue
-		}
-		if sess.ActivatedShrines == nil {
-			sess.ActivatedShrines = make(map[string]struct{})
-		}
-		sess.ActivatedShrines[k] = struct{}{}
-	}
 }
 
 // BugDigest packs map, health, weekly epoch, and save path for pasting

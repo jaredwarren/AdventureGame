@@ -118,7 +118,7 @@ func (s *PlayScene) Update(ctx GameContext) error {
 		if b.Timer <= 0 {
 			// Explode!
 			if broke, saveKey := w.BreakTileAt(b.TX, b.TY, world.DamageBomb); broke {
-				ctx.Session().MarkDestroyedTile(saveKey)
+				ctx.Session().MarkDestroyedTile(w.MapID, saveKey)
 			}
 
 			// Damage nearby enemies within 32 pixels
@@ -227,7 +227,7 @@ func (s *PlayScene) Update(ctx GameContext) error {
 		sh := &w.Shrines[i]
 		if !sh.Active && pr.Overlaps(sh.Rect) {
 			sh.Active = true
-			sess.MarkShrineActivated(world.PersistentShrineSaveKey(w.MapID, sh.TiledID))
+			sess.MarkShrineActivated(w.MapID, world.PersistentShrineSaveKey(w.MapID, sh.TiledID))
 			ctx.Audio().Play("pickup.wav", 0.25)
 			scx, scy := sh.Rect.X+sh.Rect.W*0.5, sh.Rect.Y+sh.Rect.H*0.5
 			for k := 0; k < 12; k++ {
@@ -268,7 +268,7 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 				w.ApplyPickupReward(p.Kind)
 
 				// Persist save state
-				ctx.Session().MarkPersistentPickupCollected(p.PersistentSaveKey)
+				ctx.Session().MarkPersistentPickupCollected(w.MapID, p.PersistentSaveKey)
 
 				// Play pickup audio
 				ctx.Audio().Play("pickup.wav", 0.25)
@@ -493,7 +493,7 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				}
 			}
 		case systems.TileDestroyedEvent:
-			ctx.Session().MarkDestroyedTile(e.SaveKey)
+			ctx.Session().MarkDestroyedTile(w.MapID, e.SaveKey)
 			if _, tx, ty, ok := world.ParseMapTilePersistKey(e.SaveKey); ok {
 				bx := float64(tx*world.TileSize) + world.TileSize*0.5
 				by := float64(ty*world.TileSize) + world.TileSize*0.5
@@ -504,7 +504,7 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				ctx.Audio().Play("hit.wav", 0.2)
 			}
 		case systems.PickupEvent:
-			ctx.Session().MarkPersistentPickupCollected(e.PersistentSaveKey)
+			ctx.Session().MarkPersistentPickupCollected(w.MapID, e.PersistentSaveKey)
 			ctx.Audio().Play("pickup.wav", 0.25)
 			var px, py float64
 			for _, p := range w.Pickups {
@@ -527,7 +527,7 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				s.particles = append(s.particles, NewDebrisParticle(pxx, pyy, color.RGBA{220, 30, 30, 255}))
 			}
 		case systems.LockOpenEvent:
-			ctx.Session().MarkOpenedLockTile(world.MapTilePersistKey(w.MapID, e.Tile[0], e.Tile[1]))
+			ctx.Session().MarkOpenedLockTile(w.MapID, world.MapTilePersistKey(w.MapID, e.Tile[0], e.Tile[1]))
 			// Coalesce multi-tile lock openings into a single SFX/shake.
 			lockOpened = true
 			lx := float64(e.Tile[0]*world.TileSize) + world.TileSize*0.5

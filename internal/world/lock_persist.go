@@ -1,5 +1,7 @@
 package world
 
+import "github.com/jaredwarren/game-test/internal/world/tile"
+
 // ApplyPersistedOpenedLocks converts GIDLock tiles back to walkable floor for
 // any saved keys that match this world's MapID (after BuildFromTiled reload).
 func ApplyPersistedOpenedLocks(w *World, keys map[string]struct{}) {
@@ -7,7 +9,7 @@ func ApplyPersistedOpenedLocks(w *World, keys map[string]struct{}) {
 		return
 	}
 	for k := range keys {
-		mid, tx, ty, ok := ParseMapTilePersistKey(k)
+		mid, tx, ty, ok := tile.ParseMapTilePersistKey(k)
 		if !ok || mid != w.MapID {
 			continue
 		}
@@ -15,8 +17,8 @@ func ApplyPersistedOpenedLocks(w *World, keys map[string]struct{}) {
 			continue
 		}
 		idx := w.tileIndex(tx, ty)
-		if w.Tiles[idx] == GIDLock {
-			w.Tiles[idx] = GIDGrass
+		if w.Tiles[idx] == tile.GIDLock {
+			w.Tiles[idx] = tile.GIDGrass
 		}
 	}
 }

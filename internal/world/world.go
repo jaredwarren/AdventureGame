@@ -1,6 +1,15 @@
-// Package world is the gameplay simulation layer: tile collision, player movement, sword hits,
-// pickups, and simple enemy AI. It deliberately knows nothing about Ebiten—only numbers and structs—
-// so you can unit-test logic without graphics.
+// Package world is the gameplay simulation layer: player movement, sword hits,
+// pickups, and simple enemy AI. It deliberately knows nothing about Ebiten—only
+// numbers and structs—so you can unit-test logic without graphics.
+//
+// Domain-specific tables live in subpackages (import them directly when adding
+// new content):
+//   - world/tile   — GIDs, collision defs, tile persist keys
+//   - world/pickup — collectible kinds and rewards
+//   - world/enemy  — per-enemy Tiled tuning
+//
+// The root world package re-exports common symbols via aliases.go so existing
+// callers can keep using world.GIDGrass, world.PickupCoin, etc.
 //
 // Coordinate conventions:
 //   - Tile grid: origin top-left, tile size [TileSize] pixels (must match Tiled export).
@@ -19,10 +28,8 @@ import (
 
 	"github.com/jaredwarren/game-test/internal/geom"
 	"github.com/jaredwarren/game-test/internal/progression"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
-
-// TileSize must match maps authored in Tiled (see BuildFromTiled guard).
-const TileSize = 16
 
 // ItemSlot identifies which item is currently active in the player's secondary slot.
 type ItemSlot int
@@ -224,7 +231,7 @@ type World struct {
 
 func (w *World) gidAt(tx, ty int) int {
 	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
-		return GIDWall
+		return tile.GIDWall
 	}
 	return w.Tiles[ty*w.MapW+tx]
 }
@@ -241,7 +248,7 @@ func (w *World) tileIndex(tx, ty int) int {
 func (w *World) solidTile(tx, ty int) bool {
 	g := w.gidAt(tx, ty)
 	idx := w.tileIndex(tx, ty)
-	return SolidAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
+	return tile.SolidAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
 }
 
 // RectHitTiles returns true if rect overlaps any solid tile (sample corners + center).
@@ -254,8 +261,8 @@ func (w *World) RectHitsSolid(r geom.Rect) bool {
 		{r.X + r.W*0.5, r.Y + r.H*0.5},
 	}
 	for _, p := range points {
-		tx := int(p[0] / TileSize)
-		ty := int(p[1] / TileSize)
+		tx := int(p[0] / tile.Size)
+		ty := int(p[1] / tile.Size)
 		if w.solidTile(tx, ty) {
 			return true
 		}
@@ -523,10 +530,10 @@ func (w *World) ConvertLockToFloor(tx, ty int) bool {
 		return false
 	}
 	idx := w.tileIndex(tx, ty)
-	if w.Tiles[idx] != GIDLock {
+	if w.Tiles[idx] != tile.GIDLock {
 		return false
 	}
-	w.Tiles[idx] = GIDGrass
+	w.Tiles[idx] = tile.GIDGrass
 	return true
 }
 
@@ -577,8 +584,8 @@ func (w *World) TryDamageFaceTile(kind DamageKind) (ok bool, saveKey string) {
 	pc := w.PlayerRect()
 	cx := pc.X + pc.W*0.5
 	cy := pc.Y + pc.H*0.5
-	tx := int(cx / TileSize)
-	ty := int(cy / TileSize)
+	tx := int(cx / tile.Size)
+	ty := int(cy / tile.Size)
 	switch w.Player.Dir {
 	case DirDown:
 		ty++
@@ -594,7 +601,7 @@ func (w *World) TryDamageFaceTile(kind DamageKind) (ok bool, saveKey string) {
 		return false, ""
 	}
 	g := w.gidAt(tx, ty)
-	def := TileDefOf(g)
+	def := tile.DefOf(g)
 	if !def.AcceptsDamage(kind) {
 		return false, ""
 	}
@@ -602,13 +609,13 @@ func (w *World) TryDamageFaceTile(kind DamageKind) (ok bool, saveKey string) {
 		w.DestroyedTiles = make(map[int]bool)
 	}
 	w.DestroyedTiles[idx] = true
-	if kind == DamageBomb {
+	if kind == tile.DamageBomb {
 		w.Bombs--
 		if w.Bombs < 0 {
 			w.Bombs = 0
 		}
 	}
-	return true, MapTilePersistKey(w.MapID, tx, ty)
+	return true, tile.MapTilePersistKey(w.MapID, tx, ty)
 }
 
 // ShrineHeal is the “poor” shrine interaction (no coins). Rich interaction is priced in the shop.
@@ -673,7 +680,7 @@ func (w *World) BreakTileAt(tx, ty int, kind DamageKind) (ok bool, saveKey strin
 		return false, ""
 	}
 	g := w.gidAt(tx, ty)
-	def := TileDefOf(g)
+	def := tile.DefOf(g)
 	if !def.AcceptsDamage(kind) {
 		return false, ""
 	}
@@ -681,7 +688,7 @@ func (w *World) BreakTileAt(tx, ty int, kind DamageKind) (ok bool, saveKey strin
 		w.DestroyedTiles = make(map[int]bool)
 	}
 	w.DestroyedTiles[idx] = true
-	return true, MapTilePersistKey(w.MapID, tx, ty)
+	return true, tile.MapTilePersistKey(w.MapID, tx, ty)
 }
 
 type ActiveFlame struct {
@@ -700,7 +707,7 @@ func (w *World) TryIgniteTree(tx, ty int) bool {
 		return false
 	}
 	g := w.gidAt(tx, ty)
-	if g != GIDTree {
+	if g != tile.GIDTree {
 		return false
 	}
 	// Check if already burning
@@ -709,8 +716,8 @@ func (w *World) TryIgniteTree(tx, ty int) bool {
 			return false
 		}
 	}
-	bx := float64(tx*TileSize) + TileSize*0.5
-	by := float64(ty*TileSize) + TileSize*0.5
+	bx := float64(tx*tile.Size) + tile.Size*0.5
+	by := float64(ty*tile.Size) + tile.Size*0.5
 	w.Flames = append(w.Flames, ActiveFlame{
 		X:     bx,
 		Y:     by,

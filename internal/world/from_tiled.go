@@ -2,7 +2,7 @@
 //
 // Pickup objects may set property persistent=true (bool) so the pickup is
 // tracked by PersistentPickupSaveKey(mapID, object id) across saves; see
-// Session.CollectedPersistentPickups / save.GameSave.CollectedPickupKeys.
+// scenes.MapProgress per mapID / save.GameSave.CollectedPickupKeys.
 //
 // Spawn markers and doors (default) use feet-on-ground Y: see PlayerTopLeftFromDoorSpawn and
 // optional door property spawn_anchor ("feet" default, "topleft" for hitbox top-left).

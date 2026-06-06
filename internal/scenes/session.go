@@ -14,11 +14,7 @@
 //   - Services (Input/Audio/Assets/Renderer flow via Context, not Session).
 package scenes
 
-import (
-	"strings"
-
-	"github.com/jaredwarren/game-test/internal/world"
-)
+import "github.com/jaredwarren/game-test/internal/world"
 
 // Session is the run-scoped mutable state shared across scenes.
 type Session struct {
@@ -26,6 +22,11 @@ type Session struct {
 	// start; loader helpers (OpenWorld / EnterMap / LoadGameFromSave)
 	// replace it atomically from within a scene Update.
 	World *world.World
+
+	// Maps records per-map durable progress (pickups, broken tiles, locks,
+	// shrines). Keys are map IDs; values persist across revisits and are
+	// flattened into save.GameSave on BuildSave.
+	Maps map[string]*MapProgress
 
 	// WeeklySeed refreshes from time.Now at the top of every Update; feeds
 	// any future weekly-rotation content (leaderboard epochs, event maps).
@@ -40,97 +41,50 @@ type Session struct {
 	// ShowDebugOverlay toggles the F3 playtest HUD. Lives on Session (not
 	// any one scene) because every scene respects it.
 	ShowDebugOverlay bool
-
-	// CollectedPersistentPickups records Tiled persistent pickup keys already
-	// collected this run; mirrored into save.GameSave.CollectedPickupKeys.
-	CollectedPersistentPickups map[string]struct{}
-
-	// DestroyedTiles records tiles destroyed by any damage source
-	// (bomb, fire, ...); keys from world.MapTilePersistKey, mirrored
-	// into save.GameSave.DestroyedTileKeys.
-	DestroyedTiles map[string]struct{}
-
-	// OpenedLockTiles records GIDLock tiles opened with a key; keys from
-	// world.MapTilePersistKey, mirrored into save.OpenedLockTileKeys.
-	OpenedLockTiles map[string]struct{}
-
-	// ActivatedShrines records Tiled shrine keys already activated this run;
-	// keys from world.PersistentShrineSaveKey, mirrored into save.GameSave.ActivatedShrines.
-	ActivatedShrines map[string]struct{}
 }
 
-// MarkPersistentPickupCollected records a consumed persistent pickup (no-op if key empty).
-func (s *Session) MarkPersistentPickupCollected(key string) {
-	if s == nil || key == "" {
-		return
+// ProgressFor returns durable progress for mapID, creating an empty bundle if needed.
+func (s *Session) ProgressFor(mapID string) *MapProgress {
+	if s == nil || mapID == "" {
+		return nil
 	}
-	if s.CollectedPersistentPickups == nil {
-		s.CollectedPersistentPickups = make(map[string]struct{})
+	if s.Maps == nil {
+		s.Maps = make(map[string]*MapProgress)
 	}
-	s.CollectedPersistentPickups[key] = struct{}{}
+	if p, ok := s.Maps[mapID]; ok {
+		return p
+	}
+	p := &MapProgress{}
+	s.Maps[mapID] = p
+	return p
 }
 
-// ClearPersistedProgress resets persistent pickups, bomb-broken cracked
-// walls, and key-opened lock tiles (e.g. new game from title).
+// MarkPersistentPickupCollected records a consumed persistent pickup on mapID.
+func (s *Session) MarkPersistentPickupCollected(mapID, key string) {
+	s.ProgressFor(mapID).MarkCollectedPickup(key)
+}
+
+// MarkDestroyedTile records a destroyed tile on mapID.
+func (s *Session) MarkDestroyedTile(mapID, key string) {
+	s.ProgressFor(mapID).MarkDestroyedTile(key)
+}
+
+// MarkOpenedLockTile records an opened lock tile on mapID.
+func (s *Session) MarkOpenedLockTile(mapID, key string) {
+	s.ProgressFor(mapID).MarkOpenedLock(key)
+}
+
+// MarkShrineActivated records an activated shrine on mapID.
+func (s *Session) MarkShrineActivated(mapID, key string) {
+	s.ProgressFor(mapID).MarkActivatedShrine(key)
+}
+
+// ClearPersistedProgress resets all per-map durable progress (e.g. new game).
 func (s *Session) ClearPersistedProgress() {
 	if s == nil {
 		return
 	}
-	s.CollectedPersistentPickups = nil
-	s.DestroyedTiles = nil
-	s.OpenedLockTiles = nil
-	s.ActivatedShrines = nil
-}
-
-// MarkDestroyedTile records a tile destroyed by any damage source
-// (bomb, fire, ...). No-op when key is empty.
-func (s *Session) MarkDestroyedTile(key string) {
-	if s == nil || key == "" {
-		return
-	}
-	if s.DestroyedTiles == nil {
-		s.DestroyedTiles = make(map[string]struct{})
-	}
-	s.DestroyedTiles[key] = struct{}{}
-}
-
-// MarkOpenedLockTile records a GIDLock tile opened with a small key (no-op if key empty).
-func (s *Session) MarkOpenedLockTile(key string) {
-	if s == nil || key == "" {
-		return
-	}
-	if s.OpenedLockTiles == nil {
-		s.OpenedLockTiles = make(map[string]struct{})
-	}
-	s.OpenedLockTiles[key] = struct{}{}
-}
-
-// MarkShrineActivated records an activated shrine (no-op if key empty).
-func (s *Session) MarkShrineActivated(key string) {
-	if s == nil || key == "" {
-		return
-	}
-	if s.ActivatedShrines == nil {
-		s.ActivatedShrines = make(map[string]struct{})
-	}
-	s.ActivatedShrines[key] = struct{}{}
-}
-
-// persistentPickupKeySet returns a copy of keys suitable for BuildFromTiled, or nil if empty.
-func (s *Session) persistentPickupKeySet() map[string]struct{} {
-	if s == nil || len(s.CollectedPersistentPickups) == 0 {
-		return nil
-	}
-	out := make(map[string]struct{}, len(s.CollectedPersistentPickups))
-	for k := range s.CollectedPersistentPickups {
-		if strings.TrimSpace(k) != "" {
-			out[k] = struct{}{}
-		}
-	}
-	if len(out) == 0 {
-		return nil
-	}
-	return out
+	s.Maps = nil
 }
 
 // NewSession builds an empty session. Callers populate HasSave from disk

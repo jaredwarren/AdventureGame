@@ -1,5 +1,7 @@
 package world
 
+import "github.com/jaredwarren/game-test/internal/world/tile"
+
 // ApplyDestroyedTiles marks World.DestroyedTiles for any saved keys
 // whose map_id matches this world and whose GID is a destroyable tile
 // (any TileDef with a non-empty DamageKinds).
@@ -14,7 +16,7 @@ func ApplyDestroyedTiles(w *World, keys map[string]struct{}) {
 		w.DestroyedTiles = make(map[int]bool)
 	}
 	for k := range keys {
-		mid, tx, ty, ok := ParseMapTilePersistKey(k)
+		mid, tx, ty, ok := tile.ParseMapTilePersistKey(k)
 		if !ok || mid != w.MapID {
 			continue
 		}
@@ -22,7 +24,7 @@ func ApplyDestroyedTiles(w *World, keys map[string]struct{}) {
 			continue
 		}
 		idx := w.tileIndex(tx, ty)
-		if TileDefOf(w.Tiles[idx]).Destroyable() {
+		if tile.DefOf(w.Tiles[idx]).Destroyable() {
 			w.DestroyedTiles[idx] = true
 		}
 	}
