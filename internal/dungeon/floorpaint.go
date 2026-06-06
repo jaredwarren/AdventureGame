@@ -4,83 +4,84 @@ import (
 	"math/rand"
 )
 
-// FloorMixWeights are relative weights for open-tile decoration (grass / water /
-// floor2). Water is still a blocking tile in-game; default gentmj keeps water
-// weight at 0 so mazes stay connected. They are normalized; if all zero, grass
-// is used everywhere.
-type FloorMixWeights struct {
-	Grass  float64
-	Water  float64
-	Floor2 float64
+// FloorTileWeight pairs a tile GID with its relative paint weight and
+// passability. Passable=true means trees can be planted on this tile kind
+// (grass, floor2); Passable=false means it is a blocking tile (water).
+type FloorTileWeight struct {
+	GID      int
+	Weight   float64
+	Passable bool
 }
 
 // FloorPaintParams configures PaintNaturalFloors. TreeDeadEndProb is the
-// probability that a **dead-end** passable tile (exactly one grass/floor2
-// neighbor among open cells) becomes a tree; spawn is never treed. Water does
-// not count as passable for this graph. Trees block until burned.
+// probability that a dead-end passable tile (exactly one passable neighbor
+// among open cells) becomes a tree; spawn is never treed.
 type FloorPaintParams struct {
-	Mix FloorMixWeights
+	// Floors lists all tile GIDs (with relative weights) that open cells can
+	// become. Add any number of floor or water variants here; no struct
+	// changes required.
+	Floors []FloorTileWeight
 
-	GrassGID  int
-	WaterGID  int
-	Floor2GID int
-	TreeGID   int
-	WallGID   int
+	TreeGID int
+	WallGID int
 
 	SpawnX, SpawnY int
 
 	TreeDeadEndProb float64
 }
 
-// PaintNaturalFloors replaces stamped corridor tiles (currently all grassGID
-// from StampOrthogonalMaze) with a weighted mix of grass / water / floor2,
-// then optionally places trees on dead ends (excluding spawn).
+// PaintNaturalFloors replaces stamped corridor tiles with a weighted mix of
+// the tiles listed in p.Floors, then optionally places trees on dead ends
+// (excluding spawn).
 func PaintNaturalFloors(mapW, mapH int, data []int, p FloorPaintParams, rng *rand.Rand) {
 	if rng == nil || mapW < 1 || mapH < 1 || len(data) != mapW*mapH {
 		return
 	}
-	g, w, f2 := p.Mix.Grass, p.Mix.Water, p.Mix.Floor2
-	if g < 0 {
-		g = 0
+
+	// Normalize weights; guard against all-zero.
+	floors := make([]FloorTileWeight, len(p.Floors))
+	copy(floors, p.Floors)
+	sum := 0.0
+	for i := range floors {
+		if floors[i].Weight < 0 {
+			floors[i].Weight = 0
+		}
+		sum += floors[i].Weight
 	}
-	if w < 0 {
-		w = 0
-	}
-	if f2 < 0 {
-		f2 = 0
-	}
-	sum := g + w + f2
 	if sum <= 0 {
-		g, w, f2 = 1, 0, 0
-		sum = 1
+		// Default: first entry at full weight, or nothing.
+		if len(floors) > 0 {
+			floors[0].Weight = 1
+			sum = 1
+		} else {
+			return
+		}
 	}
-	g /= sum
-	w /= sum
-	f2 /= sum
+	for i := range floors {
+		floors[i].Weight /= sum
+	}
 
 	for i := range data {
 		if data[i] == p.WallGID {
 			continue
 		}
 		r := rng.Float64()
-		if r < g {
-			data[i] = p.GrassGID
-		} else if r < g+w {
-			data[i] = p.WaterGID
-		} else {
-			data[i] = p.Floor2GID
+		acc := 0.0
+		for _, f := range floors {
+			acc += f.Weight
+			if r < acc {
+				data[i] = f.GID
+				break
+			}
 		}
 	}
 
 	treeP := p.TreeDeadEndProb
-	if treeP < 0 {
-		treeP = 0
+	if treeP <= 0 {
+		return
 	}
 	if treeP > 1 {
 		treeP = 1
-	}
-	if treeP <= 0 {
-		return
 	}
 
 	for ty := 0; ty < mapH; ty++ {
@@ -92,10 +93,10 @@ func PaintNaturalFloors(mapW, mapH int, data []int, p FloorPaintParams, rng *ran
 			if data[idx] == p.WallGID {
 				continue
 			}
-			if !isPassableFloorKind(data[idx], p) {
+			if !isPassableFloorKind(data[idx], floors) {
 				continue
 			}
-			if passableNeighborCount(mapW, mapH, data, tx, ty, p) != 1 {
+			if passableNeighborCount(mapW, mapH, data, tx, ty, p, floors) != 1 {
 				continue
 			}
 			if rng.Float64() < treeP {
@@ -105,17 +106,18 @@ func PaintNaturalFloors(mapW, mapH int, data []int, p FloorPaintParams, rng *ran
 	}
 }
 
-// isPassableFloorKind is grass or floor2 (player can walk; water is blocking).
-func isPassableFloorKind(gid int, p FloorPaintParams) bool {
-	switch gid {
-	case p.GrassGID, p.Floor2GID:
-		return true
-	default:
-		return false
+// isPassableFloorKind reports whether gid is a passable floor tile (trees can
+// be placed on it). Water and other blocking floor kinds are not passable.
+func isPassableFloorKind(gid int, floors []FloorTileWeight) bool {
+	for _, f := range floors {
+		if f.GID == gid {
+			return f.Passable
+		}
 	}
+	return false
 }
 
-func passableNeighborCount(mapW, mapH int, data []int, tx, ty int, p FloorPaintParams) int {
+func passableNeighborCount(mapW, mapH int, data []int, tx, ty int, p FloorPaintParams, floors []FloorTileWeight) int {
 	dirs := [...]struct{ dx, dy int }{{0, -1}, {1, 0}, {0, 1}, {-1, 0}}
 	n := 0
 	for _, d := range dirs {
@@ -127,7 +129,7 @@ func passableNeighborCount(mapW, mapH int, data []int, tx, ty int, p FloorPaintP
 		if g == p.WallGID {
 			continue
 		}
-		if isPassableFloorKind(g, p) {
+		if isPassableFloorKind(g, floors) {
 			n++
 		}
 	}

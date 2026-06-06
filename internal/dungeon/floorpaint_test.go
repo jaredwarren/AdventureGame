@@ -11,10 +11,11 @@ func TestPaintNaturalFloors_NoTree_AllWalkableKinds(t *testing.T) {
 	mw, mh, data := StampOrthogonalMaze(m, 1, 2)
 	rng := rand.New(rand.NewSource(42))
 	PaintNaturalFloors(mw, mh, data, FloorPaintParams{
-		Mix:             FloorMixWeights{Grass: 1, Water: 1, Floor2: 1},
-		GrassGID:        1,
-		WaterGID:        5,
-		Floor2GID:       7,
+		Floors: []FloorTileWeight{
+			{GID: 1, Weight: 1, Passable: true},
+			{GID: 5, Weight: 1, Passable: false},
+			{GID: 7, Weight: 1, Passable: true},
+		},
 		TreeGID:         8,
 		WallGID:         2,
 		SpawnX:          1,
@@ -45,10 +46,9 @@ func TestPaintNaturalFloors_SpawnNotTree(t *testing.T) {
 	spawnX, spawnY := 1, 1
 	rng := rand.New(rand.NewSource(0))
 	PaintNaturalFloors(mw, mh, data, FloorPaintParams{
-		Mix:             FloorMixWeights{Grass: 1, Water: 0, Floor2: 0},
-		GrassGID:        1,
-		WaterGID:        5,
-		Floor2GID:       7,
+		Floors: []FloorTileWeight{
+			{GID: 1, Weight: 1, Passable: true},
+		},
 		TreeGID:         8,
 		WallGID:         2,
 		SpawnX:          spawnX,

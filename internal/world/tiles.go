@@ -30,6 +30,8 @@ const (
 	GIDWaterShoreNWInner = 18
 	GIDWaterShoreSWInner = 19
 	GIDWaterShoreSEInner = 20
+
+	GIDDirtPath = 21
 )
 
 // SolidAt reads collision from the TileDef registry. Destroyable tiles

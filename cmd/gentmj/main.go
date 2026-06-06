@@ -75,14 +75,11 @@ func main() {
 	spawnTX, spawnTY := firstGrassTile(mw, mh, tileData, world.GIDGrass)
 	paintRNG := rand.New(rand.NewSource(*seed ^ 0x9e3779b9))
 	dungeon.PaintNaturalFloors(mw, mh, tileData, dungeon.FloorPaintParams{
-		Mix: dungeon.FloorMixWeights{
-			Grass:  *floorGrass,
-			Water:  *floorWater,
-			Floor2: *floorFloor2,
+		Floors: []dungeon.FloorTileWeight{
+			{GID: world.GIDGrass, Weight: *floorGrass, Passable: true},
+			{GID: world.GIDWater, Weight: *floorWater, Passable: false},
+			{GID: world.GIDFloor2, Weight: *floorFloor2, Passable: true},
 		},
-		GrassGID:        world.GIDGrass,
-		WaterGID:        world.GIDWater,
-		Floor2GID:       world.GIDFloor2,
 		TreeGID:         world.GIDTree,
 		WallGID:         world.GIDWall,
 		SpawnX:          spawnTX,
