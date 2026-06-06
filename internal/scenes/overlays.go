@@ -44,24 +44,31 @@ func DrawHUD(r services.Renderer, w *world.World, sess *Session) {
 	r.DrawText(200, y+16, fmt.Sprintf("key %d", w.SmallKey))
 	r.DrawText(200, y+32, fmt.Sprintf("%d,%d", int(w.Player.X), int(w.Player.Y)))
 	// Item slot pill boxes — selected slot gets bright border, unselected gets dim.
-	const pillW, pillH float32 = 52, 12
+	const pillH float32 = 18
 	const pillGap float32 = 4
 	px := float32(260)
-	drawSlot := func(label string, selected bool) {
+	drawSlot := func(kind world.PickupKind, selected bool, countText string) {
 		var border color.RGBA
 		if selected {
 			border = color.RGBA{0xff, 0xff, 0xff, 0xff}
 		} else {
 			border = color.RGBA{0x60, 0x60, 0x60, 0xff}
 		}
+		var pillW float32 = 18
+		if countText != "" {
+			pillW = 34
+		}
 		r.FillRect(px, float32(y)-1, pillW, pillH, color.RGBA{0x10, 0x10, 0x18, 0xcc})
 		r.StrokeRect(px, float32(y)-1, pillW, pillH, 1, border)
-		r.DrawText(int(px)+3, y, label)
+		r.DrawPickupScreen(kind, px+1, float32(y), 16, 16)
+		if countText != "" {
+			r.DrawText(int(px)+19, y+4, countText)
+		}
 		px += pillW + pillGap
 	}
-	drawSlot(fmt.Sprintf("BOMB %d/%d", w.Bombs, world.MaxBombsCarry), w.SelectedItem == world.ItemSlotBomb)
+	drawSlot(world.PickupBomb, w.SelectedItem == world.ItemSlotBomb, fmt.Sprintf("%d", w.Bombs))
 	if w.HasTorch {
-		drawSlot("TORCH", w.SelectedItem == world.ItemSlotTorch)
+		drawSlot(world.PickupTorch, w.SelectedItem == world.ItemSlotTorch, "")
 	}
 
 	barW := 60

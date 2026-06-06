@@ -117,8 +117,10 @@ type Door struct {
 
 // Shrine is an authored interactable location.
 type Shrine struct {
-	ID   EntityID
-	Rect geom.Rect
+	ID      EntityID
+	TiledID int
+	Rect    geom.Rect
+	Active  bool
 }
 
 // Player holds locomotion + combat timers (frame counts, not seconds).
@@ -132,14 +134,22 @@ type Player struct {
 	Hitbox
 	Facing
 
-	Swing        int // >0 while sword animation runs; only mid-window counts as hit frames (see SwordHitbox)
-	SwingCD      int // frames until another Z press is accepted
-	TorchSwing   int // >0 while torch swing runs; same active window as sword (see TorchHitbox)
-	TorchSwingCD int // frames until another torch press is accepted
-	Invuln       int // i-frames after taking damage
-	DodgeTimer   int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
-	Stamina      int // drained by sprint; refilled when not sprinting
-	SprintHeld   bool
+	Swing                  int // >0 while sword animation runs; only mid-window counts as hit frames (see SwordHitbox)
+	SwingCD                int // frames until another Z press is accepted
+	TorchSwing             int // >0 while torch swing runs; same active window as sword (see TorchHitbox)
+	TorchSwingCD           int // frames until another torch press is accepted
+	Invuln                 int // i-frames after taking damage
+	DodgeTimer             int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
+	Stamina                int // drained by sprint; refilled when not sprinting
+	SprintHeld             bool
+	SwingDuration          int
+	MaxSwingCD             int
+	SwingActiveStart       int
+	SwingActiveEnd         int
+	TorchSwingDuration     int
+	MaxTorchSwingCD        int
+	TorchSwingActiveStart  int
+	TorchSwingActiveEnd    int
 }
 
 type World struct {
@@ -369,11 +379,11 @@ func (w *World) SetFacingFromMotion(dx, dy float64) {
 	}
 }
 
-func swordSwingHitbox(swing int, dir Dir, px, py float64) (geom.Rect, bool) {
+func swordSwingHitbox(swing int, activeStart, activeEnd int, dir Dir, px, py float64) (geom.Rect, bool) {
 	if swing <= 0 {
 		return geom.Rect{}, false
 	}
-	active := swing >= 5 && swing <= 10
+	active := swing >= activeStart && swing <= activeEnd
 	if !active {
 		return geom.Rect{}, false
 	}
@@ -395,14 +405,30 @@ func swordSwingHitbox(swing int, dir Dir, px, py float64) (geom.Rect, bool) {
 func (w *World) SwordHitbox() (geom.Rect, bool) {
 	px := w.Player.X + w.Player.W*0.5
 	py := w.Player.Y + w.Player.H*0.5
-	return swordSwingHitbox(w.Player.Swing, w.Player.Dir, px, py)
+	activeStart := w.Player.SwingActiveStart
+	if activeStart <= 0 {
+		activeStart = 2
+	}
+	activeEnd := w.Player.SwingActiveEnd
+	if activeEnd <= 0 {
+		activeEnd = 7
+	}
+	return swordSwingHitbox(w.Player.Swing, activeStart, activeEnd, w.Player.Dir, px, py)
 }
 
 // TorchHitbox matches SwordHitbox timing/geometry but keys off TorchSwing.
 func (w *World) TorchHitbox() (geom.Rect, bool) {
 	px := w.Player.X + w.Player.W*0.5
 	py := w.Player.Y + w.Player.H*0.5
-	return swordSwingHitbox(w.Player.TorchSwing, w.Player.Dir, px, py)
+	activeStart := w.Player.TorchSwingActiveStart
+	if activeStart <= 0 {
+		activeStart = 2
+	}
+	activeEnd := w.Player.TorchSwingActiveEnd
+	if activeEnd <= 0 {
+		activeEnd = 7
+	}
+	return swordSwingHitbox(w.Player.TorchSwing, activeStart, activeEnd, w.Player.Dir, px, py)
 }
 
 // Rect returns the enemy's AABB using its Transform + Hitbox components.
@@ -505,8 +531,16 @@ func (w *World) TrySwingSword() bool {
 	if w.Player.TorchSwing > 0 || w.Player.TorchSwingCD > 0 {
 		return false
 	}
-	w.Player.Swing = 14
-	w.Player.SwingCD = 20
+	duration := w.Player.SwingDuration
+	if duration <= 0 {
+		duration = 8
+	}
+	cooldown := w.Player.MaxSwingCD
+	if cooldown <= 0 {
+		cooldown = 12
+	}
+	w.Player.Swing = duration
+	w.Player.SwingCD = cooldown
 	return true
 }
 
@@ -522,8 +556,16 @@ func (w *World) TrySwingTorch() bool {
 	if w.Player.Swing > 0 || w.Player.SwingCD > 0 {
 		return false
 	}
-	w.Player.TorchSwing = 14
-	w.Player.TorchSwingCD = 20
+	duration := w.Player.TorchSwingDuration
+	if duration <= 0 {
+		duration = 8
+	}
+	cooldown := w.Player.MaxTorchSwingCD
+	if cooldown <= 0 {
+		cooldown = 12
+	}
+	w.Player.TorchSwing = duration
+	w.Player.TorchSwingCD = cooldown
 	return true
 }
 

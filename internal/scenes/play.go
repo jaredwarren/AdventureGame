@@ -218,6 +218,21 @@ func (s *PlayScene) Update(ctx GameContext) error {
 	s.handleActions(ctx, w)
 	s.handleMovement(ctx, w)
 
+	// Check if player touched any shrines
+	pr := w.PlayerRect()
+	for i := range w.Shrines {
+		sh := &w.Shrines[i]
+		if !sh.Active && pr.Overlaps(sh.Rect) {
+			sh.Active = true
+			sess.MarkShrineActivated(world.PersistentShrineSaveKey(w.MapID, sh.TiledID))
+			ctx.Audio().Play("pickup.wav", 0.25)
+			scx, scy := sh.Rect.X+sh.Rect.W*0.5, sh.Rect.Y+sh.Rect.H*0.5
+			for k := 0; k < 12; k++ {
+				s.particles = append(s.particles, NewSparkleParticle(scx, scy))
+			}
+		}
+	}
+
 	events, err := s.pipeline.Tick(w, services.TickSeconds)
 	if err != nil {
 		return err
@@ -225,7 +240,7 @@ func (s *PlayScene) Update(ctx GameContext) error {
 	s.reactToEvents(ctx, w, events)
 	s.handleDeath(ctx)
 
-	pr := w.PlayerRect()
+	pr = w.PlayerRect()
 	cam := ctx.Renderer().Camera()
 	cam.Follow(pr.X+pr.W*0.5, pr.Y+pr.H*0.5)
 	cam.TickShake()

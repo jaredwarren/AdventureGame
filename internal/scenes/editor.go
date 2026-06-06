@@ -48,6 +48,10 @@ type EditorScene struct {
 	showTileMenu   bool
 	tileMenuSelect int
 	tileMenuScroll int
+
+	showItemMenu     bool
+	itemMenuSelect   int
+	activePickupKind string
 }
 
 func newEditorScene() Scene { return &EditorScene{} }
@@ -70,6 +74,20 @@ var (
 	}
 )
 
+type editorPickupItem struct {
+	name  string
+	kind  world.PickupKind
+	label string
+}
+
+var editorPickupItems = []editorPickupItem{
+	{"coin", world.PickupCoin, "Coin"},
+	{"heart", world.PickupHeart, "Heart"},
+	{"bomb", world.PickupBomb, "Bomb"},
+	{"key", world.PickupSmallKey, "Key"},
+	{"torch", world.PickupTorch, "Torch"},
+}
+
 func (s *EditorScene) ID() SceneID { return SceneEditor }
 
 func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
@@ -83,6 +101,9 @@ func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
 	s.showTileMenu = false
 	s.tileMenuSelect = 0
 	s.tileMenuScroll = 0
+	s.showItemMenu = false
+	s.itemMenuSelect = 0
+	s.activePickupKind = "coin"
 	return nil
 }
 
@@ -230,7 +251,7 @@ func (s *EditorScene) newMarkerObject(wx, wy float64) tiled.Object {
 		o.Height = 16
 	case "pickup":
 		o.Properties = []tiled.Property{
-			{Name: "kind", Type: "string", Value: "coin"},
+			{Name: "kind", Type: "string", Value: s.activePickupKind},
 		}
 	}
 	return o
@@ -249,6 +270,38 @@ func (s *EditorScene) paintTile(tx, ty int) {
 		return
 	}
 	ground.Data[idx] = s.brushGID
+}
+
+func (s *EditorScene) selectItem(ctx GameContext, name string) {
+	s.activePickupKind = name
+	for idx, t := range editorMarkerTypes {
+		if t == "pickup" {
+			s.markerTypeIndex = idx
+			break
+		}
+	}
+	lg := s.markersLayer()
+	if lg != nil && s.selObj >= 0 && s.selObj < len(lg.Objects) {
+		o := &lg.Objects[s.selObj]
+		if o.Type == "pickup" {
+			found := false
+			for i, p := range o.Properties {
+				if p.Name == "kind" {
+					o.Properties[i].Value = name
+					found = true
+					break
+				}
+			}
+			if !found {
+				o.Properties = append(o.Properties, tiled.Property{
+					Name:  "kind",
+					Type:  "string",
+					Value: name,
+				})
+			}
+			s.rebuild(ctx)
+		}
+	}
 }
 
 func (s *EditorScene) Update(ctx GameContext) error {
@@ -340,6 +393,70 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		return nil
 	}
 
+	// Item selection menu input handling
+	if s.showItemMenu {
+		if in.JustPressed(services.ActionEditorTileMenu) || in.JustPressed(services.ActionCancel) {
+			s.showItemMenu = false
+			return nil
+		}
+
+		if in.JustPressed(services.ActionMoveUp) {
+			s.itemMenuSelect--
+			if s.itemMenuSelect < 0 {
+				s.itemMenuSelect = len(editorPickupItems) - 1
+			}
+		}
+		if in.JustPressed(services.ActionMoveDown) {
+			s.itemMenuSelect++
+			if s.itemMenuSelect >= len(editorPickupItems) {
+				s.itemMenuSelect = 0
+			}
+		}
+
+		if in.JustPressed(services.ActionConfirm) {
+			s.selectItem(ctx, editorPickupItems[s.itemMenuSelect].name)
+			s.showItemMenu = false
+			return nil
+		}
+
+		if in.JustPressed(services.ActionEditorAdd) {
+			s.selectItem(ctx, editorPickupItems[s.itemMenuSelect].name)
+			s.showItemMenu = false
+			wx, wy := s.worldXY(ctx)
+			lg := s.markersLayer()
+			if lg != nil {
+				o := s.newMarkerObject(wx, wy)
+				lg.Objects = append(lg.Objects, o)
+				s.selObj = len(lg.Objects) - 1
+				s.rebuild(ctx)
+			}
+			return nil
+		}
+
+		if in.MouseJustPressed(services.MouseLeft) {
+			mx, my := in.CursorPosition()
+			const panelX, panelY = 70, 30
+			const panelW, panelH = 180, 180
+			const headerH = 22
+			const itemH = 20
+
+			if mx >= panelX && mx < panelX+panelW && my >= panelY && my < panelY+panelH {
+				listY := panelY + headerH
+				if my >= listY && my < listY+len(editorPickupItems)*itemH {
+					clickedRow := (my - listY) / itemH
+					if clickedRow >= 0 && clickedRow < len(editorPickupItems) {
+						s.itemMenuSelect = clickedRow
+						s.selectItem(ctx, editorPickupItems[s.itemMenuSelect].name)
+						s.showItemMenu = false
+					}
+				}
+			} else {
+				s.showItemMenu = false
+			}
+		}
+		return nil
+	}
+
 	if s.modeTile && in.JustPressed(services.ActionEditorTileMenu) {
 		s.showTileMenu = true
 		s.tileMenuSelect = 0
@@ -361,11 +478,33 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		return nil
 	}
 
+	if !s.modeTile && in.JustPressed(services.ActionEditorTileMenu) {
+		s.showItemMenu = true
+		currentKind := s.activePickupKind
+		lg := s.markersLayer()
+		if lg != nil && s.selObj >= 0 && s.selObj < len(lg.Objects) {
+			o := &lg.Objects[s.selObj]
+			if o.Type == "pickup" {
+				if k, ok := tiled.ObjProp(o, "kind"); ok {
+					currentKind = k
+				}
+			}
+		}
+		for idx, item := range editorPickupItems {
+			if item.name == currentKind {
+				s.itemMenuSelect = idx
+				break
+			}
+		}
+		return nil
+	}
+
 	if in.JustPressed(services.ActionEditorToggleMode) {
 		s.modeTile = !s.modeTile
 		s.selObj = -1
 		s.dragging = false
 		s.showTileMenu = false
+		s.showItemMenu = false
 	}
 
 	for i, gid := range editorBrushPalette {
@@ -483,6 +622,9 @@ func (s *EditorScene) Draw(ctx GameContext) {
 		}
 	} else {
 		s.drawMarkerOverlay(ctx)
+		if s.showItemMenu {
+			s.drawItemMenu(ctx)
+		}
 	}
 
 	mode := "MARKER"
@@ -610,4 +752,47 @@ func (s *EditorScene) drawMarkerOverlay(ctx GameContext) {
 			r.StrokeRect(float32(rc.X), float32(rc.Y), float32(rc.W), float32(rc.H), 1, col)
 		}
 	}
+}
+
+func (s *EditorScene) drawItemMenu(ctx GameContext) {
+	r := ctx.Renderer()
+
+	const panelX, panelY float32 = 70, 30
+	const panelW, panelH float32 = 180, 180
+	const headerH float32 = 22
+	const footerH float32 = 18
+	const rowH float32 = 20
+
+	// Draw panel background (dark semi-transparent window)
+	r.FillRect(panelX, panelY, panelW, panelH, color.RGBA{0x08, 0x0a, 0x14, 0xf0})
+	r.StrokeRect(panelX, panelY, panelW, panelH, 1, color.RGBA{0x80, 0x80, 0xa0, 0xff})
+
+	// Header Text
+	r.DrawText(int(panelX)+50, int(panelY)+6, "SELECT ITEM")
+
+	// Divider below header
+	r.StrokeLine(panelX+4, panelY+headerH-2, panelX+panelW-4, panelY+headerH-2, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
+
+	// Items (no scrolling needed since we only have 5)
+	for i, item := range editorPickupItems {
+		rowY := panelY + headerH + float32(i)*rowH
+
+		// Highlight currently selected item in menu
+		if i == s.itemMenuSelect {
+			r.FillRect(panelX+4, rowY+1, panelW-8, rowH-2, color.RGBA{0x2b, 0x4a, 0x8a, 0x80})
+			r.StrokeRect(panelX+4, rowY+1, panelW-8, rowH-2, 1, color.RGBA{0x50, 0x80, 0xff, 0xff})
+		}
+
+		// Draw pickup image
+		r.DrawPickupScreen(item.kind, panelX+8, rowY+2, 16, 16)
+
+		// Draw pickup name/label
+		r.DrawText(int(panelX)+30, int(rowY)+4, item.label)
+	}
+
+	// Divider above footer
+	r.StrokeLine(panelX+4, panelY+panelH-footerH, panelX+panelW-4, panelY+panelH-footerH, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
+
+	// Footer hints
+	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn select  Enter confirm")
 }

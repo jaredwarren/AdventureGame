@@ -47,8 +47,21 @@ type GameSave struct {
 	// OpenedLockTileKeys lists GIDLock tiles opened with a small key; same key format as cracked tiles.
 	OpenedLockTileKeys []string `json:"opened_lock_tiles,omitempty"`
 
-	ReduceScreenShake bool `json:"reduce_screen_shake"`
-	TimeOfDay         int  `json:"time_of_day"`
+	// ActivatedShrines lists keys of shrines that the player has touched.
+	ActivatedShrines []string `json:"activated_shrines,omitempty"`
+
+	ReduceScreenShake bool           `json:"reduce_screen_shake"`
+	TimeOfDay         int            `json:"time_of_day"`
+	SelectedItem      world.ItemSlot `json:"selected_item"`
+
+	SwingDuration         int `json:"swing_duration,omitempty"`
+	MaxSwingCD            int `json:"max_swing_cd,omitempty"`
+	SwingActiveStart      int `json:"swing_active_start,omitempty"`
+	SwingActiveEnd        int `json:"swing_active_end,omitempty"`
+	TorchSwingDuration    int `json:"torch_swing_duration,omitempty"`
+	MaxTorchSwingCD       int `json:"max_torch_swing_cd,omitempty"`
+	TorchSwingActiveStart int `json:"torch_swing_active_start,omitempty"`
+	TorchSwingActiveEnd   int `json:"torch_swing_active_end,omitempty"`
 }
 
 const defaultPath = "save.json"

@@ -333,15 +333,15 @@
           "id": 1,
           "name": "spawn",
           "type": "spawn",
-          "x": 32,
-          "y": 112
+          "x": 17,
+          "y": 135
         },
         {
           "id": 2,
           "name": "bomb",
           "type": "pickup",
-          "x": 64,
-          "y": 96,
+          "x": 86,
+          "y": 136,
           "properties": [
             {
               "name": "kind",
@@ -354,8 +354,8 @@
           "id": 3,
           "name": "back",
           "type": "door",
-          "x": 7,
-          "y": 114,
+          "x": 1,
+          "y": 112,
           "width": 16,
           "height": 32,
           "properties": [
@@ -384,11 +384,67 @@
           "y": 116,
           "width": 24,
           "height": 24
+        },
+        {
+          "id": 100,
+          "name": "pickup_100",
+          "type": "pickup",
+          "x": 148,
+          "y": 128,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "coin"
+            }
+          ]
+        },
+        {
+          "id": 101,
+          "name": "pickup_101",
+          "type": "pickup",
+          "x": 148,
+          "y": 142,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "heart"
+            }
+          ]
+        },
+        {
+          "id": 102,
+          "name": "pickup_102",
+          "type": "pickup",
+          "x": 146,
+          "y": 157,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "coin"
+            }
+          ]
+        },
+        {
+          "id": 103,
+          "name": "pickup_103",
+          "type": "pickup",
+          "x": 146,
+          "y": 114,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "heart"
+            }
+          ]
         }
       ]
     }
   ],
   "nextlayerid": 3,
-  "nextobjectid": 100,
+  "nextobjectid": 104,
   "tilesets": []
 }

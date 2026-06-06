@@ -50,10 +50,18 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 		return nil, fmt.Errorf("expected %dx%d tiles", TileSize, TileSize)
 	}
 	w.Player = Player{
-		ID:        w.allocID(),
-		Transform: Transform{},
-		Hitbox:    Hitbox{W: DefaultPlayerHitboxW, H: DefaultPlayerHitboxH},
-		Facing:    Facing{Dir: DirDown},
+		ID:                    w.allocID(),
+		Transform:             Transform{},
+		Hitbox:                Hitbox{W: DefaultPlayerHitboxW, H: DefaultPlayerHitboxH},
+		Facing:                Facing{Dir: DirDown},
+		SwingDuration:         8,
+		MaxSwingCD:            12,
+		SwingActiveStart:      2,
+		SwingActiveEnd:        7,
+		TorchSwingDuration:    8,
+		MaxTorchSwingCD:       12,
+		TorchSwingActiveStart: 2,
+		TorchSwingActiveEnd:   7,
 	}
 	w.Player.Stamina = w.MaxStamina()
 
@@ -129,8 +137,9 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 			})
 		case "shrine":
 			w.Shrines = append(w.Shrines, Shrine{
-				ID:   w.allocID(),
-				Rect: geom.Rect{X: o.X, Y: o.Y, W: o.Width, H: o.Height},
+				ID:      w.allocID(),
+				TiledID: o.ID,
+				Rect:    geom.Rect{X: o.X, Y: o.Y, W: o.Width, H: o.Height},
 			})
 		}
 	}

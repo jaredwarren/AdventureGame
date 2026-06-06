@@ -75,10 +75,12 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 			sess.CollectedPersistentPickups = stringSetFromSlice(opts.Save.CollectedPickupKeys)
 			sess.DestroyedTiles = stringSetFromSlice(opts.Save.DestroyedTileKeys)
 			sess.OpenedLockTiles = stringSetFromSlice(opts.Save.OpenedLockTileKeys)
+			sess.ActivatedShrines = stringSetFromSlice(opts.Save.ActivatedShrines)
 		} else {
 			sess.CollectedPersistentPickups = nil
 			sess.DestroyedTiles = nil
 			sess.OpenedLockTiles = nil
+			sess.ActivatedShrines = nil
 		}
 	} else if opts.Save != nil {
 		if len(opts.Save.CollectedPickupKeys) > 0 {
@@ -89,6 +91,9 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 		}
 		if len(opts.Save.OpenedLockTileKeys) > 0 {
 			mergeOpenedLockKeys(sess, opts.Save.OpenedLockTileKeys)
+		}
+		if len(opts.Save.ActivatedShrines) > 0 {
+			mergeActivatedShrines(sess, opts.Save.ActivatedShrines)
 		}
 	}
 
@@ -103,6 +108,15 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 		w.Bombs = world.ClampBombsCarry(sess.World.Bombs)
 		w.HasTorch = sess.World.HasTorch
 		w.TimeOfDay = sess.World.TimeOfDay
+		w.SelectedItem = sess.World.SelectedItem
+		w.Player.SwingDuration = sess.World.Player.SwingDuration
+		w.Player.MaxSwingCD = sess.World.Player.MaxSwingCD
+		w.Player.SwingActiveStart = sess.World.Player.SwingActiveStart
+		w.Player.SwingActiveEnd = sess.World.Player.SwingActiveEnd
+		w.Player.TorchSwingDuration = sess.World.Player.TorchSwingDuration
+		w.Player.MaxTorchSwingCD = sess.World.Player.MaxTorchSwingCD
+		w.Player.TorchSwingActiveStart = sess.World.Player.TorchSwingActiveStart
+		w.Player.TorchSwingActiveEnd = sess.World.Player.TorchSwingActiveEnd
 		if w.HP > w.MaxHP() {
 			w.HP = w.MaxHP()
 		}
@@ -112,6 +126,7 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 	sess.World = w
 	world.ApplyDestroyedTiles(w, sess.DestroyedTiles)
 	world.ApplyPersistedOpenedLocks(w, sess.OpenedLockTiles)
+	world.ApplyPersistedShrines(w, sess.ActivatedShrines)
 
 	if opts.Save != nil && opts.Save.MapID == mapID {
 		ApplySave(sess, opts.Save, opts.Cam)
@@ -239,6 +254,32 @@ func ApplySave(sess *Session, s *save.GameSave, cam *render.Camera) {
 		cam.ReduceShake = s.ReduceScreenShake
 	}
 	w.TimeOfDay = s.TimeOfDay
+	w.SelectedItem = s.SelectedItem
+
+	if s.SwingDuration > 0 {
+		w.Player.SwingDuration = s.SwingDuration
+	}
+	if s.MaxSwingCD > 0 {
+		w.Player.MaxSwingCD = s.MaxSwingCD
+	}
+	if s.SwingActiveStart > 0 {
+		w.Player.SwingActiveStart = s.SwingActiveStart
+	}
+	if s.SwingActiveEnd > 0 {
+		w.Player.SwingActiveEnd = s.SwingActiveEnd
+	}
+	if s.TorchSwingDuration > 0 {
+		w.Player.TorchSwingDuration = s.TorchSwingDuration
+	}
+	if s.MaxTorchSwingCD > 0 {
+		w.Player.MaxTorchSwingCD = s.MaxTorchSwingCD
+	}
+	if s.TorchSwingActiveStart > 0 {
+		w.Player.TorchSwingActiveStart = s.TorchSwingActiveStart
+	}
+	if s.TorchSwingActiveEnd > 0 {
+		w.Player.TorchSwingActiveEnd = s.TorchSwingActiveEnd
+	}
 }
 
 // BuildSave snapshots the current World + Session into a save payload. The
@@ -269,6 +310,15 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 		Fortune:           w.Stats.Fortune,
 		ReduceScreenShake: reduce,
 		TimeOfDay:         w.TimeOfDay,
+		SelectedItem:      w.SelectedItem,
+		SwingDuration:          w.Player.SwingDuration,
+		MaxSwingCD:             w.Player.MaxSwingCD,
+		SwingActiveStart:       w.Player.SwingActiveStart,
+		SwingActiveEnd:         w.Player.SwingActiveEnd,
+		TorchSwingDuration:     w.Player.TorchSwingDuration,
+		MaxTorchSwingCD:        w.Player.MaxTorchSwingCD,
+		TorchSwingActiveStart:  w.Player.TorchSwingActiveStart,
+		TorchSwingActiveEnd:    w.Player.TorchSwingActiveEnd,
 	}
 	if sess != nil && len(sess.CollectedPersistentPickups) > 0 {
 		keys := make([]string, 0, len(sess.CollectedPersistentPickups))
@@ -299,6 +349,16 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 		}
 		sort.Strings(keys)
 		gs.OpenedLockTileKeys = keys
+	}
+	if sess != nil && len(sess.ActivatedShrines) > 0 {
+		keys := make([]string, 0, len(sess.ActivatedShrines))
+		for k := range sess.ActivatedShrines {
+			if strings.TrimSpace(k) != "" {
+				keys = append(keys, k)
+			}
+		}
+		sort.Strings(keys)
+		gs.ActivatedShrines = keys
 	}
 	return gs
 }
@@ -371,6 +431,22 @@ func mergeOpenedLockKeys(sess *Session, keys []string) {
 			sess.OpenedLockTiles = make(map[string]struct{})
 		}
 		sess.OpenedLockTiles[k] = struct{}{}
+	}
+}
+
+func mergeActivatedShrines(sess *Session, keys []string) {
+	if sess == nil {
+		return
+	}
+	for _, k := range keys {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		if sess.ActivatedShrines == nil {
+			sess.ActivatedShrines = make(map[string]struct{})
+		}
+		sess.ActivatedShrines[k] = struct{}{}
 	}
 }
 

@@ -39,11 +39,11 @@ func tinyMapJSON() []byte {
 	return []byte(b.String())
 }
 
-func TestTimeOfDayPersistence(t *testing.T) {
+func TestTimeAndItemPersistence(t *testing.T) {
 	assets := &mockAssetCache{mapJSON: tinyMapJSON()}
 	sess := NewSession()
 
-	// Initial load: TimeOfDay should be 0 by default.
+	// Initial load: TimeOfDay should be 0 by default, SelectedItem should be ItemSlotBomb.
 	err := EnterMap(assets, sess, "field1", MapLoadOpts{})
 	if err != nil {
 		t.Fatalf("EnterMap failed: %v", err)
@@ -51,9 +51,13 @@ func TestTimeOfDayPersistence(t *testing.T) {
 	if sess.World.TimeOfDay != 0 {
 		t.Errorf("expected initial TimeOfDay to be 0, got %d", sess.World.TimeOfDay)
 	}
+	if sess.World.SelectedItem != world.ItemSlotBomb {
+		t.Errorf("expected initial SelectedItem to be ItemSlotBomb, got %v", sess.World.SelectedItem)
+	}
 
-	// Change TimeOfDay
+	// Change TimeOfDay and SelectedItem
 	sess.World.TimeOfDay = 4500
+	sess.World.SelectedItem = world.ItemSlotTorch
 
 	// 1. Transition maps via EnterMap with CarryStatsFromSession: true
 	err = EnterMap(assets, sess, "field2", MapLoadOpts{CarryStatsFromSession: true})
@@ -63,6 +67,9 @@ func TestTimeOfDayPersistence(t *testing.T) {
 	if sess.World.TimeOfDay != 4500 {
 		t.Errorf("expected carried TimeOfDay to be 4500, got %d", sess.World.TimeOfDay)
 	}
+	if sess.World.SelectedItem != world.ItemSlotTorch {
+		t.Errorf("expected carried SelectedItem to be ItemSlotTorch, got %v", sess.World.SelectedItem)
+	}
 
 	// 2. BuildSave and ApplySave
 	cam := render.NewCamera(320, 240)
@@ -70,16 +77,24 @@ func TestTimeOfDayPersistence(t *testing.T) {
 	if saveObj.TimeOfDay != 4500 {
 		t.Errorf("expected saved TimeOfDay to be 4500, got %d", saveObj.TimeOfDay)
 	}
+	if saveObj.SelectedItem != world.ItemSlotTorch {
+		t.Errorf("expected saved SelectedItem to be ItemSlotTorch, got %v", saveObj.SelectedItem)
+	}
 
 	// Reload with ApplySave
 	sess.World.TimeOfDay = 100
+	sess.World.SelectedItem = world.ItemSlotBomb
 	ApplySave(sess, saveObj, cam)
 	if sess.World.TimeOfDay != 4500 {
 		t.Errorf("expected loaded TimeOfDay to be 4500, got %d", sess.World.TimeOfDay)
 	}
+	if sess.World.SelectedItem != world.ItemSlotTorch {
+		t.Errorf("expected loaded SelectedItem to be ItemSlotTorch, got %v", sess.World.SelectedItem)
+	}
 
 	// 3. Test WarpDoor
 	sess.World.TimeOfDay = 6789
+	sess.World.SelectedItem = world.ItemSlotTorch
 	// Add a target door in the world
 	sess.World.Doors = []world.Door{
 		{
@@ -97,6 +112,9 @@ func TestTimeOfDayPersistence(t *testing.T) {
 	}
 	if sess.World.TimeOfDay != 6789 {
 		t.Errorf("expected TimeOfDay to persist through WarpDoor, got %d", sess.World.TimeOfDay)
+	}
+	if sess.World.SelectedItem != world.ItemSlotTorch {
+		t.Errorf("expected SelectedItem to persist through WarpDoor, got %v", sess.World.SelectedItem)
 	}
 }
 

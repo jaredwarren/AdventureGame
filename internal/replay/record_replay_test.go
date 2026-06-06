@@ -116,8 +116,8 @@ func newReplayWorld() *world.World {
 // to drive systems.Pipeline.
 func playTick(in services.Input, w *world.World, pipe *systems.Pipeline) ([]systems.Event, error) {
 	if in.JustPressed(services.ActionAttack) && w.Player.SwingCD == 0 {
-		w.Player.Swing = 10
-		w.Player.SwingCD = 18
+		w.Player.Swing = 8
+		w.Player.SwingCD = 12
 	}
 	return pipe.Tick(w, 1.0/60.0)
 }

@@ -242,10 +242,84 @@ func (r *Renderer) DrawWorld(w *world.World) {
 	pr := w.PlayerRect()
 	r.drawCharacter(float32(pr.X-ox), float32(pr.Y-oy), float32(pr.W), float32(pr.H), w.Player.Dir, true, false)
 
-	if hb, ok := w.SwordHitbox(); ok {
-		vector.FillRect(screen,
-			float32(hb.X-ox), float32(hb.Y-oy), float32(hb.W), float32(hb.H),
-			color.RGBA{0xff, 0xff, 0xff, 0x80}, false)
+	// Draw sword swing animation and trail if swinging
+	if w.Player.Swing > 0 {
+		var baseAngle float64
+		switch w.Player.Dir {
+		case world.DirDown:
+			baseAngle = math.Pi / 2
+		case world.DirUp:
+			baseAngle = -math.Pi / 2
+		case world.DirLeft:
+			baseAngle = math.Pi
+		default: // DirRight
+			baseAngle = 0
+		}
+
+		t := float64(8-w.Player.Swing) / 7.0
+		const sweep = 1.1
+		angle := baseAngle - sweep + t*2.0*sweep
+
+		// Draw motion blur trail
+		const numTrails = 4
+		const step = 0.12
+		for i := numTrails; i > 0; i-- {
+			trailAngle := angle - float64(i)*step
+			if trailAngle >= baseAngle-sweep {
+				trailAlpha := float32(0.12) * float32(numTrails-i+1) / float32(numTrails)
+				cos := float32(math.Cos(trailAngle))
+				sin := float32(math.Sin(trailAngle))
+				vector.StrokeLine(screen,
+					float32(pr.X-ox+pr.W*0.5)+4*cos, float32(pr.Y-oy+pr.H*0.5)+4*sin,
+					float32(pr.X-ox+pr.W*0.5)+17*cos, float32(pr.Y-oy+pr.H*0.5)+17*sin,
+					1.5, color.RGBA{0xa0, 0xe0, 0xff, uint8(255 * trailAlpha)}, true)
+			}
+		}
+
+		// Draw main sword
+		cx := float32(pr.X - ox + pr.W*0.5)
+		cy := float32(pr.Y - oy + pr.H*0.5)
+		drawSwordAt(screen, cx, cy, angle, 1.0)
+	}
+
+	// Draw torch swing animation and trail if swinging
+	if w.Player.TorchSwing > 0 {
+		var baseAngle float64
+		switch w.Player.Dir {
+		case world.DirDown:
+			baseAngle = math.Pi / 2
+		case world.DirUp:
+			baseAngle = -math.Pi / 2
+		case world.DirLeft:
+			baseAngle = math.Pi
+		default: // DirRight
+			baseAngle = 0
+		}
+
+		t := float64(8-w.Player.TorchSwing) / 7.0
+		const sweep = 1.1
+		angle := baseAngle - sweep + t*2.0*sweep
+
+		// Draw flaming motion blur trail
+		const numTrails = 4
+		const step = 0.12
+		for i := numTrails; i > 0; i-- {
+			trailAngle := angle - float64(i)*step
+			if trailAngle >= baseAngle-sweep {
+				trailAlpha := float32(0.12) * float32(numTrails-i+1) / float32(numTrails)
+				cos := float32(math.Cos(trailAngle))
+				sin := float32(math.Sin(trailAngle))
+				vector.StrokeLine(screen,
+					float32(pr.X-ox+pr.W*0.5)+4*cos, float32(pr.Y-oy+pr.H*0.5)+4*sin,
+					float32(pr.X-ox+pr.W*0.5)+15*cos, float32(pr.Y-oy+pr.H*0.5)+15*sin,
+					2.0, color.RGBA{0xff, 0x70, 0x00, uint8(255 * trailAlpha)}, true)
+			}
+		}
+
+		// Draw main torch
+		cx := float32(pr.X - ox + pr.W*0.5)
+		cy := float32(pr.Y - oy + pr.H*0.5)
+		drawTorchAt(screen, cx, cy, angle, 1.0, w.Tick)
 	}
 
 	if w.IsEditor {
@@ -533,38 +607,43 @@ func (r *Renderer) drawShrine(sh world.Shrine, ox, oy float64, tick int) {
 	r.FillRect(sx+2, sy+shh-13, sw-4, 2, color.RGBA{0x90, 0x90, 0x98, 0xff})
 	r.FillRect(sx+2, sy+shh-13, sw-4, 1, color.RGBA{0xc0, 0xc0, 0xc8, 0xff}) // Top lip highlight
 
+	if !sh.Active {
+		return
+	}
+
 	// Floating Crystal Animation (sine wave hover)
 	offsetY := float32(math.Sin(float64(tick)*0.08) * 1.5)
 	cy := sy + 2 + offsetY // center of floating area
+	cx := sx + sw*0.5
 
 	// Soft aura glow (behind crystal)
-	vector.FillCircle(r.screen, sx+8, cy+1, 5, color.RGBA{0x00, 0xe0, 0xff, 0x33}, true)
-	vector.FillCircle(r.screen, sx+8, cy+1, 3, color.RGBA{0x00, 0xe0, 0xff, 0x55}, true)
+	vector.FillCircle(r.screen, cx, cy+1, 5, color.RGBA{0x00, 0xe0, 0xff, 0x33}, true)
+	vector.FillCircle(r.screen, cx, cy+1, 3, color.RGBA{0x00, 0xe0, 0xff, 0x55}, true)
 
 	// Draw diamond crystal path
 	var path vector.Path
-	path.MoveTo(sx+8, cy-4)
-	path.LineTo(sx+11, cy+1)
-	path.LineTo(sx+8, cy+6)
-	path.LineTo(sx+5, cy+1)
+	path.MoveTo(cx, cy-4)
+	path.LineTo(cx+3, cy+1)
+	path.LineTo(cx, cy+6)
+	path.LineTo(cx-3, cy+1)
 	path.Close()
 	drawPath(r.screen, &path, color.RGBA{0x00, 0xb0, 0xe0, 0xff}, true, 0)
 	drawPath(r.screen, &path, color.RGBA{0x00, 0xe0, 0xff, 0xff}, false, 1.0)
 
 	// Core reflection: small inner white diamond
 	var corePath vector.Path
-	corePath.MoveTo(sx+8, cy-2)
-	corePath.LineTo(sx+9.5, cy+1)
-	corePath.LineTo(sx+8, cy+4)
-	corePath.LineTo(sx+6.5, cy+1)
+	corePath.MoveTo(cx, cy-2)
+	corePath.LineTo(cx+1.5, cy+1)
+	corePath.LineTo(cx, cy+4)
+	corePath.LineTo(cx-1.5, cy+1)
 	corePath.Close()
 	drawPath(r.screen, &corePath, color.RGBA{0xe0, 0xfb, 0xff, 0xff}, true, 0)
 
 	// Floating spark pixels (magic glow)
 	sparkOffset1 := float32(math.Sin(float64(tick)*0.05) * 4)
 	sparkOffset2 := float32(math.Cos(float64(tick)*0.06) * 4)
-	r.FillRect(sx+3+sparkOffset1, cy-3+sparkOffset2, 1, 1, color.RGBA{0x00, 0xff, 0xff, 0xbb})
-	r.FillRect(sx+sw-4-sparkOffset2, cy-1-sparkOffset1, 1, 1, color.RGBA{0x00, 0xff, 0xff, 0x99})
+	r.FillRect(cx-5+sparkOffset1, cy-3+sparkOffset2, 1, 1, color.RGBA{0x00, 0xff, 0xff, 0xbb})
+	r.FillRect(cx+4-sparkOffset2, cy-1-sparkOffset1, 1, 1, color.RGBA{0x00, 0xff, 0xff, 0x99})
 }
 
 func (r *Renderer) drawCharacter(x, y, w, h float32, dir world.Dir, isPlayer bool, isBoss bool) {
@@ -611,5 +690,94 @@ func (r *Renderer) drawCharacter(x, y, w, h float32, dir world.Dir, isPlayer boo
 		r.FillRect(x+w-4, y+4, 2, 2, eyeCol)
 		r.FillRect(x+w-4, y+5, 1, 1, pupilCol)
 	}
+}
+
+func drawSwordAt(screen *ebiten.Image, cx, cy float32, angle float64, alpha float32) {
+	cos := float32(math.Cos(angle))
+	sin := float32(math.Sin(angle))
+
+	perpCos := -sin
+	perpSin := cos
+
+	bladeCol := color.RGBA{0xd8, 0xdf, 0xe5, uint8(255 * alpha)}
+	bladeEdgeCol := color.RGBA{0xff, 0xff, 0xff, uint8(255 * alpha)}
+	guardCol := color.RGBA{0xd8, 0xa0, 0x20, uint8(255 * alpha)}
+	handleCol := color.RGBA{0x5c, 0x3a, 0x21, uint8(255 * alpha)}
+	pommelCol := color.RGBA{0x3e, 0x27, 0x16, uint8(255 * alpha)}
+
+	const handleStart = 2.0
+	const handleEnd = -2.0
+	const guardDist = 3.0
+	const bladeEnd = 16.0
+
+	// Draw Handle (grip)
+	vector.StrokeLine(screen,
+		cx+handleStart*cos, cy+handleStart*sin,
+		cx+handleEnd*cos, cy+handleEnd*sin,
+		1.5, handleCol, true)
+
+	// Draw Pommel
+	vector.FillCircle(screen, cx+handleEnd*cos, cy+handleEnd*sin, 1.2, pommelCol, true)
+
+	// Draw Crossguard
+	const guardHalfWidth = 4.0
+	vector.StrokeLine(screen,
+		cx+guardDist*cos-guardHalfWidth*perpCos, cy+guardDist*sin-guardHalfWidth*perpSin,
+		cx+guardDist*cos+guardHalfWidth*perpCos, cy+guardDist*sin+guardHalfWidth*perpSin,
+		1.8, guardCol, true)
+
+	// Draw Blade
+	vector.StrokeLine(screen,
+		cx+guardDist*cos, cy+guardDist*sin,
+		cx+bladeEnd*cos, cy+bladeEnd*sin,
+		2.2, bladeCol, true)
+
+	// Draw Blade edge highlight
+	vector.StrokeLine(screen,
+		cx+guardDist*cos+0.5*perpCos, cy+guardDist*sin+0.5*perpSin,
+		cx+bladeEnd*cos, cy+bladeEnd*sin,
+		1.0, bladeEdgeCol, true)
+}
+
+func drawTorchAt(screen *ebiten.Image, cx, cy float32, angle float64, alpha float32, tick int) {
+	cos := float32(math.Cos(angle))
+	sin := float32(math.Sin(angle))
+
+	handleCol := color.RGBA{0x8b, 0x5a, 0x2b, uint8(255 * alpha)}
+	tipCol := color.RGBA{0x4a, 0x4a, 0x4a, uint8(255 * alpha)}
+	flameCol := color.RGBA{0xff, 0x50, 0x00, uint8(230 * alpha)}
+	flameCoreCol := color.RGBA{0xff, 0xd0, 0x00, uint8(255 * alpha)}
+
+	const handleStart = 2.0
+	const handleEnd = -2.0
+	const tipStart = 2.0
+	const tipEnd = 5.0
+	const flameEnd = 13.0
+
+	// Draw Handle (grip)
+	vector.StrokeLine(screen,
+		cx+handleStart*cos, cy+handleStart*sin,
+		cx+handleEnd*cos, cy+handleEnd*sin,
+		1.5, handleCol, true)
+
+	// Draw tip / metal casing
+	vector.StrokeLine(screen,
+		cx+tipStart*cos, cy+tipStart*sin,
+		cx+tipEnd*cos, cy+tipEnd*sin,
+		2.2, tipCol, true)
+
+	// Draw flame (dynamic length based on tick/wobble)
+	flicker := float32(math.Sin(float64(tick)*0.45)) * 1.5
+	actualFlameEnd := flameEnd + flicker
+	vector.StrokeLine(screen,
+		cx+tipEnd*cos, cy+tipEnd*sin,
+		cx+actualFlameEnd*cos, cy+actualFlameEnd*sin,
+		3.0, flameCol, true)
+
+	// Draw flame core
+	vector.StrokeLine(screen,
+		cx+tipEnd*cos, cy+tipEnd*sin,
+		cx+(actualFlameEnd-3.0)*cos, cy+(actualFlameEnd-3.0)*sin,
+		1.5, flameCoreCol, true)
 }
 

@@ -53,6 +53,10 @@ type Session struct {
 	// OpenedLockTiles records GIDLock tiles opened with a key; keys from
 	// world.MapTilePersistKey, mirrored into save.OpenedLockTileKeys.
 	OpenedLockTiles map[string]struct{}
+
+	// ActivatedShrines records Tiled shrine keys already activated this run;
+	// keys from world.PersistentShrineSaveKey, mirrored into save.GameSave.ActivatedShrines.
+	ActivatedShrines map[string]struct{}
 }
 
 // MarkPersistentPickupCollected records a consumed persistent pickup (no-op if key empty).
@@ -75,6 +79,7 @@ func (s *Session) ClearPersistedProgress() {
 	s.CollectedPersistentPickups = nil
 	s.DestroyedTiles = nil
 	s.OpenedLockTiles = nil
+	s.ActivatedShrines = nil
 }
 
 // MarkDestroyedTile records a tile destroyed by any damage source
@@ -98,6 +103,17 @@ func (s *Session) MarkOpenedLockTile(key string) {
 		s.OpenedLockTiles = make(map[string]struct{})
 	}
 	s.OpenedLockTiles[key] = struct{}{}
+}
+
+// MarkShrineActivated records an activated shrine (no-op if key empty).
+func (s *Session) MarkShrineActivated(key string) {
+	if s == nil || key == "" {
+		return
+	}
+	if s.ActivatedShrines == nil {
+		s.ActivatedShrines = make(map[string]struct{})
+	}
+	s.ActivatedShrines[key] = struct{}{}
 }
 
 // persistentPickupKeySet returns a copy of keys suitable for BuildFromTiled, or nil if empty.
