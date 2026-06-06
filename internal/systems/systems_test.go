@@ -387,3 +387,25 @@ func TestTimersSystem_FlamePlayerContactDamage(t *testing.T) {
 	}
 }
 
+func TestPickupSystem_ChestsAreIgnored(t *testing.T) {
+	w := newTestWorld()
+	p := world.NewPickup(world.NoEntity, w.Player.X+2, w.Player.Y+2, world.PickupSmallKey)
+	p.PersistentSaveKey = "testmap:1"
+	w.Pickups = []world.Pickup{p}
+
+	var bus systems.EventBus
+	if err := (systems.PickupSystem{}).Update(w, &bus, 0); err != nil {
+		t.Fatalf("PickupSystem returned %v", err)
+	}
+
+	if w.SmallKey != 0 {
+		t.Errorf("SmallKey = %d, want 0 (chest should not be collected automatically)", w.SmallKey)
+	}
+	if w.Pickups[0].Gone || w.Pickups[0].Opened {
+		t.Errorf("chest pickup was modified: %+v", w.Pickups[0])
+	}
+	if bus.Len() != 0 {
+		t.Errorf("expected 0 events, got %d", bus.Len())
+	}
+}
+

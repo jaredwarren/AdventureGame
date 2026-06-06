@@ -42,8 +42,11 @@ func TestBuildFromTiled_SkipsPersistentPickupWhenCollected(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(w.Pickups) != 0 {
-		t.Fatalf("expected persistent pickup skipped, got %d pickups", len(w.Pickups))
+	if len(w.Pickups) != 1 {
+		t.Fatalf("expected 1 persistent pickup to be spawned, got %d", len(w.Pickups))
+	}
+	if !w.Pickups[0].Opened {
+		t.Errorf("expected persistent pickup to be Opened = true")
 	}
 }
 

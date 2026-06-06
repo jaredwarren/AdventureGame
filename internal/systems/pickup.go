@@ -26,7 +26,7 @@ func (PickupSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 	pr := w.Player.Rect()
 	for i := range w.Pickups {
 		p := &w.Pickups[i]
-		if p.Gone {
+		if p.Gone || p.Opened || p.PersistentSaveKey != "" {
 			continue
 		}
 		if !pr.Overlaps(p.Rect()) {

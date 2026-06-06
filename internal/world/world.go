@@ -64,8 +64,9 @@ type Pickup struct {
 	Transform
 	Hitbox
 
-	Kind PickupKind
-	Gone bool // set true when consumed; kept in the slice for stable indices
+	Kind   PickupKind
+	Gone   bool // set true when consumed; kept in the slice for stable indices
+	Opened bool // set true when chest is opened
 
 	// PersistentSaveKey is non-empty when this pickup was authored with
 	// persistent=true in Tiled; format from PersistentPickupSaveKey. Consumed
@@ -155,6 +156,7 @@ type World struct {
 	Doors          []Door
 	Shrines        []Shrine
 	Pickups        []Pickup
+	IsEditor       bool // set true when running in editor mode
 	Enemies        []Enemy
 
 	Player   Player
@@ -273,19 +275,32 @@ func (w *World) RectOverlapsAnyLiveEnemy(r geom.Rect) bool {
 	return false
 }
 
-// SlidePlayerAABB slides the player's would-be AABB against solids and live
-// enemies (no enemy-enemy blocking here).
+// RectOverlapsAnyClosedChest reports whether r overlaps any closed chest pickup.
+func (w *World) RectOverlapsAnyClosedChest(r geom.Rect) bool {
+	for i := range w.Pickups {
+		p := &w.Pickups[i]
+		if p.PersistentSaveKey != "" && !p.Opened && !p.Gone {
+			if r.Overlaps(p.Rect()) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// SlidePlayerAABB slides the player's would-be AABB against solids, live
+// enemies, and closed chests (no enemy-enemy blocking here).
 func (w *World) SlidePlayerAABB(x, y, ww, hh, dx, dy float64) (float64, float64) {
 	return slideAABBAgnostic(x, y, ww, hh, dx, dy, func(r geom.Rect) bool {
-		return w.RectHitsSolid(r) || w.RectOverlapsAnyLiveEnemy(r)
+		return w.RectHitsSolid(r) || w.RectOverlapsAnyLiveEnemy(r) || w.RectOverlapsAnyClosedChest(r)
 	})
 }
 
-// SlideEnemyAABB slides an enemy AABB against solids and the player hitbox.
+// SlideEnemyAABB slides an enemy AABB against solids, the player hitbox, and closed chests.
 func (w *World) SlideEnemyAABB(x, y, ww, hh, dx, dy float64) (float64, float64) {
 	pr := w.PlayerRect()
 	return slideAABBAgnostic(x, y, ww, hh, dx, dy, func(r geom.Rect) bool {
-		return w.RectHitsSolid(r) || r.Overlaps(pr)
+		return w.RectHitsSolid(r) || r.Overlaps(pr) || w.RectOverlapsAnyClosedChest(r)
 	})
 }
 

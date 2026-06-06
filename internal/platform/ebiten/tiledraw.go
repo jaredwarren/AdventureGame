@@ -16,7 +16,7 @@ import (
 
 // Shared palette used across tile draw functions.
 var (
-	tileGrassColor     = color.RGBA{0x2b, 0x4a, 0x2b, 0xff}
+	tileGrassColor     = color.RGBA{0x55, 0x88, 0x55, 0xff}
 	tileWaterColor     = color.RGBA{0x2a, 0x4a, 0x8a, 0xff}
 	tileShoreLineColor = color.RGBA{0xe0, 0xd0, 0xa0, 0xff}
 )
@@ -39,7 +39,7 @@ var tileDrawers = map[int]func(dst *ebiten.Image, x, y, w, h float32){
 
 	world.GIDWall: func(dst *ebiten.Image, x, y, w, h float32) {
 		vector.FillRect(dst, x, y, w, h, color.RGBA{0x40, 0x40, 0x50, 0xff}, false)
-		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x60, 0x60, 0x70, 0xff}, false)
+		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x20, 0x20, 0x28, 0xff}, false)
 		vector.StrokeLine(dst, x, y+h*0.5, x+w, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
 		vector.StrokeLine(dst, x+w*0.5, y, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
 		vector.StrokeLine(dst, x+w*0.25, y+h*0.5, x+w*0.25, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff}, false)
@@ -76,9 +76,9 @@ var tileDrawers = map[int]func(dst *ebiten.Image, x, y, w, h float32){
 	},
 
 	world.GIDFloor2: func(dst *ebiten.Image, x, y, w, h float32) {
-		vector.FillRect(dst, x, y, w, h, color.RGBA{0x3a, 0x3a, 0x44, 0xff}, false)
-		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x4a, 0x4a, 0x54, 0xff}, false)
-		vector.StrokeRect(dst, x+w*0.25, y+h*0.25, w*0.5, h*0.5, 1, color.RGBA{0x2a, 0x2a, 0x34, 0xff}, false)
+		vector.FillRect(dst, x, y, w, h, color.RGBA{0x50, 0x50, 0x5c, 0xff}, false)
+		vector.StrokeRect(dst, x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x65, 0x65, 0x75, 0xff}, false)
+		vector.StrokeRect(dst, x+w*0.25, y+h*0.25, w*0.5, h*0.5, 1, color.RGBA{0x3c, 0x3c, 0x46, 0xff}, false)
 	},
 
 	world.GIDDirtPath: func(dst *ebiten.Image, x, y, w, h float32) {

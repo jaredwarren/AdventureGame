@@ -101,7 +101,7 @@ func (d TileDef) ResolvedDestroyedGID() int {
 
 var tileDefs = map[int]TileDef{
 	GIDEmpty:   {GID: GIDEmpty, Name: "empty", Solid: false, SwatchColor: color.RGBA{0x00, 0x00, 0x00, 0xff}},
-	GIDGrass:   {GID: GIDGrass, Name: "grass", Solid: false, FloorWeight: 0.58, SwatchColor: color.RGBA{0x2b, 0x4a, 0x2b, 0xff}},
+	GIDGrass:   {GID: GIDGrass, Name: "grass", Solid: false, FloorWeight: 0.58, SwatchColor: color.RGBA{0x55, 0x88, 0x55, 0xff}},
 	GIDWall:    {GID: GIDWall, Name: "wall", Solid: true, SwatchColor: color.RGBA{0x40, 0x40, 0x50, 0xff}},
 	GIDCracked: {GID: GIDCracked, Name: "cracked", DamageKinds: []DamageKind{DamageBomb}, SwatchColor: color.RGBA{0x6b, 0x4a, 0x2a, 0xff}},
 	GIDDoor:    {GID: GIDDoor, Name: "door", Solid: false, SwatchColor: color.RGBA{0x3a, 0x5a, 0x3a, 0xff}},
@@ -109,7 +109,7 @@ var tileDefs = map[int]TileDef{
 	// two GIDs if you want both barriers and walkable puddles.
 	GIDWater:  {GID: GIDWater, Name: "water", Solid: true, FloorWeight: 0, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}},
 	GIDLock:   {GID: GIDLock, Name: "lock", OpenableByKey: true, SwatchColor: color.RGBA{0x6a, 0x2a, 0x7a, 0xff}},
-	GIDFloor2:   {GID: GIDFloor2, Name: "floor2", Solid: false, FloorWeight: 0.42, SwatchColor: color.RGBA{0x3a, 0x3a, 0x44, 0xff}},
+	GIDFloor2:   {GID: GIDFloor2, Name: "floor2", Solid: false, FloorWeight: 0.42, SwatchColor: color.RGBA{0x50, 0x50, 0x5c, 0xff}},
 	GIDDirtPath: {GID: GIDDirtPath, Name: "dirt_path", Solid: false, FloorWeight: 0.3, SwatchColor: color.RGBA{0x8b, 0x6a, 0x3a, 0xff}},
 	GIDTree:     {GID: GIDTree, Name: "tree", DamageKinds: []DamageKind{DamageFire}, SwatchColor: color.RGBA{0x2d, 0x5a, 0x2a, 0xff}},
 

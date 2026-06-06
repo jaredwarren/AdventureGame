@@ -220,7 +220,15 @@ func (r *Renderer) DrawWorld(w *world.World) {
 		if p.Gone {
 			continue
 		}
-		r.drawPickup(p, ox, oy)
+		if w.IsEditor || p.PersistentSaveKey == "" {
+			r.drawPickup(p, ox, oy)
+		} else {
+			if p.Opened {
+				r.drawOpenedChest(p, ox, oy)
+			} else {
+				r.drawClosedChest(p, ox, oy)
+			}
+		}
 	}
 
 	for _, e := range w.Enemies {
@@ -340,15 +348,12 @@ func (r *Renderer) fallbackTile(gid int, wx, wy float32) {
 	vector.FillRect(r.screen, wx, wy, world.TileSize, world.TileSize, c, false)
 }
 
-// drawPickup renders one pickup entity using the pickup atlas. (ox,oy) are
-// the camera offsets; (p.X,p.Y) is world space.
-func (r *Renderer) drawPickup(p world.Pickup, ox, oy float64) {
-	px := float32(p.X - ox)
-	py := float32(p.Y - oy)
-	w := float32(p.W)
-	h := float32(p.H)
-
-	switch p.Kind {
+// DrawPickupScreen draws one pickup kind in screen space at (px, py) with size (w, h).
+func (r *Renderer) DrawPickupScreen(kind world.PickupKind, px, py, w, h float32) {
+	if r.screen == nil {
+		return
+	}
+	switch kind {
 	case world.PickupCoin:
 		cx, cy := px+w*0.5, py+h*0.5
 		rad := w * 0.5
@@ -420,6 +425,59 @@ func (r *Renderer) drawPickup(p world.Pickup, ox, oy float64) {
 		// Fallback
 		r.pickupFallback(float64(px), float64(py))
 	}
+}
+
+// drawPickup renders one pickup entity using the pickup atlas. (ox,oy) are
+// the camera offsets; (p.X,p.Y) is world space.
+func (r *Renderer) drawPickup(p world.Pickup, ox, oy float64) {
+	px := float32(p.X - ox)
+	py := float32(p.Y - oy)
+	r.DrawPickupScreen(p.Kind, px, py, float32(p.W), float32(p.H))
+}
+
+func (r *Renderer) drawClosedChest(p world.Pickup, ox, oy float64) {
+	px := float32(p.X - ox)
+	py := float32(p.Y - oy)
+	w := float32(p.W)
+	h := float32(p.H)
+
+	// Main wood chest body: 12x12 brown box
+	r.FillRect(px, py, w, h, color.RGBA{0x5c, 0x3a, 0x21, 0xff})
+
+	// Outline/border in darker brown for definition
+	r.StrokeRect(px, py, w, h, 1, color.RGBA{0x3e, 0x27, 0x16, 0xff})
+
+	// Gold iron bands on the sides
+	r.FillRect(px+2, py, 2, h, color.RGBA{0xd8, 0xa0, 0x20, 0xff})
+	r.FillRect(px+8, py, 2, h, color.RGBA{0xd8, 0xa0, 0x20, 0xff})
+
+	// Gold latch/lock in the center
+	r.FillRect(px+5, py+4, 2, 4, color.RGBA{0xd8, 0xa0, 0x20, 0xff})
+	r.FillRect(px+5, py+6, 2, 2, color.RGBA{0x2b, 0x2b, 0x2b, 0xff}) // Dark keyhole
+}
+
+func (r *Renderer) drawOpenedChest(p world.Pickup, ox, oy float64) {
+	px := float32(p.X - ox)
+	py := float32(p.Y - oy)
+	w := float32(p.W)
+
+	// Wood box base: 12x7 brown box at the bottom
+	r.FillRect(px, py+5, w, 7, color.RGBA{0x5c, 0x3a, 0x21, 0xff})
+	r.StrokeRect(px, py+5, w, 7, 1, color.RGBA{0x3e, 0x27, 0x16, 0xff})
+
+	// Dark/black interior showing it's empty
+	r.FillRect(px+2, py+6, w-4, 4, color.RGBA{0x10, 0x10, 0x10, 0xff})
+
+	// Lid: drawn angled/above the chest base.
+	r.FillRect(px, py+1, w, 4, color.RGBA{0x5c, 0x3a, 0x21, 0xff})
+	r.StrokeRect(px, py+1, w, 4, 1, color.RGBA{0x3e, 0x27, 0x16, 0xff})
+
+	// Gold bands on the tilted lid
+	r.FillRect(px+2, py+1, 2, 4, color.RGBA{0xd8, 0xa0, 0x20, 0xff})
+	r.FillRect(px+8, py+1, 2, 4, color.RGBA{0xd8, 0xa0, 0x20, 0xff})
+
+	// Latch hanging down from the lid
+	r.FillRect(px+5, py+3, 2, 3, color.RGBA{0xd8, 0xa0, 0x20, 0xff})
 }
 
 func (r *Renderer) pickupFallback(px, py float64) {

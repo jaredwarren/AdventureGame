@@ -43,6 +43,10 @@ type PlayScene struct {
 
 	showItemMenu   bool
 	itemMenuCursor int
+
+	toastItem     world.PickupKind
+	toastTimer    int
+	toastMessage  string
 }
 
 func newPlayScene() Scene {
@@ -86,6 +90,10 @@ func (s *PlayScene) Update(ctx GameContext) error {
 	w := sess.World
 	if w == nil {
 		return nil
+	}
+
+	if s.toastTimer > 0 {
+		s.toastTimer--
 	}
 
 	// Item menu intercepts all gameplay input while open.
@@ -232,10 +240,68 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 	in := ctx.Input()
 	pr := w.PlayerRect()
 	if in.JustPressed(services.ActionInteract) {
-		for _, sh := range w.Shrines {
-			if pr.Overlaps(sh.Rect) {
-				ctx.Manager().Replace(SceneShop, nil)
+		chestOpened := false
+		for i := range w.Pickups {
+			p := &w.Pickups[i]
+			if p.PersistentSaveKey != "" && !p.Opened && !p.Gone && pr.OverlapsExpanded(p.Rect(), 2.0) {
+				p.Opened = true
+				chestOpened = true
+
+				// Collect the item!
+				switch p.Kind {
+				case world.PickupCoin:
+					w.Currency++
+				case world.PickupHeart:
+					if w.HP < w.MaxHP() {
+						w.HP++
+					}
+				case world.PickupBomb:
+					w.Bombs = world.ClampBombsCarry(w.Bombs + 1)
+				case world.PickupSmallKey:
+					w.SmallKey++
+				case world.PickupTorch:
+					w.HasTorch = true
+				}
+
+				// Persist save state
+				ctx.Session().MarkPersistentPickupCollected(p.PersistentSaveKey)
+
+				// Play pickup audio
+				ctx.Audio().Play("pickup.wav", 0.25)
+
+				// Spawn sparkle particles (same as systems.PickupEvent reaction)
+				px, py := p.X+p.W*0.5, p.Y+p.H*0.5
+				for k := 0; k < 8; k++ {
+					s.particles = append(s.particles, NewSparkleParticle(px, py))
+				}
+
+				// Set toast notification
+				s.toastItem = p.Kind
+				s.toastTimer = 150
+				switch p.Kind {
+				case world.PickupCoin:
+					s.toastMessage = "Found Gold Coin!"
+				case world.PickupHeart:
+					s.toastMessage = "Found Heart!"
+				case world.PickupBomb:
+					s.toastMessage = "Found Bomb!"
+				case world.PickupSmallKey:
+					s.toastMessage = "Found Small Key!"
+				case world.PickupTorch:
+					s.toastMessage = "Found Torch!"
+				default:
+					s.toastMessage = "Found Item!"
+				}
 				break
+			}
+		}
+
+		if !chestOpened {
+			for _, sh := range w.Shrines {
+				if pr.Overlaps(sh.Rect) {
+					ctx.Manager().Replace(SceneShop, nil)
+					break
+				}
 			}
 		}
 	}
@@ -541,6 +607,9 @@ func (s *PlayScene) Draw(ctx GameContext) {
 		}
 
 		DrawHUD(r, sess.World, sess)
+		if s.toastTimer > 0 {
+			s.drawToast(r)
+		}
 		if s.showItemMenu {
 			DrawItemMenu(r, sess.World, s.itemMenuCursor)
 		}
@@ -553,4 +622,36 @@ func (s *PlayScene) Draw(ctx GameContext) {
 	} else {
 		r.DrawText(0, 0, "no world")
 	}
+}
+
+func (s *PlayScene) drawToast(r services.Renderer) {
+	const bannerW float32 = 180
+	const bannerH float32 = 26
+	const screenW float32 = 320
+
+	bx := (screenW - bannerW) / 2
+	var by float32 = 16
+	var alpha float64 = 1.0
+
+	// micro-animations: slide in and fade out
+	if s.toastTimer > 135 { // first 15 frames (0.25s) slide down
+		t := float32(150-s.toastTimer) / 15.0 // 0 to 1
+		by = -bannerH + t*(16+bannerH)
+	} else if s.toastTimer < 15 { // last 15 frames (0.25s) fade out
+		alpha = float64(s.toastTimer) / 15.0
+	}
+
+	// Draw dark premium background with gold border
+	bgCol := color.RGBA{0x0b, 0x0c, 0x14, uint8(230 * alpha)}
+	borderCol := color.RGBA{0xd8, 0xa0, 0x20, uint8(255 * alpha)}
+	r.FillRect(bx, by, bannerW, bannerH, bgCol)
+	r.StrokeRect(bx, by, bannerW, bannerH, 1, borderCol)
+
+	// Draw item image on the left of the banner
+	// Size: 16x16, positioned at bx + 8, by + 5
+	r.DrawPickupScreen(s.toastItem, bx+8, by+5, 16, 16)
+
+	// Draw text to the right of the image
+	// Text x: bx + 32, y: by + 9
+	r.DrawText(int(bx)+32, int(by)+9, s.toastMessage)
 }

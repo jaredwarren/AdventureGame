@@ -90,12 +90,20 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 					saveKey = fmt.Sprintf("%s:name:%s", mapID, o.Name)
 				}
 			}
+			var opened bool
 			if saveKey != "" && collectedPersistent != nil {
 				if _, skip := collectedPersistent[saveKey]; skip {
-					break
+					opened = true
 				}
 			}
-			w.SpawnPickup(o.X, o.Y-defaultPickupHitbox, k, saveKey)
+			id := w.SpawnPickup(o.X, o.Y-defaultPickupHitbox, k, saveKey)
+			if opened {
+				for i := range w.Pickups {
+					if w.Pickups[i].ID == id {
+						w.Pickups[i].Opened = true
+					}
+				}
+			}
 		case "door":
 			tmap, _ := tiled.ObjProp(o, "target_map")
 			sx, _ := tiled.ObjProp(o, "spawn_x")

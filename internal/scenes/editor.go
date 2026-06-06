@@ -143,6 +143,7 @@ func (s *EditorScene) rebuild(ctx GameContext) {
 		return
 	}
 	s.errMsg = ""
+	w.IsEditor = true
 	w.HasAmbientLightOverride = true
 	w.AmbientLightOverride = 1.0
 	w.TimeOfDay = 3000

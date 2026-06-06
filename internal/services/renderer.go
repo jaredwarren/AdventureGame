@@ -50,6 +50,10 @@ type Renderer interface {
 	// tile atlas as DrawWorld when available, otherwise TileSwatchColor.
 	DrawTileScreen(gid int, x, y, dw, dh float32)
 
+	// DrawPickupScreen draws one pickup kind in screen space at (x, y)
+	// with size (dw, dh). Used for HUD and toast notifications.
+	DrawPickupScreen(kind world.PickupKind, x, y, dw, dh float32)
+
 	// DrawText renders a single line of debug-style text in screen space.
 	// (x, y) is the top-left in internal resolution pixels. Font, size, and
 	// color are renderer-defined (small pixel font today).
