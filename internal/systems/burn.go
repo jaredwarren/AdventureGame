@@ -26,13 +26,21 @@ func (BurnSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		if e.BurnCD > 0 {
 			continue
 		}
-		e.BurnCD = world.TorchBurnTickInterval
+		burnInterval := w.Player.TorchBurnInterval
+		if burnInterval <= 0 {
+			burnInterval = world.TorchBurnTickInterval
+		}
+		burnDamage := w.Player.TorchBurnDamage
+		if burnDamage <= 0 {
+			burnDamage = world.TorchBurnDamagePerTick
+		}
+		e.BurnCD = burnInterval
 		before := e.HP
-		w.DamageEnemy(i, world.TorchBurnDamagePerTick)
+		w.DamageEnemy(i, burnDamage)
 		killed := before > 0 && e.HP <= 0
 		tryPush(bus, HitEvent{
 			EnemyID:     e.ID,
-			Damage:      world.TorchBurnDamagePerTick,
+			Damage:      burnDamage,
 			Killed:      killed,
 			IsBoss:      e.IsBoss,
 			FromBurnDoT: true,

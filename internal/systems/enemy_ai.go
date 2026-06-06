@@ -120,9 +120,17 @@ func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
 		w.HP = 0
 	}
 	ecx, ecy := e.Center()
-	nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, ecx, ecy, playerContactKnockbackPx, true)
+	force := w.Player.PlayerKnockbackForce
+	if force <= 0 {
+		force = playerContactKnockbackPx
+	}
+	nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, ecx, ecy, force, true)
 	w.Player.X, w.Player.Y = nx, ny
-	w.Player.Invuln = invulnFrames
+	frames := w.Player.InvulnFrames
+	if frames <= 0 {
+		frames = invulnFrames
+	}
+	w.Player.Invuln = frames
 	e.HurtCD = enemyHurtCD
 	return true
 }

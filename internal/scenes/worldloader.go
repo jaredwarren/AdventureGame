@@ -105,7 +105,14 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 	if opts.CarryStatsFromSession && sess.World != nil {
 		w.HP = sess.World.HP
 		w.Currency = sess.World.Currency
-		w.Bombs = world.ClampBombsCarry(sess.World.Bombs)
+		w.Player.MaxBombs = sess.World.Player.MaxBombs
+		w.Player.BombFuseDuration = sess.World.Player.BombFuseDuration
+		w.Player.BombRadius = sess.World.Player.BombRadius
+		w.Player.BombDamage = sess.World.Player.BombDamage
+		w.Player.TorchBurnDuration = sess.World.Player.TorchBurnDuration
+		w.Player.TorchBurnInterval = sess.World.Player.TorchBurnInterval
+		w.Player.TorchBurnDamage = sess.World.Player.TorchBurnDamage
+		w.Bombs = w.ClampBombsCarry(sess.World.Bombs)
 		w.HasTorch = sess.World.HasTorch
 		w.TimeOfDay = sess.World.TimeOfDay
 		w.SelectedItem = sess.World.SelectedItem
@@ -117,6 +124,23 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 		w.Player.MaxTorchSwingCD = sess.World.Player.MaxTorchSwingCD
 		w.Player.TorchSwingActiveStart = sess.World.Player.TorchSwingActiveStart
 		w.Player.TorchSwingActiveEnd = sess.World.Player.TorchSwingActiveEnd
+		w.Player.SprintHeld = sess.World.Player.SprintHeld
+		w.Player.SprintExhausted = sess.World.Player.SprintExhausted
+		w.Player.BaseSpeed = sess.World.Player.BaseSpeed
+		w.Player.SprintSpeed = sess.World.Player.SprintSpeed
+		w.Player.DodgeStaminaCost = sess.World.Player.DodgeStaminaCost
+		w.Player.DodgeDuration = sess.World.Player.DodgeDuration
+		w.Player.DodgeMaxImpulse = sess.World.Player.DodgeMaxImpulse
+		w.Player.DodgeSpeed = sess.World.Player.DodgeSpeed
+		w.Player.StaminaRegenInterval = sess.World.Player.StaminaRegenInterval
+		w.Player.SwordReach = sess.World.Player.SwordReach
+		w.Player.SwordThickness = sess.World.Player.SwordThickness
+		w.Player.TorchReach = sess.World.Player.TorchReach
+		w.Player.TorchThickness = sess.World.Player.TorchThickness
+		w.Player.InvulnFrames = sess.World.Player.InvulnFrames
+		w.Player.EnemyKnockbackForce = sess.World.Player.EnemyKnockbackForce
+		w.Player.PlayerKnockbackForce = sess.World.Player.PlayerKnockbackForce
+		w.Player.PlayerHazardKnockbackForce = sess.World.Player.PlayerHazardKnockbackForce
 		if w.HP > w.MaxHP() {
 			w.HP = w.MaxHP()
 		}
@@ -243,7 +267,28 @@ func ApplySave(sess *Session, s *save.GameSave, cam *render.Camera) {
 		w.HP = w.MaxHP()
 	}
 	w.Currency = s.Currency
-	w.Bombs = world.ClampBombsCarry(s.Bombs)
+	if s.MaxBombs > 0 {
+		w.Player.MaxBombs = s.MaxBombs
+	}
+	if s.BombFuseDuration > 0 {
+		w.Player.BombFuseDuration = s.BombFuseDuration
+	}
+	if s.BombRadius > 0 {
+		w.Player.BombRadius = s.BombRadius
+	}
+	if s.BombDamage > 0 {
+		w.Player.BombDamage = s.BombDamage
+	}
+	if s.TorchBurnDuration > 0 {
+		w.Player.TorchBurnDuration = s.TorchBurnDuration
+	}
+	if s.TorchBurnInterval > 0 {
+		w.Player.TorchBurnInterval = s.TorchBurnInterval
+	}
+	if s.TorchBurnDamage > 0 {
+		w.Player.TorchBurnDamage = s.TorchBurnDamage
+	}
+	w.Bombs = w.ClampBombsCarry(s.Bombs)
 	w.HasTorch = s.HasTorch
 	w.Stats = StatsFromSave(s)
 	w.SmallKey = s.SmallKey
@@ -280,6 +325,53 @@ func ApplySave(sess *Session, s *save.GameSave, cam *render.Camera) {
 	if s.TorchSwingActiveEnd > 0 {
 		w.Player.TorchSwingActiveEnd = s.TorchSwingActiveEnd
 	}
+
+	if s.BaseSpeed > 0 {
+		w.Player.BaseSpeed = s.BaseSpeed
+	}
+	if s.SprintSpeed > 0 {
+		w.Player.SprintSpeed = s.SprintSpeed
+	}
+	if s.DodgeStaminaCost > 0 {
+		w.Player.DodgeStaminaCost = s.DodgeStaminaCost
+	}
+	if s.DodgeDuration > 0 {
+		w.Player.DodgeDuration = s.DodgeDuration
+	}
+	if s.DodgeMaxImpulse > 0 {
+		w.Player.DodgeMaxImpulse = s.DodgeMaxImpulse
+	}
+	if s.DodgeSpeed > 0 {
+		w.Player.DodgeSpeed = s.DodgeSpeed
+	}
+	if s.StaminaRegenInterval > 0 {
+		w.Player.StaminaRegenInterval = s.StaminaRegenInterval
+	}
+
+	if s.SwordReach > 0 {
+		w.Player.SwordReach = s.SwordReach
+	}
+	if s.SwordThickness > 0 {
+		w.Player.SwordThickness = s.SwordThickness
+	}
+	if s.TorchReach > 0 {
+		w.Player.TorchReach = s.TorchReach
+	}
+	if s.TorchThickness > 0 {
+		w.Player.TorchThickness = s.TorchThickness
+	}
+	if s.InvulnFrames > 0 {
+		w.Player.InvulnFrames = s.InvulnFrames
+	}
+	if s.EnemyKnockbackForce > 0 {
+		w.Player.EnemyKnockbackForce = s.EnemyKnockbackForce
+	}
+	if s.PlayerKnockbackForce > 0 {
+		w.Player.PlayerKnockbackForce = s.PlayerKnockbackForce
+	}
+	if s.PlayerHazardKnockbackForce > 0 {
+		w.Player.PlayerHazardKnockbackForce = s.PlayerHazardKnockbackForce
+	}
 }
 
 // BuildSave snapshots the current World + Session into a save payload. The
@@ -300,7 +392,7 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 		PlayerY:           w.Player.Y,
 		HP:                w.HP,
 		Currency:          w.Currency,
-		Bombs:             world.ClampBombsCarry(w.Bombs),
+		Bombs:             w.ClampBombsCarry(w.Bombs),
 		HasTorch:          w.HasTorch,
 		SmallKey:          w.SmallKey,
 		Vitality:          w.Stats.Vitality,
@@ -319,6 +411,28 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 		MaxTorchSwingCD:        w.Player.MaxTorchSwingCD,
 		TorchSwingActiveStart:  w.Player.TorchSwingActiveStart,
 		TorchSwingActiveEnd:    w.Player.TorchSwingActiveEnd,
+		BaseSpeed:             w.Player.BaseSpeed,
+		SprintSpeed:           w.Player.SprintSpeed,
+		DodgeStaminaCost:      w.Player.DodgeStaminaCost,
+		DodgeDuration:         w.Player.DodgeDuration,
+		DodgeMaxImpulse:       w.Player.DodgeMaxImpulse,
+		DodgeSpeed:            w.Player.DodgeSpeed,
+		StaminaRegenInterval:  w.Player.StaminaRegenInterval,
+		SwordReach:                 w.Player.SwordReach,
+		SwordThickness:             w.Player.SwordThickness,
+		TorchReach:                 w.Player.TorchReach,
+		TorchThickness:             w.Player.TorchThickness,
+		InvulnFrames:               w.Player.InvulnFrames,
+		EnemyKnockbackForce:        w.Player.EnemyKnockbackForce,
+		PlayerKnockbackForce:       w.Player.PlayerKnockbackForce,
+		PlayerHazardKnockbackForce: w.Player.PlayerHazardKnockbackForce,
+		MaxBombs:                   w.Player.MaxBombs,
+		BombFuseDuration:           w.Player.BombFuseDuration,
+		BombRadius:                 w.Player.BombRadius,
+		BombDamage:                 w.Player.BombDamage,
+		TorchBurnDuration:          w.Player.TorchBurnDuration,
+		TorchBurnInterval:          w.Player.TorchBurnInterval,
+		TorchBurnDamage:            w.Player.TorchBurnDamage,
 	}
 	if sess != nil && len(sess.CollectedPersistentPickups) > 0 {
 		keys := make([]string, 0, len(sess.CollectedPersistentPickups))

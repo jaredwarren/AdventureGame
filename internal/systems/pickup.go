@@ -41,7 +41,7 @@ func (PickupSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 				w.HP++
 			}
 		case world.PickupBomb:
-			w.Bombs = world.ClampBombsCarry(w.Bombs + 1)
+			w.Bombs = w.ClampBombsCarry(w.Bombs + 1)
 		case world.PickupSmallKey:
 			w.SmallKey++
 		case world.PickupTorch:

@@ -35,13 +35,17 @@ const (
 	ItemSlotTorch
 )
 
-// ClampBombsCarry clamps n to [0, MaxBombsCarry] for save load and pickups.
-func ClampBombsCarry(n int) int {
+// ClampBombsCarry clamps n to [0, MaxBombs] for save load and pickups.
+func (w *World) ClampBombsCarry(n int) int {
 	if n < 0 {
 		return 0
 	}
-	if n > MaxBombsCarry {
-		return MaxBombsCarry
+	maxB := w.Player.MaxBombs
+	if maxB <= 0 {
+		maxB = MaxBombsCarry
+	}
+	if n > maxB {
+		return maxB
 	}
 	return n
 }
@@ -142,6 +146,7 @@ type Player struct {
 	DodgeTimer             int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
 	Stamina                int // drained by sprint; refilled when not sprinting
 	SprintHeld             bool
+	SprintExhausted        bool
 	SwingDuration          int
 	MaxSwingCD             int
 	SwingActiveStart       int
@@ -150,6 +155,28 @@ type Player struct {
 	MaxTorchSwingCD        int
 	TorchSwingActiveStart  int
 	TorchSwingActiveEnd    int
+	BaseSpeed              float64
+	SprintSpeed            float64
+	DodgeStaminaCost       int
+	DodgeDuration          int
+	DodgeMaxImpulse        int
+	DodgeSpeed             float64
+	StaminaRegenInterval       int
+	SwordReach                 float64
+	SwordThickness             float64
+	TorchReach                 float64
+	TorchThickness             float64
+	InvulnFrames               int
+	EnemyKnockbackForce        float64
+	PlayerKnockbackForce       float64
+	PlayerHazardKnockbackForce float64
+	MaxBombs                   int
+	BombFuseDuration           int
+	BombRadius                 float64
+	BombDamage                 int
+	TorchBurnDuration          int
+	TorchBurnInterval          int
+	TorchBurnDamage            int
 }
 
 type World struct {
@@ -379,7 +406,7 @@ func (w *World) SetFacingFromMotion(dx, dy float64) {
 	}
 }
 
-func swordSwingHitbox(swing int, activeStart, activeEnd int, dir Dir, px, py float64) (geom.Rect, bool) {
+func swordSwingHitbox(swing int, activeStart, activeEnd int, reach, thick float64, dir Dir, px, py float64) (geom.Rect, bool) {
 	if swing <= 0 {
 		return geom.Rect{}, false
 	}
@@ -387,8 +414,6 @@ func swordSwingHitbox(swing int, activeStart, activeEnd int, dir Dir, px, py flo
 	if !active {
 		return geom.Rect{}, false
 	}
-	const reach = 14.0
-	const thick = 10.0
 	switch dir {
 	case DirDown:
 		return geom.Rect{X: px - thick*0.5, Y: py, W: thick, H: reach}, true
@@ -413,7 +438,15 @@ func (w *World) SwordHitbox() (geom.Rect, bool) {
 	if activeEnd <= 0 {
 		activeEnd = 7
 	}
-	return swordSwingHitbox(w.Player.Swing, activeStart, activeEnd, w.Player.Dir, px, py)
+	reach := w.Player.SwordReach
+	if reach <= 0 {
+		reach = 14.0
+	}
+	thick := w.Player.SwordThickness
+	if thick <= 0 {
+		thick = 10.0
+	}
+	return swordSwingHitbox(w.Player.Swing, activeStart, activeEnd, reach, thick, w.Player.Dir, px, py)
 }
 
 // TorchHitbox matches SwordHitbox timing/geometry but keys off TorchSwing.
@@ -428,7 +461,15 @@ func (w *World) TorchHitbox() (geom.Rect, bool) {
 	if activeEnd <= 0 {
 		activeEnd = 7
 	}
-	return swordSwingHitbox(w.Player.TorchSwing, activeStart, activeEnd, w.Player.Dir, px, py)
+	reach := w.Player.TorchReach
+	if reach <= 0 {
+		reach = 14.0
+	}
+	thick := w.Player.TorchThickness
+	if thick <= 0 {
+		thick = 10.0
+	}
+	return swordSwingHitbox(w.Player.TorchSwing, activeStart, activeEnd, reach, thick, w.Player.Dir, px, py)
 }
 
 // Rect returns the enemy's AABB using its Transform + Hitbox components.
@@ -496,11 +537,19 @@ func (w *World) IgniteEnemy(i int) {
 	if e.HP <= 0 {
 		return
 	}
-	if e.BurnTimer < TorchBurnDuration {
-		e.BurnTimer = TorchBurnDuration
+	burnDuration := w.Player.TorchBurnDuration
+	if burnDuration <= 0 {
+		burnDuration = TorchBurnDuration
+	}
+	burnInterval := w.Player.TorchBurnInterval
+	if burnInterval <= 0 {
+		burnInterval = TorchBurnTickInterval
+	}
+	if e.BurnTimer < burnDuration {
+		e.BurnTimer = burnDuration
 	}
 	if e.BurnCD <= 0 {
-		e.BurnCD = TorchBurnTickInterval
+		e.BurnCD = burnInterval
 	}
 }
 

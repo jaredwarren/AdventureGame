@@ -128,8 +128,16 @@ func (s *PlayScene) Update(ctx GameContext) error {
 				}
 				ecx, ecy := enemy.Center()
 				dist := math.Hypot(ecx-b.X, ecy-b.Y)
-				if dist <= 32.0 {
-					w.DamageEnemy(i, 4) // high damage
+				bombRadius := w.Player.BombRadius
+				if bombRadius <= 0 {
+					bombRadius = 32.0
+				}
+				bombDamage := w.Player.BombDamage
+				if bombDamage <= 0 {
+					bombDamage = 4
+				}
+				if dist <= bombRadius {
+					w.DamageEnemy(i, bombDamage) // high damage
 				}
 			}
 
@@ -271,7 +279,7 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 						w.HP++
 					}
 				case world.PickupBomb:
-					w.Bombs = world.ClampBombsCarry(w.Bombs + 1)
+					w.Bombs = w.ClampBombsCarry(w.Bombs + 1)
 				case world.PickupSmallKey:
 					w.SmallKey++
 				case world.PickupTorch:
@@ -335,10 +343,22 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 		}
 	}
 
-	if in.JustPressed(services.ActionDodge) && w.Player.Stamina >= 20 {
-		w.Player.Stamina -= 20
-		w.Player.DodgeTimer = 20
-		s.dodgeImpulse = 12
+	cost := w.Player.DodgeStaminaCost
+	if cost <= 0 {
+		cost = 20
+	}
+	if in.JustPressed(services.ActionDodge) && w.Player.Stamina >= cost {
+		w.Player.Stamina -= cost
+		duration := w.Player.DodgeDuration
+		if duration <= 0 {
+			duration = 20
+		}
+		w.Player.DodgeTimer = duration
+		maxImpulse := w.Player.DodgeMaxImpulse
+		if maxImpulse <= 0 {
+			maxImpulse = 12
+		}
+		s.dodgeImpulse = maxImpulse
 	}
 }
 
@@ -369,7 +389,11 @@ func (s *PlayScene) tryDropBomb(ctx GameContext, w *world.World) {
 		}
 	}
 	w.Bombs--
-	s.bombs = append(s.bombs, &ActiveBomb{X: bx, Y: by, TX: tx, TY: ty, Timer: 90})
+	bombFuseDuration := w.Player.BombFuseDuration
+	if bombFuseDuration <= 0 {
+		bombFuseDuration = 90
+	}
+	s.bombs = append(s.bombs, &ActiveBomb{X: bx, Y: by, TX: tx, TY: ty, Timer: bombFuseDuration})
 	ctx.Audio().Play("swing.wav", 0.15)
 }
 
@@ -423,22 +447,45 @@ func (s *PlayScene) handleItemMenu(ctx GameContext, w *world.World) {
 // both once Player.Sprinting is modeled explicitly.
 func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 	in := ctx.Input()
+	ax, ay := in.Axis2D()
+	isMoving := ax != 0 || ay != 0
+	isSprintHeld := in.IsDown(services.ActionSprint)
 
-	const baseSpd = 1.35
+	w.Player.SprintHeld = isSprintHeld
+
+	if !isSprintHeld {
+		w.Player.SprintExhausted = false
+	}
+
+	baseSpd := w.Player.BaseSpeed
+	if baseSpd <= 0 {
+		baseSpd = 1.35
+	}
 	spd := baseSpd
-	if in.IsDown(services.ActionSprint) && w.Player.Stamina > 0 {
-		spd = 2.15
+
+	isSprinting := isSprintHeld && isMoving && !w.Player.SprintExhausted && w.Player.Stamina > 0
+
+	if isSprinting {
+		sprintSpd := w.Player.SprintSpeed
+		if sprintSpd <= 0 {
+			sprintSpd = 2.15
+		}
+		spd = sprintSpd
 		w.Player.Stamina--
-		if w.Player.Stamina < 0 {
+		if w.Player.Stamina <= 0 {
 			w.Player.Stamina = 0
+			w.Player.SprintExhausted = true
 		}
 	} else if w.Player.Stamina < w.MaxStamina() {
-		if w.Tick%2 == 0 {
+		interval := w.Player.StaminaRegenInterval
+		if interval <= 0 {
+			interval = 2
+		}
+		if w.Tick%interval == 0 {
 			w.Player.Stamina++
 		}
 	}
 
-	ax, ay := in.Axis2D()
 	dx := float64(ax) * spd
 	dy := float64(ay) * spd
 	if dx != 0 || dy != 0 {
@@ -447,15 +494,19 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 
 	if s.dodgeImpulse > 0 {
 		s.dodgeImpulse--
+		dodgeSpd := w.Player.DodgeSpeed
+		if dodgeSpd <= 0 {
+			dodgeSpd = 2.8
+		}
 		switch w.Player.Dir {
 		case world.DirDown:
-			dy += 2.8
+			dy += dodgeSpd
 		case world.DirUp:
-			dy -= 2.8
+			dy -= dodgeSpd
 		case world.DirLeft:
-			dx -= 2.8
+			dx -= dodgeSpd
 		case world.DirRight:
-			dx += 2.8
+			dx += dodgeSpd
 		}
 	}
 
