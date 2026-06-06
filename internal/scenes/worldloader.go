@@ -36,9 +36,11 @@ type MapLoadOpts struct {
 	// Cam is passed to ApplySave when Save is applied (e.g. load-game
 	// shake preference).
 	Cam *render.Camera
-	// CarryStatsFromSession copies HP, currency, bombs, and stats from
-	// the outgoing Session.World (door transitions). When false, stats
-	// come from Save if set, otherwise progression defaults.
+	// CarryRunState applies portable run state after BuildFromTiled without
+	// changing player position (respawn, optional door carry).
+	CarryRunState *RunState
+	// CarryStatsFromSession copies run state from the outgoing Session.World.
+	// Prefer CarryRunState when the snapshot is already captured.
 	CarryStatsFromSession bool
 	// ReplacePersistedProgress, when true with a non-nil Save, replaces
 	// Session pickup + tile persistence (cracked walls, opened locks) from the save.
@@ -62,11 +64,17 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 		return fmt.Errorf("worldloader: parse %q: %w", mapID, err)
 	}
 
+	carry := opts.CarryRunState
+	if carry == nil && opts.CarryStatsFromSession && sess.World != nil {
+		rs := RunStateFromWorld(sess.World)
+		carry = &rs
+	}
+
 	st := progression.DefaultStats()
 	if opts.Save != nil {
 		st = StatsFromSave(opts.Save)
-	} else if opts.CarryStatsFromSession && sess.World != nil {
-		st = sess.World.Stats
+	} else if carry != nil {
+		st = carry.Stats
 	}
 
 	if opts.ReplacePersistedProgress {
@@ -85,48 +93,8 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 		return fmt.Errorf("worldloader: build %q: %w", mapID, err)
 	}
 
-	if opts.CarryStatsFromSession && sess.World != nil {
-		w.HP = sess.World.HP
-		w.Currency = sess.World.Currency
-		w.Player.MaxBombs = sess.World.Player.MaxBombs
-		w.Player.BombFuseDuration = sess.World.Player.BombFuseDuration
-		w.Player.BombRadius = sess.World.Player.BombRadius
-		w.Player.BombDamage = sess.World.Player.BombDamage
-		w.Player.TorchBurnDuration = sess.World.Player.TorchBurnDuration
-		w.Player.TorchBurnInterval = sess.World.Player.TorchBurnInterval
-		w.Player.TorchBurnDamage = sess.World.Player.TorchBurnDamage
-		w.Bombs = w.ClampBombsCarry(sess.World.Bombs)
-		w.HasTorch = sess.World.HasTorch
-		w.TimeOfDay = sess.World.TimeOfDay
-		w.SelectedItem = sess.World.SelectedItem
-		w.Player.SwingDuration = sess.World.Player.SwingDuration
-		w.Player.MaxSwingCD = sess.World.Player.MaxSwingCD
-		w.Player.SwingActiveStart = sess.World.Player.SwingActiveStart
-		w.Player.SwingActiveEnd = sess.World.Player.SwingActiveEnd
-		w.Player.TorchSwingDuration = sess.World.Player.TorchSwingDuration
-		w.Player.MaxTorchSwingCD = sess.World.Player.MaxTorchSwingCD
-		w.Player.TorchSwingActiveStart = sess.World.Player.TorchSwingActiveStart
-		w.Player.TorchSwingActiveEnd = sess.World.Player.TorchSwingActiveEnd
-		w.Player.SprintHeld = sess.World.Player.SprintHeld
-		w.Player.SprintExhausted = sess.World.Player.SprintExhausted
-		w.Player.BaseSpeed = sess.World.Player.BaseSpeed
-		w.Player.SprintSpeed = sess.World.Player.SprintSpeed
-		w.Player.DodgeStaminaCost = sess.World.Player.DodgeStaminaCost
-		w.Player.DodgeDuration = sess.World.Player.DodgeDuration
-		w.Player.DodgeMaxImpulse = sess.World.Player.DodgeMaxImpulse
-		w.Player.DodgeSpeed = sess.World.Player.DodgeSpeed
-		w.Player.StaminaRegenInterval = sess.World.Player.StaminaRegenInterval
-		w.Player.SwordReach = sess.World.Player.SwordReach
-		w.Player.SwordThickness = sess.World.Player.SwordThickness
-		w.Player.TorchReach = sess.World.Player.TorchReach
-		w.Player.TorchThickness = sess.World.Player.TorchThickness
-		w.Player.InvulnFrames = sess.World.Player.InvulnFrames
-		w.Player.EnemyKnockbackForce = sess.World.Player.EnemyKnockbackForce
-		w.Player.PlayerKnockbackForce = sess.World.Player.PlayerKnockbackForce
-		w.Player.PlayerHazardKnockbackForce = sess.World.Player.PlayerHazardKnockbackForce
-		if w.HP > w.MaxHP() {
-			w.HP = w.MaxHP()
-		}
+	if carry != nil && (opts.Save == nil || opts.Save.MapID != mapID) {
+		carry.ApplyTo(w)
 	}
 	w.DoorCooldown = 60
 
@@ -174,17 +142,22 @@ func WarpDoor(assets services.AssetCache, sess *Session, cam *render.Camera, d *
 	carry.PlayerX = px
 	carry.PlayerY = py
 
-	if err := EnterMap(assets, sess, target, MapLoadOpts{Save: carry, CarryStatsFromSession: true}); err != nil {
+	if err := EnterMap(assets, sess, target, MapLoadOpts{Save: carry}); err != nil {
 		return err
 	}
 	sess.World.DoorCooldown = 90
 	return nil
 }
 
-// Respawn is the current death handler: warp to field1 with partial HP. On
-// error the World is cleared (title screen state).
+// Respawn warps to field1 while preserving run progress (stats, currency,
+// keys, tuning). HP is set to half max afterward. On error the World is cleared.
 func Respawn(assets services.AssetCache, sess *Session) {
-	if err := OpenWorld(assets, sess, "field1", nil); err != nil {
+	var carry *RunState
+	if sess.World != nil {
+		rs := RunStateFromWorld(sess.World)
+		carry = &rs
+	}
+	if err := EnterMap(assets, sess, "field1", MapLoadOpts{CarryRunState: carry}); err != nil {
 		sess.World = nil
 		return
 	}
@@ -240,118 +213,11 @@ func ApplySave(sess *Session, s *save.GameSave, cam *render.Camera) {
 	if sess.World == nil || s == nil {
 		return
 	}
-	w := sess.World
-	w.Player.X = s.PlayerX
-	w.Player.Y = s.PlayerY
-	w.HP = s.HP
-	if w.HP > w.MaxHP() {
-		w.HP = w.MaxHP()
-	}
-	w.Currency = s.Currency
-	if s.MaxBombs > 0 {
-		w.Player.MaxBombs = s.MaxBombs
-	}
-	if s.BombFuseDuration > 0 {
-		w.Player.BombFuseDuration = s.BombFuseDuration
-	}
-	if s.BombRadius > 0 {
-		w.Player.BombRadius = s.BombRadius
-	}
-	if s.BombDamage > 0 {
-		w.Player.BombDamage = s.BombDamage
-	}
-	if s.TorchBurnDuration > 0 {
-		w.Player.TorchBurnDuration = s.TorchBurnDuration
-	}
-	if s.TorchBurnInterval > 0 {
-		w.Player.TorchBurnInterval = s.TorchBurnInterval
-	}
-	if s.TorchBurnDamage > 0 {
-		w.Player.TorchBurnDamage = s.TorchBurnDamage
-	}
-	w.Bombs = w.ClampBombsCarry(s.Bombs)
-	w.HasTorch = s.HasTorch
-	w.Stats = StatsFromSave(s)
-	w.SmallKey = s.SmallKey
-	if w.SmallKey < 0 {
-		w.SmallKey = 0
-	}
+	RunStateFromSave(s).ApplyTo(sess.World)
+	sess.World.Player.X = s.PlayerX
+	sess.World.Player.Y = s.PlayerY
 	if cam != nil {
 		cam.ReduceShake = s.ReduceScreenShake
-	}
-	w.TimeOfDay = s.TimeOfDay
-	w.SelectedItem = s.SelectedItem
-
-	if s.SwingDuration > 0 {
-		w.Player.SwingDuration = s.SwingDuration
-	}
-	if s.MaxSwingCD > 0 {
-		w.Player.MaxSwingCD = s.MaxSwingCD
-	}
-	if s.SwingActiveStart > 0 {
-		w.Player.SwingActiveStart = s.SwingActiveStart
-	}
-	if s.SwingActiveEnd > 0 {
-		w.Player.SwingActiveEnd = s.SwingActiveEnd
-	}
-	if s.TorchSwingDuration > 0 {
-		w.Player.TorchSwingDuration = s.TorchSwingDuration
-	}
-	if s.MaxTorchSwingCD > 0 {
-		w.Player.MaxTorchSwingCD = s.MaxTorchSwingCD
-	}
-	if s.TorchSwingActiveStart > 0 {
-		w.Player.TorchSwingActiveStart = s.TorchSwingActiveStart
-	}
-	if s.TorchSwingActiveEnd > 0 {
-		w.Player.TorchSwingActiveEnd = s.TorchSwingActiveEnd
-	}
-
-	if s.BaseSpeed > 0 {
-		w.Player.BaseSpeed = s.BaseSpeed
-	}
-	if s.SprintSpeed > 0 {
-		w.Player.SprintSpeed = s.SprintSpeed
-	}
-	if s.DodgeStaminaCost > 0 {
-		w.Player.DodgeStaminaCost = s.DodgeStaminaCost
-	}
-	if s.DodgeDuration > 0 {
-		w.Player.DodgeDuration = s.DodgeDuration
-	}
-	if s.DodgeMaxImpulse > 0 {
-		w.Player.DodgeMaxImpulse = s.DodgeMaxImpulse
-	}
-	if s.DodgeSpeed > 0 {
-		w.Player.DodgeSpeed = s.DodgeSpeed
-	}
-	if s.StaminaRegenInterval > 0 {
-		w.Player.StaminaRegenInterval = s.StaminaRegenInterval
-	}
-
-	if s.SwordReach > 0 {
-		w.Player.SwordReach = s.SwordReach
-	}
-	if s.SwordThickness > 0 {
-		w.Player.SwordThickness = s.SwordThickness
-	}
-	if s.TorchReach > 0 {
-		w.Player.TorchReach = s.TorchReach
-	}
-	if s.TorchThickness > 0 {
-		w.Player.TorchThickness = s.TorchThickness
-	}
-	if s.InvulnFrames > 0 {
-		w.Player.InvulnFrames = s.InvulnFrames
-	}
-	if s.EnemyKnockbackForce > 0 {
-		w.Player.EnemyKnockbackForce = s.EnemyKnockbackForce
-	}
-	if s.PlayerKnockbackForce > 0 {
-		w.Player.PlayerKnockbackForce = s.PlayerKnockbackForce
-	}
-	if s.PlayerHazardKnockbackForce > 0 {
-		w.Player.PlayerHazardKnockbackForce = s.PlayerHazardKnockbackForce
 	}
 }
 
@@ -363,57 +229,10 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 	if w == nil {
 		return nil
 	}
-	reduce := false
+	gs := RunStateFromWorld(w).ToGameSave(w.MapID, w.Player.X, w.Player.Y)
+	gs.Bombs = w.ClampBombsCarry(gs.Bombs)
 	if cam != nil {
-		reduce = cam.ReduceShake
-	}
-	gs := &save.GameSave{
-		MapID:             w.MapID,
-		PlayerX:           w.Player.X,
-		PlayerY:           w.Player.Y,
-		HP:                w.HP,
-		Currency:          w.Currency,
-		Bombs:             w.ClampBombsCarry(w.Bombs),
-		HasTorch:          w.HasTorch,
-		SmallKey:          w.SmallKey,
-		Vitality:          w.Stats.Vitality,
-		Resolve:           w.Stats.Resolve,
-		Might:             w.Stats.Might,
-		Wits:              w.Stats.Wits,
-		Fortune:           w.Stats.Fortune,
-		ReduceScreenShake: reduce,
-		TimeOfDay:         w.TimeOfDay,
-		SelectedItem:      w.SelectedItem,
-		SwingDuration:          w.Player.SwingDuration,
-		MaxSwingCD:             w.Player.MaxSwingCD,
-		SwingActiveStart:       w.Player.SwingActiveStart,
-		SwingActiveEnd:         w.Player.SwingActiveEnd,
-		TorchSwingDuration:     w.Player.TorchSwingDuration,
-		MaxTorchSwingCD:        w.Player.MaxTorchSwingCD,
-		TorchSwingActiveStart:  w.Player.TorchSwingActiveStart,
-		TorchSwingActiveEnd:    w.Player.TorchSwingActiveEnd,
-		BaseSpeed:             w.Player.BaseSpeed,
-		SprintSpeed:           w.Player.SprintSpeed,
-		DodgeStaminaCost:      w.Player.DodgeStaminaCost,
-		DodgeDuration:         w.Player.DodgeDuration,
-		DodgeMaxImpulse:       w.Player.DodgeMaxImpulse,
-		DodgeSpeed:            w.Player.DodgeSpeed,
-		StaminaRegenInterval:  w.Player.StaminaRegenInterval,
-		SwordReach:                 w.Player.SwordReach,
-		SwordThickness:             w.Player.SwordThickness,
-		TorchReach:                 w.Player.TorchReach,
-		TorchThickness:             w.Player.TorchThickness,
-		InvulnFrames:               w.Player.InvulnFrames,
-		EnemyKnockbackForce:        w.Player.EnemyKnockbackForce,
-		PlayerKnockbackForce:       w.Player.PlayerKnockbackForce,
-		PlayerHazardKnockbackForce: w.Player.PlayerHazardKnockbackForce,
-		MaxBombs:                   w.Player.MaxBombs,
-		BombFuseDuration:           w.Player.BombFuseDuration,
-		BombRadius:                 w.Player.BombRadius,
-		BombDamage:                 w.Player.BombDamage,
-		TorchBurnDuration:          w.Player.TorchBurnDuration,
-		TorchBurnInterval:          w.Player.TorchBurnInterval,
-		TorchBurnDamage:            w.Player.TorchBurnDamage,
+		gs.ReduceScreenShake = cam.ReduceShake
 	}
 	if sess != nil {
 		flattenMapsToSave(gs, sess.Maps)

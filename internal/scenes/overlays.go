@@ -78,6 +78,7 @@ func DrawHUD(r services.Renderer, w *world.World, sess *Session) {
 	r.FillRect(4, float32(y+12), float32(barW), 4, color.RGBA{0x30, 0x30, 0x40, 0xff})
 	r.FillRect(4, float32(y+12), fw, 4, color.RGBA{0x50, 0xa0, 0xff, 0xff})
 
+	r.DrawText(4, 208, fmt.Sprintf("map %s", w.MapID))
 	r.DrawText(4, 220, fmt.Sprintf("weekly %d", sess.WeeklySeed))
 }
 
