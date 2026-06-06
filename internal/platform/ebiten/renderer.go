@@ -416,82 +416,15 @@ func (r *Renderer) fallbackTile(gid int, wx, wy float32) {
 }
 
 // DrawPickupScreen draws one pickup kind in screen space at (px, py) with size (w, h).
-func (r *Renderer) DrawPickupScreen(kind world.PickupKind, px, py, w, h float32) {
+func (r *Renderer) DrawPickupScreen(kind *world.PickupKind, px, py, w, h float32) {
 	if r.screen == nil {
 		return
 	}
-	switch kind {
-	case world.PickupCoin:
-		cx, cy := px+w*0.5, py+h*0.5
-		rad := w * 0.5
-		// Body: Filled gold circle
-		vector.FillCircle(r.screen, cx, cy, rad, color.RGBA{0xff, 0xd7, 0x00, 0xff}, true)
-		// Border: Orange/brown thin circular stroke
-		vector.StrokeCircle(r.screen, cx, cy, rad-0.5, 1, color.RGBA{0xd8, 0x7a, 0x00, 0xff}, true)
-		// Detail: vertical slot line in center
-		vector.StrokeLine(r.screen, cx, cy-rad*0.5, cx, cy+rad*0.5, 1, color.RGBA{0xd8, 0x7a, 0x00, 0xff}, true)
-
-	case world.PickupHeart:
-		// Heart shape using vector.Path
-		path := &vector.Path{}
-		path.MoveTo(px+w*0.5, py+h*0.35)
-		path.QuadTo(px+w*0.1, py+h*0.05, px+w*0.1, py+h*0.48)
-		path.LineTo(px+w*0.5, py+h*0.95)
-		path.LineTo(px+w*0.9, py+h*0.48)
-		path.QuadTo(px+w*0.9, py+h*0.05, px+w*0.5, py+h*0.35)
-		path.Close()
-
-		drawPath(r.screen, path, color.RGBA{0xe0, 0x30, 0x30, 0xff}, true, 0)
-		drawPath(r.screen, path, color.RGBA{0x90, 0x10, 0x10, 0xff}, false, 1)
-
-	case world.PickupBomb:
-		// Body: Dark/black circle
-		cx, cy := px+w*0.5, py+h*0.6
-		rad := w * 0.35
-		vector.FillCircle(r.screen, cx, cy, rad, color.RGBA{0x1a, 0x1a, 0x1a, 0xff}, true)
-		vector.StrokeCircle(r.screen, cx, cy, rad, 1, color.RGBA{0x33, 0x33, 0x33, 0xff}, true)
-		// Fuse nozzle: Grey rectangle
-		vector.FillRect(r.screen, px+w*0.4, py+h*0.2, w*0.2, h*0.1, color.RGBA{0x80, 0x80, 0x80, 0xff}, false)
-		// Fuse line: curved line
-		vector.StrokeLine(r.screen, px+w*0.5, py+h*0.2, px+w*0.7, py+h*0.05, 1.2, color.RGBA{0xd0, 0xc0, 0x90, 0xff}, true)
-		// Spark: small orange circle
-		vector.FillCircle(r.screen, px+w*0.7, py+h*0.05, 1.5, color.RGBA{0xff, 0x50, 0x00, 0xff}, true)
-
-	case world.PickupSmallKey:
-		// Handle/Head: hollow gold circle
-		vector.StrokeCircle(r.screen, px+w*0.5, py+h*0.25, w*0.2, 1.5, color.RGBA{0xff, 0xd7, 0x00, 0xff}, true)
-		// Stem/Shaft: gold rectangle
-		vector.FillRect(r.screen, px+w*0.45, py+h*0.45, w*0.1, h*0.4, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
-		// Teeth: two gold rectangles
-		vector.FillRect(r.screen, px+w*0.55, py+h*0.6, w*0.15, h*0.08, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
-		vector.FillRect(r.screen, px+w*0.55, py+h*0.75, w*0.15, h*0.08, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
-
-	case world.PickupTorch:
-		// Handle: brown rectangle
-		vector.FillRect(r.screen, px+w*0.42, py+h*0.45, w*0.16, h*0.5, color.RGBA{0x8b, 0x5a, 0x2b, 0xff}, false)
-		// Nozzle: grey rect
-		vector.FillRect(r.screen, px+w*0.35, py+h*0.38, w*0.3, h*0.08, color.RGBA{0x4a, 0x4a, 0x4a, 0xff}, false)
-		// Flame (outer): red teardrop path
-		flame := &vector.Path{}
-		flame.MoveTo(px+w*0.5, py+h*0.05)
-		flame.QuadTo(px+w*0.2, py+h*0.3, px+w*0.3, py+h*0.38)
-		flame.LineTo(px+w*0.7, py+h*0.38)
-		flame.QuadTo(px+w*0.8, py+h*0.3, px+w*0.5, py+h*0.05)
-		flame.Close()
-		drawPath(r.screen, flame, color.RGBA{0xff, 0x3b, 0x00, 0xff}, true, 0)
-		// Flame (inner): orange teardrop path
-		innerFlame := &vector.Path{}
-		innerFlame.MoveTo(px+w*0.5, py+h*0.15)
-		innerFlame.QuadTo(px+w*0.3, py+h*0.3, px+w*0.35, py+h*0.38)
-		innerFlame.LineTo(px+w*0.65, py+h*0.38)
-		innerFlame.QuadTo(px+w*0.7, py+h*0.3, px+w*0.5, py+h*0.15)
-		innerFlame.Close()
-		drawPath(r.screen, innerFlame, color.RGBA{0xff, 0xa5, 0x00, 0xff}, true, 0)
-
-	default:
-		// Fallback
-		r.pickupFallback(float64(px), float64(py))
+	if draw, ok := pickupDrawers[kind]; ok {
+		draw(r.screen, px, py, w, h)
+		return
 	}
+	r.pickupFallback(float64(px), float64(py))
 }
 
 // drawPickup renders one pickup entity using the pickup atlas. (ox,oy) are

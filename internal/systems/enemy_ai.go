@@ -22,11 +22,6 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
-// invulnFrames is how long the player is invulnerable after a contact hit.
-// Lives here (not on the player) because it's a sim-wide constant, not
-// per-player state.
-const invulnFrames = 45
-
 // enemyHurtCD is how long an enemy must wait before landing another
 // contact hit on the player. Shared across all enemies today; could
 // migrate onto ContactHurt as a per-enemy value if we ever need it.
@@ -120,17 +115,9 @@ func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
 		w.HP = 0
 	}
 	ecx, ecy := e.Center()
-	force := w.Player.PlayerKnockbackForce
-	if force <= 0 {
-		force = playerContactKnockbackPx
-	}
-	nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, ecx, ecy, force, true)
+	nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, ecx, ecy, w.Player.EffectivePlayerKnockbackForce(), true)
 	w.Player.X, w.Player.Y = nx, ny
-	frames := w.Player.InvulnFrames
-	if frames <= 0 {
-		frames = invulnFrames
-	}
-	w.Player.Invuln = frames
+	w.Player.Invuln = w.Player.EffectiveInvulnFrames()
 	e.HurtCD = enemyHurtCD
 	return true
 }

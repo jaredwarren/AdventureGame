@@ -18,15 +18,20 @@ func DefaultStats() Stats {
 
 // MaxHP returns hearts (each heart = 2 HP units for HUD).
 func (s Stats) MaxHP() int {
-	return 6 + s.Vitality*2
+	return DefaultConfig().MaxHP(s)
 }
 
 // MaxStamina tick capacity for sprint/dodge.
 func (s Stats) MaxStamina() int {
-	return 60 + s.Resolve*20
+	return DefaultConfig().MaxStamina(s)
 }
 
 // DamageBonus added to sword base.
 func (s Stats) DamageBonus() int {
-	return s.Might
+	return DefaultConfig().DamageBonus(s)
+}
+
+// SwordDamage returns total melee damage (base + Might bonus).
+func (s Stats) SwordDamage() int {
+	return DefaultConfig().SwordDamage(s)
 }

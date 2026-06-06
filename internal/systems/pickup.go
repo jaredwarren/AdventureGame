@@ -5,7 +5,7 @@
 //
 //   - coin → currency++
 //   - heart → HP++ (clamped to MaxHP)
-//   - bomb → Bombs++ (capped at world.MaxBombsCarry)
+//   - bomb → Bombs++ (capped at World.MaxBombsCarry)
 //   - small key → SmallKey++
 //   - torch → HasTorch = true
 //
@@ -33,20 +33,7 @@ func (PickupSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			continue
 		}
 		p.Gone = true
-		switch p.Kind {
-		case world.PickupCoin:
-			w.Currency++
-		case world.PickupHeart:
-			if w.HP < w.MaxHP() {
-				w.HP++
-			}
-		case world.PickupBomb:
-			w.Bombs = w.ClampBombsCarry(w.Bombs + 1)
-		case world.PickupSmallKey:
-			w.SmallKey++
-		case world.PickupTorch:
-			w.HasTorch = true
-		}
+		w.ApplyPickupReward(p.Kind)
 		tryPush(bus, PickupEvent{PickupID: p.ID, Kind: p.Kind, PersistentSaveKey: p.PersistentSaveKey})
 	}
 	return nil

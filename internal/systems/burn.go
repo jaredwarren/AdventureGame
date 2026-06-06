@@ -26,14 +26,8 @@ func (BurnSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		if e.BurnCD > 0 {
 			continue
 		}
-		burnInterval := w.Player.TorchBurnInterval
-		if burnInterval <= 0 {
-			burnInterval = world.TorchBurnTickInterval
-		}
-		burnDamage := w.Player.TorchBurnDamage
-		if burnDamage <= 0 {
-			burnDamage = world.TorchBurnDamagePerTick
-		}
+		burnInterval := w.Player.EffectiveTorchBurnInterval()
+		burnDamage := w.Player.EffectiveTorchBurnDamage()
 		e.BurnCD = burnInterval
 		before := e.HP
 		w.DamageEnemy(i, burnDamage)

@@ -36,11 +36,7 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			}
 			before := e.HP
 			w.DamageEnemy(i, dmg)
-			force := w.Player.EnemyKnockbackForce
-			if force <= 0 {
-				force = 20.0
-			}
-			nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, pcx, pcy, force, false)
+			nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
 			e.X, e.Y = nx, ny
 			killed := before > 0 && e.HP <= 0
 			tryPush(bus, HitEvent{
@@ -64,11 +60,7 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			}
 			before := e.HP
 			w.DamageEnemy(i, dmg)
-			force := w.Player.EnemyKnockbackForce
-			if force <= 0 {
-				force = 20.0
-			}
-			nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, pcx, pcy, force, false)
+			nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
 			e.X, e.Y = nx, ny
 			w.IgniteEnemy(i)
 			killed := before > 0 && e.HP <= 0

@@ -47,7 +47,7 @@ func DrawHUD(r services.Renderer, w *world.World, sess *Session) {
 	const pillH float32 = 18
 	const pillGap float32 = 4
 	px := float32(260)
-	drawSlot := func(kind world.PickupKind, selected bool, countText string) {
+	drawSlot := func(kind *world.PickupKind, selected bool, countText string) {
 		var border color.RGBA
 		if selected {
 			border = color.RGBA{0xff, 0xff, 0xff, 0xff}
@@ -123,7 +123,7 @@ func DrawDebugOverlay(r services.Renderer, sess *Session, sceneID SceneID, extra
 	line("gid@feet %d  dir %s", gid, world.DirLabel(w.Player.Dir))
 	line("hp %d/%d stam %d/%d", w.HP, w.MaxHP(), w.Player.Stamina, w.MaxStamina())
 	line("swing %d cd %d torch %d tcd %d i-%d dodge %d", w.Player.Swing, w.Player.SwingCD, w.Player.TorchSwing, w.Player.TorchSwingCD, w.Player.Invuln, w.Player.DodgeTimer)
-	line("coin %d key %d bomb %d/%d torch %v", w.Currency, w.SmallKey, w.Bombs, world.MaxBombsCarry, w.HasTorch)
+	line("coin %d key %d bomb %d/%d torch %v", w.Currency, w.SmallKey, w.Bombs, w.MaxBombsCarry(), w.HasTorch)
 	wst := w.Stats
 	line("stats V%d R%d M%d W%d F%d", wst.Vitality, wst.Resolve, wst.Might, wst.Wits, wst.Fortune)
 
@@ -165,7 +165,7 @@ func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
 		kind  world.ItemSlot
 	}
 	slots := []slot{
-		{fmt.Sprintf("BOMB  x%d/%d", w.Bombs, world.MaxBombsCarry), world.ItemSlotBomb},
+		{fmt.Sprintf("BOMB  x%d/%d", w.Bombs, w.MaxBombsCarry()), world.ItemSlotBomb},
 	}
 	if w.HasTorch {
 		slots = append(slots, slot{"TORCH", world.ItemSlotTorch})

@@ -20,6 +20,7 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/save"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/systems"
@@ -44,7 +45,7 @@ type PlayScene struct {
 	showItemMenu   bool
 	itemMenuCursor int
 
-	toastItem     world.PickupKind
+	toastItem     *world.PickupKind
 	toastTimer    int
 	toastMessage  string
 }
@@ -128,14 +129,8 @@ func (s *PlayScene) Update(ctx GameContext) error {
 				}
 				ecx, ecy := enemy.Center()
 				dist := math.Hypot(ecx-b.X, ecy-b.Y)
-				bombRadius := w.Player.BombRadius
-				if bombRadius <= 0 {
-					bombRadius = 32.0
-				}
-				bombDamage := w.Player.BombDamage
-				if bombDamage <= 0 {
-					bombDamage = 4
-				}
+				bombRadius := w.Player.EffectiveBombRadius()
+				bombDamage := w.Player.EffectiveBombDamage()
 				if dist <= bombRadius {
 					w.DamageEnemy(i, bombDamage) // high damage
 				}
@@ -270,21 +265,7 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 				p.Opened = true
 				chestOpened = true
 
-				// Collect the item!
-				switch p.Kind {
-				case world.PickupCoin:
-					w.Currency++
-				case world.PickupHeart:
-					if w.HP < w.MaxHP() {
-						w.HP++
-					}
-				case world.PickupBomb:
-					w.Bombs = w.ClampBombsCarry(w.Bombs + 1)
-				case world.PickupSmallKey:
-					w.SmallKey++
-				case world.PickupTorch:
-					w.HasTorch = true
-				}
+				w.ApplyPickupReward(p.Kind)
 
 				// Persist save state
 				ctx.Session().MarkPersistentPickupCollected(p.PersistentSaveKey)
@@ -301,20 +282,7 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 				// Set toast notification
 				s.toastItem = p.Kind
 				s.toastTimer = 150
-				switch p.Kind {
-				case world.PickupCoin:
-					s.toastMessage = "Found Gold Coin!"
-				case world.PickupHeart:
-					s.toastMessage = "Found Heart!"
-				case world.PickupBomb:
-					s.toastMessage = "Found Bomb!"
-				case world.PickupSmallKey:
-					s.toastMessage = "Found Small Key!"
-				case world.PickupTorch:
-					s.toastMessage = "Found Torch!"
-				default:
-					s.toastMessage = "Found Item!"
-				}
+				s.toastMessage = p.Kind.ToastMessage()
 				break
 			}
 		}
@@ -343,22 +311,11 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 		}
 	}
 
-	cost := w.Player.DodgeStaminaCost
-	if cost <= 0 {
-		cost = 20
-	}
+	cost := w.Player.EffectiveDodgeStaminaCost()
 	if in.JustPressed(services.ActionDodge) && w.Player.Stamina >= cost {
 		w.Player.Stamina -= cost
-		duration := w.Player.DodgeDuration
-		if duration <= 0 {
-			duration = 20
-		}
-		w.Player.DodgeTimer = duration
-		maxImpulse := w.Player.DodgeMaxImpulse
-		if maxImpulse <= 0 {
-			maxImpulse = 12
-		}
-		s.dodgeImpulse = maxImpulse
+		w.Player.DodgeTimer = w.Player.EffectiveDodgeDuration()
+		s.dodgeImpulse = w.Player.EffectiveDodgeMaxImpulse()
 	}
 }
 
@@ -389,11 +346,10 @@ func (s *PlayScene) tryDropBomb(ctx GameContext, w *world.World) {
 		}
 	}
 	w.Bombs--
-	bombFuseDuration := w.Player.BombFuseDuration
-	if bombFuseDuration <= 0 {
-		bombFuseDuration = 90
-	}
-	s.bombs = append(s.bombs, &ActiveBomb{X: bx, Y: by, TX: tx, TY: ty, Timer: bombFuseDuration})
+	s.bombs = append(s.bombs, &ActiveBomb{
+		X: bx, Y: by, TX: tx, TY: ty,
+		Timer: w.Player.EffectiveBombFuseDuration(),
+	})
 	ctx.Audio().Play("swing.wav", 0.15)
 }
 
@@ -457,31 +413,19 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 		w.Player.SprintExhausted = false
 	}
 
-	baseSpd := w.Player.BaseSpeed
-	if baseSpd <= 0 {
-		baseSpd = 1.35
-	}
-	spd := baseSpd
+	spd := w.Player.EffectiveBaseSpeed()
 
 	isSprinting := isSprintHeld && isMoving && !w.Player.SprintExhausted && w.Player.Stamina > 0
 
 	if isSprinting {
-		sprintSpd := w.Player.SprintSpeed
-		if sprintSpd <= 0 {
-			sprintSpd = 2.15
-		}
-		spd = sprintSpd
+		spd = w.Player.EffectiveSprintSpeed()
 		w.Player.Stamina--
 		if w.Player.Stamina <= 0 {
 			w.Player.Stamina = 0
 			w.Player.SprintExhausted = true
 		}
 	} else if w.Player.Stamina < w.MaxStamina() {
-		interval := w.Player.StaminaRegenInterval
-		if interval <= 0 {
-			interval = 2
-		}
-		if w.Tick%interval == 0 {
+		if w.Tick%w.Player.EffectiveStaminaRegenInterval() == 0 {
 			w.Player.Stamina++
 		}
 	}
@@ -494,10 +438,7 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 
 	if s.dodgeImpulse > 0 {
 		s.dodgeImpulse--
-		dodgeSpd := w.Player.DodgeSpeed
-		if dodgeSpd <= 0 {
-			dodgeSpd = 2.8
-		}
+		dodgeSpd := w.Player.EffectiveDodgeSpeed()
 		switch w.Player.Dir {
 		case world.DirDown:
 			dy += dodgeSpd
@@ -528,7 +469,7 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				ctx.Audio().Play("hit.wav", 0.3)
 			}
 			if e.Killed && e.IsBoss {
-				w.Currency += 25
+				w.Currency += progression.DefaultEconomy().BossKillCoinBonus
 			}
 			// Find enemy position
 			var ex, ey float64

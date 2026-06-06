@@ -34,6 +34,7 @@ const NoEntity EntityID = 0
 const (
 	defaultEnemyW          = 14.0
 	defaultEnemyH          = 12.0
+	defaultEnemyHP         = 3
 	defaultEnemySeekSpeed  = 0.55
 	defaultEnemyContactDmg = 2
 	// DefaultEnemyAggroRadiusPx is the default aggro range for NewEnemy (~8 tiles at TileSize 16).
@@ -54,27 +55,36 @@ func (w *World) allocID() EntityID {
 	return id
 }
 
-// NewEnemy is the pure factory for Enemy values. All default components
-// are populated; callers only pass what varies per instance.
+// NewEnemy is the pure factory for Enemy values. hp <= 0 uses defaultEnemyHP.
 func NewEnemy(id EntityID, x, y float64, hp int, isBoss bool) Enemy {
+	cfg := DefaultEnemyConfig()
+	if hp > 0 {
+		cfg.HP = hp
+	}
+	cfg.IsBoss = isBoss
+	return NewEnemyWithConfig(id, x, y, cfg)
+}
+
+// NewEnemyWithConfig builds an enemy from a fully resolved EnemyConfig.
+func NewEnemyWithConfig(id EntityID, x, y float64, cfg EnemyConfig) Enemy {
 	return Enemy{
 		ID:        id,
 		Transform: Transform{X: x, Y: y},
 		Hitbox:    Hitbox{W: defaultEnemyW, H: defaultEnemyH},
-		Health:    Health{HP: hp, MaxHP: hp},
+		Health:    Health{HP: cfg.HP, MaxHP: cfg.HP},
 		AI: AIHomer{
-			Speed:       defaultEnemySeekSpeed,
-			AggroRadius: DefaultEnemyAggroRadiusPx,
+			Speed:       cfg.Speed,
+			AggroRadius: cfg.AggroRadius,
 		},
 		ContactHurt: ContactHurt{
-			Damage: defaultEnemyContactDmg,
+			Damage: cfg.ContactDamage,
 		},
-		IsBoss: isBoss,
+		IsBoss: cfg.IsBoss,
 	}
 }
 
 // NewPickup is the pure factory for Pickup values.
-func NewPickup(id EntityID, x, y float64, kind PickupKind) Pickup {
+func NewPickup(id EntityID, x, y float64, kind *PickupKind) Pickup {
 	return Pickup{
 		ID:        id,
 		Transform: Transform{X: x, Y: y},
@@ -86,7 +96,17 @@ func NewPickup(id EntityID, x, y float64, kind PickupKind) Pickup {
 // SpawnEnemy allocates an ID, builds the Enemy, appends it, and returns
 // the freshly-assigned ID for callers that want to remember it.
 func (w *World) SpawnEnemy(x, y float64, hp int, isBoss bool) EntityID {
-	e := NewEnemy(w.allocID(), x, y, hp, isBoss)
+	cfg := DefaultEnemyConfig()
+	if hp > 0 {
+		cfg.HP = hp
+	}
+	cfg.IsBoss = isBoss
+	return w.SpawnEnemyConfig(x, y, cfg)
+}
+
+// SpawnEnemyConfig spawns an enemy using per-instance tuning from Tiled or tests.
+func (w *World) SpawnEnemyConfig(x, y float64, cfg EnemyConfig) EntityID {
+	e := NewEnemyWithConfig(w.allocID(), x, y, cfg)
 	w.Enemies = append(w.Enemies, e)
 	return e.ID
 }
@@ -94,7 +114,7 @@ func (w *World) SpawnEnemy(x, y float64, hp int, isBoss bool) EntityID {
 // SpawnPickup allocates an ID, builds the Pickup, appends it, and returns
 // the ID. persistentSaveKey should be empty except for Tiled pickups marked
 // persistent (see BuildFromTiled).
-func (w *World) SpawnPickup(x, y float64, kind PickupKind, persistentSaveKey string) EntityID {
+func (w *World) SpawnPickup(x, y float64, kind *PickupKind, persistentSaveKey string) EntityID {
 	p := NewPickup(w.allocID(), x, y, kind)
 	p.PersistentSaveKey = persistentSaveKey
 	w.Pickups = append(w.Pickups, p)

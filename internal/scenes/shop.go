@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
 )
@@ -34,22 +35,24 @@ func (s *ShopScene) Enter(ctx GameContext, params map[string]any) error {
 func (s *ShopScene) Exit(ctx GameContext) error { return nil }
 
 func (s *ShopScene) getItems(w *world.World) []ShopItem {
+	cfg := progression.DefaultConfig()
+	econ := progression.DefaultEconomy()
 	return []ShopItem{
 		{
 			Name:        "Upgrade Vitality",
-			Cost:        10,
-			Description: "+2 Max HP",
+			Cost:        econ.ShopVitalityCost,
+			Description: fmt.Sprintf("+%d Max HP", cfg.HPPerVitality),
 			Buy: func(w *world.World) bool {
 				w.Stats.Vitality++
-				w.HP += 2
+				w.HP += cfg.HPPerVitality
 				return true
 			},
 			IsEnabled: func(w *world.World) bool { return true },
 		},
 		{
 			Name:        "Upgrade Resolve",
-			Cost:        8,
-			Description: "+20 Max Stamina",
+			Cost:        econ.ShopResolveCost,
+			Description: fmt.Sprintf("+%d Max Stamina", cfg.StaminaPerResolve),
 			Buy: func(w *world.World) bool {
 				w.Stats.Resolve++
 				return true
@@ -58,8 +61,8 @@ func (s *ShopScene) getItems(w *world.World) []ShopItem {
 		},
 		{
 			Name:        "Upgrade Might",
-			Cost:        12,
-			Description: "+1 Sword Damage",
+			Cost:        econ.ShopMightCost,
+			Description: fmt.Sprintf("+%d Sword Damage", cfg.DamagePerMight),
 			Buy: func(w *world.World) bool {
 				w.Stats.Might++
 				return true
@@ -68,7 +71,7 @@ func (s *ShopScene) getItems(w *world.World) []ShopItem {
 		},
 		{
 			Name:        "Heal Full HP",
-			Cost:        4,
+			Cost:        econ.ShopFullHealCost,
 			Description: "Restore all hearts",
 			Buy: func(w *world.World) bool {
 				w.HP = w.MaxHP()
@@ -80,22 +83,22 @@ func (s *ShopScene) getItems(w *world.World) []ShopItem {
 		},
 		{
 			Name:        "Buy Bomb",
-			Cost:        3,
+			Cost:        econ.ShopBombCost,
 			Description: "+1 Bomb",
 			Buy: func(w *world.World) bool {
-				if w.Bombs >= world.MaxBombsCarry {
+				if w.Bombs >= w.MaxBombsCarry() {
 					return false
 				}
 				w.Bombs++
 				return true
 			},
 			IsEnabled: func(w *world.World) bool {
-				return w.Bombs < world.MaxBombsCarry
+				return w.Bombs < w.MaxBombsCarry()
 			},
 		},
 		{
 			Name:        "Buy Torch",
-			Cost:        5,
+			Cost:        econ.ShopTorchCost,
 			Description: "See in the dark night",
 			Buy: func(w *world.World) bool {
 				w.HasTorch = true

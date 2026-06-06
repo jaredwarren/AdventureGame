@@ -78,18 +78,10 @@ func (TimersSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 					if w.HP < 0 {
 						w.HP = 0
 					}
-					frames := w.Player.InvulnFrames
-					if frames <= 0 {
-						frames = 45
-					}
-					w.Player.Invuln = frames
+					w.Player.Invuln = w.Player.EffectiveInvulnFrames()
 					fcx := float64(f.TX*world.TileSize) + float64(world.TileSize)*0.5
 					fcy := float64(f.TY*world.TileSize) + float64(world.TileSize)*0.5
-					force := w.Player.PlayerHazardKnockbackForce
-					if force <= 0 {
-						force = 12
-					}
-					nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, fcx, fcy, force, true)
+					nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, fcx, fcy, w.Player.EffectivePlayerHazardKnockbackForce(), true)
 					w.Player.X, w.Player.Y = nx, ny
 					tryPush(bus, PlayerHurtEvent{Damage: 1})
 				}

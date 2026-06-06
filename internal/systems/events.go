@@ -59,7 +59,7 @@ func (TileDestroyedEvent) isEvent() {}
 // (today they share one clip — kept for future differentiation).
 type PickupEvent struct {
 	PickupID          world.EntityID
-	Kind              world.PickupKind
+	Kind              *world.PickupKind
 	PersistentSaveKey string // empty unless Tiled pickup had persistent=true
 }
 

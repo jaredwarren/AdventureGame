@@ -24,9 +24,6 @@ import (
 // TileSize must match maps authored in Tiled (see BuildFromTiled guard).
 const TileSize = 16
 
-// MaxBombsCarry is the inventory cap for bomb pickups (see Bombs, PickupBomb).
-const MaxBombsCarry = 8
-
 // ItemSlot identifies which item is currently active in the player's secondary slot.
 type ItemSlot int
 
@@ -35,30 +32,22 @@ const (
 	ItemSlotTorch
 )
 
-// ClampBombsCarry clamps n to [0, MaxBombs] for save load and pickups.
+// MaxBombsCarry returns the player's effective bomb inventory cap.
+func (w *World) MaxBombsCarry() int {
+	return w.Player.EffectiveMaxBombs()
+}
+
+// ClampBombsCarry clamps n to [0, MaxBombsCarry] for save load and pickups.
 func (w *World) ClampBombsCarry(n int) int {
 	if n < 0 {
 		return 0
 	}
-	maxB := w.Player.MaxBombs
-	if maxB <= 0 {
-		maxB = MaxBombsCarry
-	}
+	maxB := w.MaxBombsCarry()
 	if n > maxB {
 		return maxB
 	}
 	return n
 }
-
-type PickupKind int
-
-const (
-	PickupCoin PickupKind = iota
-	PickupHeart
-	PickupBomb
-	PickupSmallKey
-	PickupTorch
-)
 
 // Pickup is a ground item the player can collect by overlap. Transform +
 // Hitbox give it its AABB; Kind drives the on-pickup effect in
@@ -68,7 +57,7 @@ type Pickup struct {
 	Transform
 	Hitbox
 
-	Kind   PickupKind
+	Kind   *PickupKind
 	Gone   bool // set true when consumed; kept in the slice for stable indices
 	Opened bool // set true when chest is opened
 
@@ -202,7 +191,7 @@ type World struct {
 	HP       int
 	Currency int
 	// Bombs is how many bomb items the player holds; pickups increment (capped at
-	// MaxBombsCarry), placing a bomb decrements (see TryDamageFaceTile(DamageBomb)).
+	// Player.MaxBombs via MaxBombsCarry), placing a bomb decrements (see TryDamageFaceTile(DamageBomb)).
 	Bombs        int
 	HasTorch     bool
 	SmallKey     int
@@ -430,46 +419,28 @@ func swordSwingHitbox(swing int, activeStart, activeEnd int, reach, thick float6
 func (w *World) SwordHitbox() (geom.Rect, bool) {
 	px := w.Player.X + w.Player.W*0.5
 	py := w.Player.Y + w.Player.H*0.5
-	activeStart := w.Player.SwingActiveStart
-	if activeStart <= 0 {
-		activeStart = 2
-	}
-	activeEnd := w.Player.SwingActiveEnd
-	if activeEnd <= 0 {
-		activeEnd = 7
-	}
-	reach := w.Player.SwordReach
-	if reach <= 0 {
-		reach = 14.0
-	}
-	thick := w.Player.SwordThickness
-	if thick <= 0 {
-		thick = 10.0
-	}
-	return swordSwingHitbox(w.Player.Swing, activeStart, activeEnd, reach, thick, w.Player.Dir, px, py)
+	return swordSwingHitbox(
+		w.Player.Swing,
+		w.Player.EffectiveSwingActiveStart(),
+		w.Player.EffectiveSwingActiveEnd(),
+		w.Player.EffectiveSwordReach(),
+		w.Player.EffectiveSwordThickness(),
+		w.Player.Dir, px, py,
+	)
 }
 
 // TorchHitbox matches SwordHitbox timing/geometry but keys off TorchSwing.
 func (w *World) TorchHitbox() (geom.Rect, bool) {
 	px := w.Player.X + w.Player.W*0.5
 	py := w.Player.Y + w.Player.H*0.5
-	activeStart := w.Player.TorchSwingActiveStart
-	if activeStart <= 0 {
-		activeStart = 2
-	}
-	activeEnd := w.Player.TorchSwingActiveEnd
-	if activeEnd <= 0 {
-		activeEnd = 7
-	}
-	reach := w.Player.TorchReach
-	if reach <= 0 {
-		reach = 14.0
-	}
-	thick := w.Player.TorchThickness
-	if thick <= 0 {
-		thick = 10.0
-	}
-	return swordSwingHitbox(w.Player.TorchSwing, activeStart, activeEnd, reach, thick, w.Player.Dir, px, py)
+	return swordSwingHitbox(
+		w.Player.TorchSwing,
+		w.Player.EffectiveTorchSwingActiveStart(),
+		w.Player.EffectiveTorchSwingActiveEnd(),
+		w.Player.EffectiveTorchReach(),
+		w.Player.EffectiveTorchThickness(),
+		w.Player.Dir, px, py,
+	)
 }
 
 // Rect returns the enemy's AABB using its Transform + Hitbox components.
@@ -518,15 +489,8 @@ func (w *World) MaxStamina() int {
 }
 
 func (w *World) SwordDamage() int {
-	return 1 + w.Stats.DamageBonus()
+	return w.Stats.SwordDamage()
 }
-
-// Torch burn DoT (see systems.BurnSystem).
-const (
-	TorchBurnDuration      = 72
-	TorchBurnTickInterval  = 12
-	TorchBurnDamagePerTick = 1
-)
 
 // IgniteEnemy extends or starts torch burn on the enemy at index i.
 func (w *World) IgniteEnemy(i int) {
@@ -537,14 +501,8 @@ func (w *World) IgniteEnemy(i int) {
 	if e.HP <= 0 {
 		return
 	}
-	burnDuration := w.Player.TorchBurnDuration
-	if burnDuration <= 0 {
-		burnDuration = TorchBurnDuration
-	}
-	burnInterval := w.Player.TorchBurnInterval
-	if burnInterval <= 0 {
-		burnInterval = TorchBurnTickInterval
-	}
+	burnDuration := w.Player.EffectiveTorchBurnDuration()
+	burnInterval := w.Player.EffectiveTorchBurnInterval()
 	if e.BurnTimer < burnDuration {
 		e.BurnTimer = burnDuration
 	}
@@ -580,16 +538,8 @@ func (w *World) TrySwingSword() bool {
 	if w.Player.TorchSwing > 0 || w.Player.TorchSwingCD > 0 {
 		return false
 	}
-	duration := w.Player.SwingDuration
-	if duration <= 0 {
-		duration = 8
-	}
-	cooldown := w.Player.MaxSwingCD
-	if cooldown <= 0 {
-		cooldown = 12
-	}
-	w.Player.Swing = duration
-	w.Player.SwingCD = cooldown
+	w.Player.Swing = w.Player.EffectiveSwingDuration()
+	w.Player.SwingCD = w.Player.EffectiveMaxSwingCD()
 	return true
 }
 
@@ -605,16 +555,8 @@ func (w *World) TrySwingTorch() bool {
 	if w.Player.Swing > 0 || w.Player.SwingCD > 0 {
 		return false
 	}
-	duration := w.Player.TorchSwingDuration
-	if duration <= 0 {
-		duration = 8
-	}
-	cooldown := w.Player.MaxTorchSwingCD
-	if cooldown <= 0 {
-		cooldown = 12
-	}
-	w.Player.TorchSwing = duration
-	w.Player.TorchSwingCD = cooldown
+	w.Player.TorchSwing = w.Player.EffectiveTorchSwingDuration()
+	w.Player.TorchSwingCD = w.Player.EffectiveMaxTorchSwingCD()
 	return true
 }
 
@@ -669,13 +611,15 @@ func (w *World) TryDamageFaceTile(kind DamageKind) (ok bool, saveKey string) {
 	return true, MapTilePersistKey(w.MapID, tx, ty)
 }
 
-// ShrineHeal is the “poor” shrine interaction (no coins). Rich interaction is priced in game.Update.
+// ShrineHeal is the “poor” shrine interaction (no coins). Rich interaction is priced in the shop.
 func (w *World) ShrineHeal() {
-	if w.HP < w.MaxHP() {
-		w.HP += 2
-		if w.HP > w.MaxHP() {
-			w.HP = w.MaxHP()
-		}
+	heal := progression.DefaultEconomy().ShrineHealAmount
+	if heal <= 0 || w.HP >= w.MaxHP() {
+		return
+	}
+	w.HP += heal
+	if w.HP > w.MaxHP() {
+		w.HP = w.MaxHP()
 	}
 }
 

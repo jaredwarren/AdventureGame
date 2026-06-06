@@ -165,6 +165,43 @@ func ObjProp(o *Object, key string) (string, bool) {
 	return "", false
 }
 
+// ObjPropInt reads a Tiled int, float, or numeric string property.
+func ObjPropInt(o *Object, key string) (int, bool) {
+	f, ok := objPropFloat(o, key)
+	if !ok {
+		return 0, false
+	}
+	return int(f), true
+}
+
+// ObjPropFloat reads a Tiled float, int, or numeric string property.
+func ObjPropFloat(o *Object, key string) (float64, bool) {
+	return objPropFloat(o, key)
+}
+
+func objPropFloat(o *Object, key string) (float64, bool) {
+	if o == nil {
+		return 0, false
+	}
+	for _, p := range o.Properties {
+		if p.Name != key {
+			continue
+		}
+		switch v := p.Value.(type) {
+		case float64:
+			return v, true
+		case int:
+			return float64(v), true
+		case string:
+			var f float64
+			if _, err := fmt.Sscanf(v, "%f", &f); err == nil {
+				return f, true
+			}
+		}
+	}
+	return 0, false
+}
+
 // ObjPropBool reads a Tiled bool or string property ("true"/"1"/"yes").
 func ObjPropBool(o *Object, key string) (bool, bool) {
 	for _, p := range o.Properties {

@@ -122,7 +122,7 @@ func TestPickupSystem_EmitsEventAndMutatesWorld(t *testing.T) {
 
 func TestPickupSystem_BombRespectsMaxCarry(t *testing.T) {
 	w := newTestWorld()
-	w.Bombs = world.MaxBombsCarry
+	w.Bombs = w.MaxBombsCarry()
 	w.Pickups = []world.Pickup{
 		world.NewPickup(world.NoEntity, w.Player.X+2, w.Player.Y+2, world.PickupBomb),
 	}
@@ -130,8 +130,9 @@ func TestPickupSystem_BombRespectsMaxCarry(t *testing.T) {
 	if err := (systems.PickupSystem{}).Update(w, &bus, 0); err != nil {
 		t.Fatalf("PickupSystem: %v", err)
 	}
-	if w.Bombs != world.MaxBombsCarry {
-		t.Errorf("Bombs = %d, want cap %d", w.Bombs, world.MaxBombsCarry)
+	cap := w.MaxBombsCarry()
+	if w.Bombs != cap {
+		t.Errorf("Bombs = %d, want cap %d", w.Bombs, cap)
 	}
 	if !w.Pickups[0].Gone {
 		t.Error("pickup should still be consumed when at cap")
@@ -236,14 +237,15 @@ func TestBurnSystem_DoT(t *testing.T) {
 	}
 	var bus systems.EventBus
 	var last []systems.Event
-	for i := 0; i < world.TorchBurnTickInterval; i++ {
+	burnInterval := world.DefaultPlayerTuning().TorchBurnInterval
+	for i := 0; i < burnInterval; i++ {
 		if err := (systems.BurnSystem{}).Update(w, &bus, 0); err != nil {
 			t.Fatalf("tick %d: %v", i, err)
 		}
 		last = bus.Drain()
 	}
 	if w.Enemies[0].HP >= 10 {
-		t.Fatalf("expected burn DoT after %d ticks, HP=%d", world.TorchBurnTickInterval, w.Enemies[0].HP)
+		t.Fatalf("expected burn DoT after %d ticks, HP=%d", burnInterval, w.Enemies[0].HP)
 	}
 	var sawDoT bool
 	for _, ev := range last {

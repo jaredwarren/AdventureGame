@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"image/color"
 	"path/filepath"
-	"strconv"
 
 	"github.com/jaredwarren/game-test/internal/geom"
 	"github.com/jaredwarren/game-test/internal/progression"
@@ -64,7 +63,6 @@ var (
 		world.GIDWaterShoreNE, world.GIDWaterShoreNW, world.GIDWaterShoreSW, world.GIDWaterShoreSE,
 		world.GIDWaterShoreNEInner, world.GIDWaterShoreNWInner, world.GIDWaterShoreSWInner, world.GIDWaterShoreSEInner,
 	}
-	editorMarkerTypes = []string{"spawn", "enemy", "pickup", "door", "shrine"}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].
 	editorBrushActions = []services.Action{
 		services.ActionEditorBrush1, services.ActionEditorBrush2,
@@ -73,20 +71,6 @@ var (
 		services.ActionEditorBrush7, services.ActionEditorBrush8,
 	}
 )
-
-type editorPickupItem struct {
-	name  string
-	kind  world.PickupKind
-	label string
-}
-
-var editorPickupItems = []editorPickupItem{
-	{"coin", world.PickupCoin, "Coin"},
-	{"heart", world.PickupHeart, "Heart"},
-	{"bomb", world.PickupBomb, "Bomb"},
-	{"key", world.PickupSmallKey, "Key"},
-	{"torch", world.PickupTorch, "Torch"},
-}
 
 func (s *EditorScene) ID() SceneID { return SceneEditor }
 
@@ -103,7 +87,9 @@ func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
 	s.tileMenuScroll = 0
 	s.showItemMenu = false
 	s.itemMenuSelect = 0
-	s.activePickupKind = "coin"
+	if pickups := world.AllPickups; len(pickups) > 0 {
+		s.activePickupKind = pickups[0].TiledName()
+	}
 	return nil
 }
 
@@ -174,28 +160,6 @@ func (s *EditorScene) rebuild(ctx GameContext) {
 	cam.ShakeTime = 0
 }
 
-func objectHitRect(o tiled.Object) geom.Rect {
-	switch o.Type {
-	case "door", "shrine":
-		w, h := o.Width, o.Height
-		if w <= 0 {
-			w = 16
-		}
-		if h <= 0 {
-			h = 16
-		}
-		return geom.Rect{X: o.X, Y: o.Y, W: w, H: h}
-	case "spawn":
-		return geom.Rect{X: o.X, Y: o.Y - 12, W: 12, H: 12}
-	case "enemy":
-		return geom.Rect{X: o.X, Y: o.Y - 12, W: 14, H: 12}
-	case "pickup":
-		return geom.Rect{X: o.X, Y: o.Y - 12, W: 12, H: 12}
-	default:
-		return geom.Rect{X: o.X, Y: o.Y, W: 16, H: 16}
-	}
-}
-
 func pointInRect(px, py float64, r geom.Rect) bool {
 	return px >= r.X && px < r.X+r.W && py >= r.Y && py < r.Y+r.H
 }
@@ -206,7 +170,7 @@ func (s *EditorScene) hitMarker(wx, wy float64) int {
 		return -1
 	}
 	for i := len(lg.Objects) - 1; i >= 0; i-- {
-		r := objectHitRect(lg.Objects[i])
+		r := world.MarkerObjectHitRect(lg.Objects[i])
 		if pointInRect(wx, wy, r) {
 			return i
 		}
@@ -224,36 +188,15 @@ func (s *EditorScene) worldXY(ctx GameContext) (float64, float64) {
 func (s *EditorScene) newMarkerObject(wx, wy float64) tiled.Object {
 	id := s.tm.NextObjectID
 	s.tm.NextObjectID++
-	t := editorMarkerTypes[s.markerTypeIndex]
+	types := world.MarkerTypeNames()
+	t := types[s.markerTypeIndex%len(types)]
 	name := fmt.Sprintf("%s_%d", t, id)
 	o := tiled.Object{ID: id, Name: name, Type: t, X: wx, Y: wy}
-	switch t {
-	case "door":
-		tw := float64(s.tm.TileWidth)
-		if tw <= 0 {
-			tw = world.TileSize
-		}
-		th := float64(s.tm.TileHeight)
-		if th <= 0 {
-			th = world.TileSize
-		}
-		o.X = float64(int(wx/tw) * int(tw))
-		o.Y = float64(int(wy/th) * int(th))
-		o.Width = 16
-		o.Height = 32
-		o.Properties = []tiled.Property{
-			{Name: "target_map", Type: "string", Value: "field1"},
-			{Name: "spawn_x", Type: "string", Value: strconv.Itoa(int(o.X))},
-			{Name: "spawn_y", Type: "string", Value: strconv.Itoa(int(o.Y))},
-		}
-	case "shrine":
-		o.Width = 16
-		o.Height = 16
-	case "pickup":
-		o.Properties = []tiled.Property{
-			{Name: "kind", Type: "string", Value: s.activePickupKind},
-		}
-	}
+	world.InitMarkerObject(&o, wx, wy, world.MarkerEditorContext{
+		TileWidth:             float64(s.tm.TileWidth),
+		TileHeight:            float64(s.tm.TileHeight),
+		ActivePickupTiledName: s.activePickupKind,
+	})
 	return o
 }
 
@@ -274,7 +217,7 @@ func (s *EditorScene) paintTile(tx, ty int) {
 
 func (s *EditorScene) selectItem(ctx GameContext, name string) {
 	s.activePickupKind = name
-	for idx, t := range editorMarkerTypes {
+	for idx, t := range world.MarkerTypeNames() {
 		if t == "pickup" {
 			s.markerTypeIndex = idx
 			break
@@ -403,24 +346,24 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		if in.JustPressed(services.ActionMoveUp) {
 			s.itemMenuSelect--
 			if s.itemMenuSelect < 0 {
-				s.itemMenuSelect = len(editorPickupItems) - 1
+				s.itemMenuSelect = len(world.AllPickups) - 1
 			}
 		}
 		if in.JustPressed(services.ActionMoveDown) {
 			s.itemMenuSelect++
-			if s.itemMenuSelect >= len(editorPickupItems) {
+			if s.itemMenuSelect >= len(world.AllPickups) {
 				s.itemMenuSelect = 0
 			}
 		}
 
 		if in.JustPressed(services.ActionConfirm) {
-			s.selectItem(ctx, editorPickupItems[s.itemMenuSelect].name)
+			s.selectItem(ctx, world.AllPickups[s.itemMenuSelect].TiledName())
 			s.showItemMenu = false
 			return nil
 		}
 
 		if in.JustPressed(services.ActionEditorAdd) {
-			s.selectItem(ctx, editorPickupItems[s.itemMenuSelect].name)
+			s.selectItem(ctx, world.AllPickups[s.itemMenuSelect].TiledName())
 			s.showItemMenu = false
 			wx, wy := s.worldXY(ctx)
 			lg := s.markersLayer()
@@ -442,11 +385,12 @@ func (s *EditorScene) Update(ctx GameContext) error {
 
 			if mx >= panelX && mx < panelX+panelW && my >= panelY && my < panelY+panelH {
 				listY := panelY + headerH
-				if my >= listY && my < listY+len(editorPickupItems)*itemH {
+				pickups := world.AllPickups
+				if my >= listY && my < listY+len(pickups)*itemH {
 					clickedRow := (my - listY) / itemH
-					if clickedRow >= 0 && clickedRow < len(editorPickupItems) {
+					if clickedRow >= 0 && clickedRow < len(pickups) {
 						s.itemMenuSelect = clickedRow
-						s.selectItem(ctx, editorPickupItems[s.itemMenuSelect].name)
+						s.selectItem(ctx, world.AllPickups[s.itemMenuSelect].TiledName())
 						s.showItemMenu = false
 					}
 				}
@@ -490,8 +434,8 @@ func (s *EditorScene) Update(ctx GameContext) error {
 				}
 			}
 		}
-		for idx, item := range editorPickupItems {
-			if item.name == currentKind {
+		for idx, item := range world.AllPickups {
+			if item.TiledName() == currentKind {
 				s.itemMenuSelect = idx
 				break
 			}
@@ -517,10 +461,12 @@ func (s *EditorScene) Update(ctx GameContext) error {
 	}
 
 	if in.JustPressed(services.ActionEditorPrevType) {
-		s.markerTypeIndex = (s.markerTypeIndex + len(editorMarkerTypes) - 1) % len(editorMarkerTypes)
+		types := world.MarkerTypeNames()
+		s.markerTypeIndex = (s.markerTypeIndex + len(types) - 1) % len(types)
 	}
 	if in.JustPressed(services.ActionEditorNextType) {
-		s.markerTypeIndex = (s.markerTypeIndex + 1) % len(editorMarkerTypes)
+		types := world.MarkerTypeNames()
+		s.markerTypeIndex = (s.markerTypeIndex + 1) % len(types)
 	}
 
 	wx, wy := s.worldXY(ctx)
@@ -638,7 +584,9 @@ func (s *EditorScene) Draw(ctx GameContext) {
 	r.DrawText(4, 4, line)
 	r.DrawText(4, 16, "E mode  Tab menu  [ ] type  A add  Del  Ctrl+S save  Esc title")
 	if !s.modeTile {
-		r.DrawText(4, 28, fmt.Sprintf("new: %s", editorMarkerTypes[s.markerTypeIndex]))
+		types := world.MarkerTypeNames()
+		r.DrawText(4, 28, fmt.Sprintf("new: %s", types[s.markerTypeIndex%len(types)]))
+		s.drawSelectedEnemyProps(r)
 	}
 	if s.savedFlash > 0 {
 		r.DrawText(280, 4, "saved")
@@ -731,6 +679,22 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn scroll  Enter confirm")
 }
 
+func (s *EditorScene) drawSelectedEnemyProps(r services.Renderer) {
+	lg := s.markersLayer()
+	if lg == nil || s.selObj < 0 || s.selObj >= len(lg.Objects) {
+		return
+	}
+	o := &lg.Objects[s.selObj]
+	if o.Type != "enemy" {
+		return
+	}
+	cfg := world.EnemyConfigFromTiled(o)
+	r.DrawText(4, 40, fmt.Sprintf(
+		"enemy hp=%d spd=%.2f aggro=%.0f dmg=%d boss=%v",
+		cfg.HP, cfg.Speed, cfg.AggroRadius, cfg.ContactDamage, cfg.IsBoss,
+	))
+}
+
 func (s *EditorScene) drawMarkerOverlay(ctx GameContext) {
 	r := ctx.Renderer()
 	lg := s.markersLayer()
@@ -741,7 +705,7 @@ func (s *EditorScene) drawMarkerOverlay(ctx GameContext) {
 	hover := s.hitMarker(wx, wy)
 
 	for i := range lg.Objects {
-		rc := objectHitRect(lg.Objects[i])
+		rc := world.MarkerObjectHitRect(lg.Objects[i])
 		col := color.RGBA{0x00, 0xff, 0xff, 0x55}
 		if i == hover {
 			r.StrokeRect(float32(rc.X), float32(rc.Y), float32(rc.W), float32(rc.H), 2, color.RGBA{0x00, 0xff, 0xff, 0xcc})
@@ -774,7 +738,7 @@ func (s *EditorScene) drawItemMenu(ctx GameContext) {
 	r.StrokeLine(panelX+4, panelY+headerH-2, panelX+panelW-4, panelY+headerH-2, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
 
 	// Items (no scrolling needed since we only have 5)
-	for i, item := range editorPickupItems {
+	for i, item := range world.AllPickups {
 		rowY := panelY + headerH + float32(i)*rowH
 
 		// Highlight currently selected item in menu
@@ -784,10 +748,10 @@ func (s *EditorScene) drawItemMenu(ctx GameContext) {
 		}
 
 		// Draw pickup image
-		r.DrawPickupScreen(item.kind, panelX+8, rowY+2, 16, 16)
+		r.DrawPickupScreen(item, panelX+8, rowY+2, 16, 16)
 
 		// Draw pickup name/label
-		r.DrawText(int(panelX)+30, int(rowY)+4, item.label)
+		r.DrawText(int(panelX)+30, int(rowY)+4, item.EditorLabel())
 	}
 
 	// Divider above footer

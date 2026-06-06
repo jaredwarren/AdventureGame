@@ -11,10 +11,7 @@ package world
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
-	"github.com/jaredwarren/game-test/internal/geom"
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/tiled"
 )
@@ -49,120 +46,20 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 	if w.TileW != TileSize || w.TileH != TileSize {
 		return nil, fmt.Errorf("expected %dx%d tiles", TileSize, TileSize)
 	}
-	w.Player = Player{
-		ID:                    w.allocID(),
-		Transform:             Transform{},
-		Hitbox:                Hitbox{W: DefaultPlayerHitboxW, H: DefaultPlayerHitboxH},
-		Facing:                Facing{Dir: DirDown},
-		SwingDuration:         8,
-		MaxSwingCD:            12,
-		SwingActiveStart:      2,
-		SwingActiveEnd:        7,
-		TorchSwingDuration:    8,
-		MaxTorchSwingCD:       12,
-		TorchSwingActiveStart: 2,
-		TorchSwingActiveEnd:   7,
-		BaseSpeed:             1.35,
-		SprintSpeed:           2.15,
-		DodgeStaminaCost:      20,
-		DodgeDuration:         20,
-		DodgeMaxImpulse:       12,
-		DodgeSpeed:            2.8,
-		StaminaRegenInterval:       2,
-		SwordReach:                 14.0,
-		SwordThickness:             10.0,
-		TorchReach:                 14.0,
-		TorchThickness:             10.0,
-		InvulnFrames:               45,
-		EnemyKnockbackForce:        20.0,
-		PlayerKnockbackForce:       6.0,
-		PlayerHazardKnockbackForce: 12.0,
-		MaxBombs:                   8,
-		BombFuseDuration:           90,
-		BombRadius:                 32.0,
-		BombDamage:                 4,
-		TorchBurnDuration:          72,
-		TorchBurnInterval:          12,
-		TorchBurnDamage:            1,
-	}
+	w.Player = DefaultPlayerTuning()
+	w.Player.ID = w.allocID()
+	w.Player.Hitbox = Hitbox{W: DefaultPlayerHitboxW, H: DefaultPlayerHitboxH}
+	w.Player.Facing = Facing{Dir: DirDown}
 	w.Player.Stamina = w.MaxStamina()
 
 	spawned := false
-	objs := m.ObjectGroup("markers")
-	for i := range objs {
-		o := &objs[i]
-		switch o.Type {
-		case "spawn":
-			w.Player.X, w.Player.Y = PlayerTopLeftFromDoorSpawn(o.X, o.Y, DoorSpawnFeet, w.Player.H)
-			spawned = true
-		case "enemy":
-			w.SpawnEnemy(o.X, o.Y-defaultEnemyH, 3, false)
-		case "pickup":
-			k := PickupCoin
-			if s, ok := tiled.ObjProp(o, "kind"); ok {
-				switch s {
-				case "heart":
-					k = PickupHeart
-				case "bomb":
-					k = PickupBomb
-				case "key":
-					k = PickupSmallKey
-				case "torch":
-					k = PickupTorch
-				}
-			}
-			persist, _ := tiled.ObjPropBool(o, "persistent")
-			var saveKey string
-			if persist {
-				if o.ID != 0 {
-					saveKey = PersistentPickupSaveKey(mapID, o.ID)
-				} else if o.Name != "" {
-					saveKey = fmt.Sprintf("%s:name:%s", mapID, o.Name)
-				}
-			}
-			var opened bool
-			if saveKey != "" && collectedPersistent != nil {
-				if _, skip := collectedPersistent[saveKey]; skip {
-					opened = true
-				}
-			}
-			id := w.SpawnPickup(o.X, o.Y-defaultPickupHitbox, k, saveKey)
-			if opened {
-				for i := range w.Pickups {
-					if w.Pickups[i].ID == id {
-						w.Pickups[i].Opened = true
-					}
-				}
-			}
-		case "door":
-			tmap, _ := tiled.ObjProp(o, "target_map")
-			sx, _ := tiled.ObjProp(o, "spawn_x")
-			sy, _ := tiled.ObjProp(o, "spawn_y")
-			fx, _ := strconv.ParseFloat(sx, 64)
-			fy, _ := strconv.ParseFloat(sy, 64)
-			style := DoorSpawnFeet
-			if a, ok := tiled.ObjProp(o, "spawn_anchor"); ok {
-				switch strings.ToLower(strings.TrimSpace(a)) {
-				case "topleft", "top_left", "top-left", "origin":
-					style = DoorSpawnTopLeft
-				}
-			}
-			// NOTE: Door rects must lie mostly on walkable tiles. Placing them flush with the outer
-			// wall (e.g. x=304 on a 320px-wide map) puts the trigger inside solid collision—unreachable.
-			w.Doors = append(w.Doors, Door{
-				ID:         w.allocID(),
-				Rect:       geom.Rect{X: o.X, Y: o.Y, W: o.Width, H: o.Height},
-				TargetMap:  tmap,
-				SpawnX:     fx,
-				SpawnY:     fy,
-				SpawnStyle: style,
-			})
-		case "shrine":
-			w.Shrines = append(w.Shrines, Shrine{
-				ID:      w.allocID(),
-				TiledID: o.ID,
-				Rect:    geom.Rect{X: o.X, Y: o.Y, W: o.Width, H: o.Height},
-			})
+	spawnCtx := MarkerSpawnContext{
+		CollectedPersistent: collectedPersistent,
+		Spawned:             &spawned,
+	}
+	for _, o := range m.ObjectGroup("markers") {
+		if h := MarkerHandlerFor(o.Type); h != nil {
+			h.SpawnFromTiled(w, &o, mapID, spawnCtx)
 		}
 	}
 
