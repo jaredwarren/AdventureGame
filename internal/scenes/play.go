@@ -9,8 +9,6 @@
 package scenes
 
 import (
-	"image/color"
-
 	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/save"
 	"github.com/jaredwarren/game-test/internal/services"
@@ -127,49 +125,6 @@ func (s *PlayScene) Draw(ctx GameContext) {
 	if sess.World != nil {
 		r.DrawWorld(sess.World)
 		DrawParticles(r, s.particles)
-
-		cam := r.Camera()
-		ox, oy := cam.X, cam.Y
-		for _, b := range sess.World.ActiveBombs {
-			sx := float32(b.X - ox)
-			sy := float32(b.Y - oy)
-
-			var cycleLen int
-			if b.Timer > 60 {
-				cycleLen = 20
-			} else if b.Timer > 30 {
-				cycleLen = 10
-			} else if b.Timer > 10 {
-				cycleLen = 4
-			} else {
-				cycleLen = 2
-			}
-			isFlash := (b.Timer/(cycleLen/2))%2 == 0
-
-			bodyColor := color.RGBA{20, 20, 20, 255}
-			if isFlash {
-				bodyColor = color.RGBA{240, 50, 50, 255}
-			}
-
-			r.FillRect(sx-5, sy-4, 10, 8, bodyColor)
-			r.FillRect(sx-4, sy-5, 8, 10, bodyColor)
-			r.FillRect(sx-2, sy-7, 4, 2, color.RGBA{60, 60, 60, 255})
-			r.StrokeLine(sx, sy-7, sx+3, sy-9, 1, color.RGBA{130, 110, 90, 255})
-		}
-
-		for _, f := range sess.World.Flames {
-			sx := float32(f.X - ox)
-			sy := float32(f.Y - oy)
-			tick := sess.World.Tick
-			flicker := (tick / 4) % 3
-
-			r.FillRect(sx-6, sy-3+float32(flicker), 12, 8-float32(flicker), color.RGBA{230, 50, 20, 220})
-			r.FillRect(sx-4, sy-7+float32(flicker), 8, 12-float32(flicker), color.RGBA{230, 50, 20, 220})
-			r.FillRect(sx-4, sy-1+float32(flicker), 8, 6-float32(flicker), color.RGBA{255, 120, 20, 240})
-			r.FillRect(sx-2, sy-5+float32(flicker), 4, 10-float32(flicker), color.RGBA{255, 120, 20, 240})
-			r.FillRect(sx-2, sy+1, 4, 3, color.RGBA{255, 220, 40, 255})
-			r.FillRect(sx-1, sy-2+float32(flicker), 2, 6-float32(flicker), color.RGBA{255, 220, 40, 255})
-		}
 
 		DrawHUD(r, sess.World, sess)
 		if s.toastTimer > 0 {
