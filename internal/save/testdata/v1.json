@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "map_id": "field1",
+  "player_x": 100.0,
+  "player_y": 100.0,
+  "hp": 3,
+  "currency": 10,
+  "has_bomb": true,
+  "has_torch": true,
+  "small_key": 1,
+  "vitality": 1,
+  "resolve": 1,
+  "might": 1,
+  "wits": 1,
+  "fortune": 1,
+  "time_of_day": 600,
+  "selected_item": 0
+}

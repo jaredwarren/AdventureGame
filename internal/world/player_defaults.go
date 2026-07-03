@@ -1,41 +1,12 @@
 package world
 
+import "github.com/jaredwarren/game-test/internal/balance"
+
 // defaultPlayerTuning is the single source of truth for upgradeable player
 // properties. BuildFromTiled seeds new worlds from this; systems resolve
 // zero-valued Player fields through Effective* accessors below.
 var defaultPlayerTuning = Player{
-	SwingDuration:              8,
-	MaxSwingCD:                 12,
-	SwingActiveStart:           2,
-	SwingActiveEnd:             7,
-	TorchSwingDuration:         8,
-	MaxTorchSwingCD:            12,
-	TorchSwingActiveStart:      2,
-	TorchSwingActiveEnd:        7,
-	BaseSpeed:                  1.35,
-	SprintSpeed:                2.15,
-	DodgeStaminaCost:           20,
-	DodgeDuration:              20,
-	DodgeMaxImpulse:            12,
-	DodgeSpeed:                 2.8,
-	StaminaRegenInterval:       2,
-	SwordReach:                 14.0,
-	SwordThickness:             10.0,
-	TorchReach:                 14.0,
-	TorchThickness:             10.0,
-	InvulnFrames:               45,
-	EnemyKnockbackForce:        20.0,
-	PlayerKnockbackForce:       6.0,
-	PlayerHazardKnockbackForce: 12.0,
-	MaxBombs:                   8,
-	BombFuseDuration:           90,
-	BombRadius:                 32.0,
-	BombDamage:                 4,
-	TorchBurnDuration:          72,
-	TorchBurnInterval:          12,
-	TorchBurnDamage:            1,
-	TorchLightRadius:           85.0,
-	PersonalLightRadius:        35.0,
+	PlayerTuning: balance.DefaultPlayerTuning(),
 }
 
 // DefaultPlayerTuning returns a copy of the canonical player tuning defaults.

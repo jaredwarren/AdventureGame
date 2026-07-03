@@ -7,12 +7,13 @@ package save
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
-	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/balance"
 )
 
-const CurrentVersion = 2
+const CurrentVersion = 3
 
 // GameSave is versioned for migrations.
 type GameSave struct {
@@ -23,73 +24,151 @@ type GameSave struct {
 	PlayerY  float64 `json:"player_y"`
 	HP       int     `json:"hp"`
 	Currency int     `json:"currency"`
-	// Bombs is the carried bomb count. Older saves used has_bomb (bool);
-	// Load maps has_bomb:true to Bombs=1 when bombs is absent/zero.
-	Bombs    int  `json:"bombs,omitempty"`
-	HasTorch bool `json:"has_torch"`
-	SmallKey int  `json:"small_key"`
-	Vitality int  `json:"vitality"`
-	Resolve  int  `json:"resolve"`
-	Might    int  `json:"might"`
-	Wits     int  `json:"wits"`
-	Fortune  int  `json:"fortune"`
+	Bombs    int     `json:"bombs,omitempty"`
+	HasTorch bool    `json:"has_torch"`
+	SmallKey int     `json:"small_key"`
+	Vitality int     `json:"vitality"`
+	Resolve  int     `json:"resolve"`
+	Might    int     `json:"might"`
+	Wits     int     `json:"wits"`
+	Fortune  int     `json:"fortune"`
 
-	// CollectedPickupKeys lists persistent pickup save keys already taken;
-	// see world.PersistentPickupSaveKey. Omitted when empty.
+	// CollectedPickupKeys lists persistent pickup save keys already taken.
 	CollectedPickupKeys []string `json:"collected_pickups,omitempty"`
 
-	// DestroyedTileKeys lists tiles destroyed by any damage source
-	// (bombs, fire, ...); see world.MapTilePersistKey. The JSON tag
-	// stays "broken_cracked_tiles" for backward compatibility with
-	// existing save files from before generalized tile destruction.
+	// DestroyedTileKeys lists tiles destroyed by any damage source.
 	DestroyedTileKeys []string `json:"broken_cracked_tiles,omitempty"`
 
-	// OpenedLockTileKeys lists GIDLock tiles opened with a small key; same key format as cracked tiles.
+	// OpenedLockTileKeys lists GIDLock tiles opened with a small key.
 	OpenedLockTileKeys []string `json:"opened_lock_tiles,omitempty"`
 
 	// ActivatedShrines lists keys of shrines that the player has touched.
 	ActivatedShrines []string `json:"activated_shrines,omitempty"`
 
-	ReduceScreenShake bool           `json:"reduce_screen_shake"`
-	TimeOfDay         int            `json:"time_of_day"`
-	SelectedItem      world.ItemSlot `json:"selected_item"`
-
-	SwingDuration              int     `json:"swing_duration,omitempty"`
-	MaxSwingCD                 int     `json:"max_swing_cd,omitempty"`
-	SwingActiveStart           int     `json:"swing_active_start,omitempty"`
-	SwingActiveEnd             int     `json:"swing_active_end,omitempty"`
-	TorchSwingDuration         int     `json:"torch_swing_duration,omitempty"`
-	MaxTorchSwingCD            int     `json:"max_torch_swing_cd,omitempty"`
-	TorchSwingActiveStart      int     `json:"torch_swing_active_start,omitempty"`
-	TorchSwingActiveEnd        int     `json:"torch_swing_active_end,omitempty"`
-	BaseSpeed                  float64 `json:"base_speed,omitempty"`
-	SprintSpeed                float64 `json:"sprint_speed,omitempty"`
-	DodgeStaminaCost           int     `json:"dodge_stamina_cost,omitempty"`
-	DodgeDuration              int     `json:"dodge_duration,omitempty"`
-	DodgeMaxImpulse            int     `json:"dodge_max_impulse,omitempty"`
-	DodgeSpeed                 float64 `json:"dodge_speed,omitempty"`
-	StaminaRegenInterval       int     `json:"stamina_regen_interval,omitempty"`
-	SwordReach                 float64 `json:"sword_reach,omitempty"`
-	SwordThickness             float64 `json:"sword_thickness,omitempty"`
-	TorchReach                 float64 `json:"torch_reach,omitempty"`
-	TorchThickness             float64 `json:"torch_thickness,omitempty"`
-	InvulnFrames               int     `json:"invuln_frames,omitempty"`
-	EnemyKnockbackForce        float64 `json:"enemy_knockback_force,omitempty"`
-	PlayerKnockbackForce       float64 `json:"player_knockback_force,omitempty"`
-	PlayerHazardKnockbackForce float64 `json:"player_hazard_knockback_force,omitempty"`
-	MaxBombs                   int     `json:"max_bombs,omitempty"`
-	BombFuseDuration           int     `json:"bomb_fuse_duration,omitempty"`
-	BombRadius                 float64 `json:"bomb_radius,omitempty"`
-	BombDamage                 int     `json:"bomb_damage,omitempty"`
-	TorchBurnDuration          int     `json:"torch_burn_duration,omitempty"`
-	TorchBurnInterval          int     `json:"torch_burn_interval,omitempty"`
-	TorchBurnDamage            int     `json:"torch_burn_damage,omitempty"`
-	TorchLightRadius           float64 `json:"torch_light_radius,omitempty"`
-	PersonalLightRadius        float64 `json:"personal_light_radius,omitempty"`
+	ReduceScreenShake bool                 `json:"reduce_screen_shake"`
+	TimeOfDay         int                  `json:"time_of_day"`
+	SelectedItem      int                  `json:"selected_item"`
+	Tuning            balance.PlayerTuning `json:"tuning"`
 }
 
 const defaultPath = "save.json"
 
+// migrateV1toV2 handles legacy v1 save files:
+// - Maps legacy `has_bomb: true` to `bombs: 1` if bombs is 0 or absent.
+// - Ensures core stats (vitality, resolve, might) default to at least 1.
+func migrateV1toV2(raw map[string]any) map[string]any {
+	if hb, ok := raw["has_bomb"].(bool); ok && hb {
+		b, _ := raw["bombs"].(float64)
+		if b <= 0 {
+			raw["bombs"] = float64(1)
+		}
+	}
+	for _, stat := range []string{"vitality", "resolve", "might"} {
+		if val, ok := raw[stat].(float64); !ok || val < 1 {
+			raw[stat] = float64(1)
+		}
+	}
+	raw["version"] = float64(2)
+	return raw
+}
+
+// migrateV2toV3 handles v2 -> v3 save migration:
+// - Lifts flat player tuning JSON fields into the nested "tuning" object.
+func migrateV2toV3(raw map[string]any) map[string]any {
+	tuning, _ := raw["tuning"].(map[string]any)
+	if tuning == nil {
+		tuning = make(map[string]any)
+	}
+
+	def := balance.DefaultPlayerTuning()
+	flatKeys := map[string]any{
+		"swing_duration":                def.SwingDuration,
+		"max_swing_cd":                  def.MaxSwingCD,
+		"swing_active_start":            def.SwingActiveStart,
+		"swing_active_end":              def.SwingActiveEnd,
+		"torch_swing_duration":          def.TorchSwingDuration,
+		"max_torch_swing_cd":            def.MaxTorchSwingCD,
+		"torch_swing_active_start":      def.TorchSwingActiveStart,
+		"torch_swing_active_end":        def.TorchSwingActiveEnd,
+		"base_speed":                    def.BaseSpeed,
+		"sprint_speed":                  def.SprintSpeed,
+		"dodge_stamina_cost":            def.DodgeStaminaCost,
+		"dodge_duration":                def.DodgeDuration,
+		"dodge_max_impulse":             def.DodgeMaxImpulse,
+		"dodge_speed":                   def.DodgeSpeed,
+		"stamina_regen_interval":        def.StaminaRegenInterval,
+		"sword_reach":                   def.SwordReach,
+		"sword_thickness":               def.SwordThickness,
+		"torch_reach":                   def.TorchReach,
+		"torch_thickness":               def.TorchThickness,
+		"invuln_frames":                 def.InvulnFrames,
+		"enemy_knockback_force":         def.EnemyKnockbackForce,
+		"player_knockback_force":        def.PlayerKnockbackForce,
+		"player_hazard_knockback_force": def.PlayerHazardKnockbackForce,
+		"max_bombs":                     def.MaxBombs,
+		"bomb_fuse_duration":            def.BombFuseDuration,
+		"bomb_radius":                   def.BombRadius,
+		"bomb_damage":                   def.BombDamage,
+		"torch_burn_duration":           def.TorchBurnDuration,
+		"torch_burn_interval":           def.TorchBurnInterval,
+		"torch_burn_damage":             def.TorchBurnDamage,
+		"torch_light_radius":            def.TorchLightRadius,
+		"personal_light_radius":         def.PersonalLightRadius,
+	}
+
+	for key, defaultVal := range flatKeys {
+		if val, exists := raw[key]; exists {
+			tuning[key] = val
+			delete(raw, key)
+		} else if _, existsInTuning := tuning[key]; !existsInTuning {
+			tuning[key] = defaultVal
+		}
+	}
+	raw["tuning"] = tuning
+	raw["version"] = float64(3)
+	return raw
+}
+
+// LoadBytes parses save JSON data, running migrations as needed up to CurrentVersion.
+func LoadBytes(data []byte) (*GameSave, error) {
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+
+	vFloat, _ := raw["version"].(float64)
+	v := int(vFloat)
+	if v == 0 {
+		v = 1
+	}
+
+	if v > CurrentVersion {
+		return nil, fmt.Errorf("unsupported save version: %d (max supported is %d)", v, CurrentVersion)
+	}
+
+	if v < 2 {
+		raw = migrateV1toV2(raw)
+		v = 2
+	}
+	if v < 3 {
+		raw = migrateV2toV3(raw)
+		v = 3
+	}
+
+	migratedBytes, err := json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	var s GameSave
+	if err := json.Unmarshal(migratedBytes, &s); err != nil {
+		return nil, err
+	}
+	s.Version = CurrentVersion
+	return &s, nil
+}
+
+// Load reads and parses a save file from disk.
 func Load(path string) (*GameSave, error) {
 	if path == "" {
 		path = defaultPath
@@ -98,36 +177,10 @@ func Load(path string) (*GameSave, error) {
 	if err != nil {
 		return nil, err
 	}
-	type saveFile struct {
-		GameSave
-		LegacyHasBomb bool `json:"has_bomb"`
-	}
-	var sf saveFile
-	if err := json.Unmarshal(b, &sf); err != nil {
-		return nil, err
-	}
-	s := sf.GameSave
-	if s.Bombs <= 0 && sf.LegacyHasBomb {
-		s.Bombs = 1
-	}
-	if s.Version < 1 {
-		s.Version = 1
-	}
-	if s.Vitality == 0 {
-		s.Vitality = 1
-	}
-	if s.Resolve == 0 {
-		s.Resolve = 1
-	}
-	if s.Might == 0 {
-		s.Might = 1
-	}
-	if s.Bombs < 0 {
-		s.Bombs = 0
-	}
-	return &s, nil
+	return LoadBytes(b)
 }
 
+// Save writes a GameSave to disk at CurrentVersion.
 func Save(path string, s *GameSave) error {
 	if path == "" {
 		path = defaultPath

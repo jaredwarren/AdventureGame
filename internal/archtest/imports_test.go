@@ -67,8 +67,7 @@ var allowedInternalImports = map[string][]string{
 	},
 	"internal/render": {},
 	"internal/save": {
-		// TODO(phase-4): remove internal/world when save codec is fully decoupled
-		"internal/world",
+		"internal/balance",
 	},
 	"internal/input": {
 		"internal/services",
@@ -117,6 +116,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/progression",
 		"internal/save",
 		"internal/tiled",
+		"internal/balance",
 	},
 	"internal/dungeon": {
 		"internal/tiled",

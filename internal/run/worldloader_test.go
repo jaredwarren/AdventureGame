@@ -137,38 +137,38 @@ func TestTimeAndItemPersistence(t *testing.T) {
 	if saveObj.TimeOfDay != 4500 {
 		t.Errorf("expected saved TimeOfDay to be 4500, got %d", saveObj.TimeOfDay)
 	}
-	if saveObj.SelectedItem != world.ItemSlotTorch {
+	if saveObj.SelectedItem != int(world.ItemSlotTorch) {
 		t.Errorf("expected saved SelectedItem to be ItemSlotTorch, got %v", saveObj.SelectedItem)
 	}
-	if saveObj.BaseSpeed != 2.5 {
-		t.Errorf("expected saved BaseSpeed to be 2.5, got %f", saveObj.BaseSpeed)
+	if saveObj.Tuning.BaseSpeed != 2.5 {
+		t.Errorf("expected saved BaseSpeed to be 2.5, got %f", saveObj.Tuning.BaseSpeed)
 	}
-	if saveObj.SprintSpeed != 4.0 {
-		t.Errorf("expected saved SprintSpeed to be 4.0, got %f", saveObj.SprintSpeed)
+	if saveObj.Tuning.SprintSpeed != 4.0 {
+		t.Errorf("expected saved SprintSpeed to be 4.0, got %f", saveObj.Tuning.SprintSpeed)
 	}
-	if saveObj.SwordReach != 20.0 {
-		t.Errorf("expected saved SwordReach to be 20.0, got %f", saveObj.SwordReach)
+	if saveObj.Tuning.SwordReach != 20.0 {
+		t.Errorf("expected saved SwordReach to be 20.0, got %f", saveObj.Tuning.SwordReach)
 	}
-	if saveObj.MaxBombs != 12 {
-		t.Errorf("expected saved MaxBombs to be 12, got %d", saveObj.MaxBombs)
+	if saveObj.Tuning.MaxBombs != 12 {
+		t.Errorf("expected saved MaxBombs to be 12, got %d", saveObj.Tuning.MaxBombs)
 	}
-	if saveObj.BombFuseDuration != 70 {
-		t.Errorf("expected saved BombFuseDuration to be 70, got %d", saveObj.BombFuseDuration)
+	if saveObj.Tuning.BombFuseDuration != 70 {
+		t.Errorf("expected saved BombFuseDuration to be 70, got %d", saveObj.Tuning.BombFuseDuration)
 	}
-	if saveObj.BombRadius != 45.0 {
-		t.Errorf("expected saved BombRadius to be 45.0, got %f", saveObj.BombRadius)
+	if saveObj.Tuning.BombRadius != 45.0 {
+		t.Errorf("expected saved BombRadius to be 45.0, got %f", saveObj.Tuning.BombRadius)
 	}
-	if saveObj.BombDamage != 8 {
-		t.Errorf("expected saved BombDamage to be 8, got %d", saveObj.BombDamage)
+	if saveObj.Tuning.BombDamage != 8 {
+		t.Errorf("expected saved BombDamage to be 8, got %d", saveObj.Tuning.BombDamage)
 	}
-	if saveObj.TorchBurnDuration != 100 {
-		t.Errorf("expected saved TorchBurnDuration to be 100, got %d", saveObj.TorchBurnDuration)
+	if saveObj.Tuning.TorchBurnDuration != 100 {
+		t.Errorf("expected saved TorchBurnDuration to be 100, got %d", saveObj.Tuning.TorchBurnDuration)
 	}
-	if saveObj.TorchBurnInterval != 8 {
-		t.Errorf("expected saved TorchBurnInterval to be 8, got %d", saveObj.TorchBurnInterval)
+	if saveObj.Tuning.TorchBurnInterval != 8 {
+		t.Errorf("expected saved TorchBurnInterval to be 8, got %d", saveObj.Tuning.TorchBurnInterval)
 	}
-	if saveObj.TorchBurnDamage != 3 {
-		t.Errorf("expected saved TorchBurnDamage to be 3, got %d", saveObj.TorchBurnDamage)
+	if saveObj.Tuning.TorchBurnDamage != 3 {
+		t.Errorf("expected saved TorchBurnDamage to be 3, got %d", saveObj.Tuning.TorchBurnDamage)
 	}
 
 	// Reload with ApplySave

@@ -1,6 +1,10 @@
 package world
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jaredwarren/game-test/internal/balance"
+)
 
 func TestPlayerEffectiveDefaultsWhenZero(t *testing.T) {
 	var p Player
@@ -20,7 +24,7 @@ func TestPlayerEffectiveDefaultsWhenZero(t *testing.T) {
 }
 
 func TestPlayerEffectiveOverridesWhenSet(t *testing.T) {
-	p := Player{BaseSpeed: 2.5, InvulnFrames: 30, MaxBombs: 12}
+	p := Player{PlayerTuning: balance.PlayerTuning{BaseSpeed: 2.5, InvulnFrames: 30, MaxBombs: 12}}
 	if p.EffectiveBaseSpeed() != 2.5 {
 		t.Errorf("BaseSpeed override: got %v", p.EffectiveBaseSpeed())
 	}
