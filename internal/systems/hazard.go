@@ -28,7 +28,8 @@ func (HazardSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 					H: float64(world.TileSize),
 				}
 				if w.PlayerRect().Overlaps(flameRect) {
-					w.HP -= 1
+					dmg := w.EffectiveBalance().Hazards.FlameDamage
+					w.HP -= dmg
 					if w.HP < 0 {
 						w.HP = 0
 					}
@@ -37,7 +38,7 @@ func (HazardSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 					fcy := float64(f.TY*world.TileSize) + float64(world.TileSize)*0.5
 					nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, fcx, fcy, w.Player.EffectivePlayerHazardKnockbackForce(), true)
 					w.Player.X, w.Player.Y = nx, ny
-					tryPush(bus, PlayerHurtEvent{Damage: 1})
+					tryPush(bus, PlayerHurtEvent{Damage: dmg})
 				}
 			}
 			activeFlames = append(activeFlames, f)

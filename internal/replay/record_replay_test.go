@@ -263,13 +263,13 @@ func cloneEvents(src []systems.Event) []systems.Event {
 // TestReplayBombPlacementAndExplosion verifies that dropping a bomb and waiting for explosion
 // runs deterministically across multiple playback runs.
 func TestReplayBombPlacementAndExplosion(t *testing.T) {
-	script := make([][]services.Action, 70)
+	script := make([][]services.Action, 100)
 	script[0] = []services.Action{services.ActionBomb}
-	for i := 1; i < 70; i++ {
+	for i := 1; i < 100; i++ {
 		script[i] = []services.Action{}
 	}
 
-	stream := replay.NewStream(70)
+	stream := replay.NewStream(100)
 	src := newFakeInput(script)
 	rec := replay.NewRecorder(src, stream)
 	for range script {

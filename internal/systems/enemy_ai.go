@@ -22,20 +22,12 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
-// enemyHurtCD is how long an enemy must wait before landing another
-// contact hit on the player. Shared across all enemies today; could
-// migrate onto ContactHurt as a per-enemy value if we ever need it.
-const enemyHurtCD = 60
-
-// contactMargin expands the enemy hurtbox slightly so flush AABBs still register
-// as contact now that movement keeps bodies from overlapping.
-const contactMargin = 1.0
-
 // EnemyAISystem homes live enemies on the player and applies contact damage.
 type EnemyAISystem struct{}
 
 func (EnemyAISystem) Update(w *world.World, bus *EventBus, _ float64) error {
 	pcx, pcy := w.Player.Center()
+	bal := w.EffectiveBalance()
 
 	for i := range w.Enemies {
 		e := &w.Enemies[i]
@@ -50,8 +42,8 @@ func (EnemyAISystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		}
 		speed := e.AI.Speed
 		if w.IsNight() {
-			aggroR *= 1.5
-			speed *= 1.5
+			aggroR *= bal.NightBuffs.AggroMultiplier
+			speed *= bal.NightBuffs.SpeedMultiplier
 		}
 		dx := pcx - ecx
 		dy := pcy - ecy
@@ -107,7 +99,8 @@ func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
 	if e.HurtCD > 0 {
 		return false
 	}
-	if !w.PlayerRect().OverlapsExpanded(e.Rect(), contactMargin) {
+	contactCfg := w.EffectiveBalance().Contact
+	if !w.PlayerRect().OverlapsExpanded(e.Rect(), contactCfg.ContactMargin) {
 		return false
 	}
 	w.HP -= e.Damage
@@ -118,6 +111,6 @@ func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
 	nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, ecx, ecy, w.Player.EffectivePlayerKnockbackForce(), true)
 	w.Player.X, w.Player.Y = nx, ny
 	w.Player.Invuln = w.Player.EffectiveInvulnFrames()
-	e.HurtCD = enemyHurtCD
+	e.HurtCD = contactCfg.EnemyHurtCD
 	return true
 }

@@ -54,6 +54,8 @@ type playerTuning struct {
 	TorchBurnDuration          int
 	TorchBurnInterval          int
 	TorchBurnDamage            int
+	TorchLightRadius           float64
+	PersonalLightRadius        float64
 }
 
 // RunStateFromWorld snapshots portable run state from a live world.
@@ -175,6 +177,8 @@ func playerTuningFromPlayer(p world.Player) playerTuning {
 		TorchBurnDuration:          p.TorchBurnDuration,
 		TorchBurnInterval:          p.TorchBurnInterval,
 		TorchBurnDamage:            p.TorchBurnDamage,
+		TorchLightRadius:           p.TorchLightRadius,
+		PersonalLightRadius:        p.PersonalLightRadius,
 	}
 }
 
@@ -210,6 +214,8 @@ func playerTuningFromSave(s *save.GameSave, def world.Player) playerTuning {
 		TorchBurnDuration:          tuningInt(s.TorchBurnDuration, def.TorchBurnDuration),
 		TorchBurnInterval:          tuningInt(s.TorchBurnInterval, def.TorchBurnInterval),
 		TorchBurnDamage:            tuningInt(s.TorchBurnDamage, def.TorchBurnDamage),
+		TorchLightRadius:           tuningFloat(s.TorchLightRadius, def.TorchLightRadius),
+		PersonalLightRadius:        tuningFloat(s.PersonalLightRadius, def.PersonalLightRadius),
 	}
 }
 
@@ -247,6 +253,8 @@ func (t playerTuning) applyTo(p *world.Player) {
 	p.TorchBurnDuration = t.TorchBurnDuration
 	p.TorchBurnInterval = t.TorchBurnInterval
 	p.TorchBurnDamage = t.TorchBurnDamage
+	p.TorchLightRadius = t.TorchLightRadius
+	p.PersonalLightRadius = t.PersonalLightRadius
 }
 
 func (t playerTuning) fillSave(gs *save.GameSave) {
@@ -280,6 +288,8 @@ func (t playerTuning) fillSave(gs *save.GameSave) {
 	gs.TorchBurnDuration = t.TorchBurnDuration
 	gs.TorchBurnInterval = t.TorchBurnInterval
 	gs.TorchBurnDamage = t.TorchBurnDamage
+	gs.TorchLightRadius = t.TorchLightRadius
+	gs.PersonalLightRadius = t.PersonalLightRadius
 }
 
 func tuningInt(v, def int) int {

@@ -20,7 +20,6 @@ import (
 	"math"
 	"math/rand"
 
-	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/save"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/systems"
@@ -335,9 +334,6 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				s.hitStop = 5
 				cam.AddShake(6, 2.5)
 				ctx.Audio().Play("hit.wav", 0.3)
-			}
-			if e.Killed && e.IsBoss {
-				w.Currency += progression.DefaultEconomy().BossKillCoinBonus
 			}
 			// Find enemy position
 			var ex, ey float64

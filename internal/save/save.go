@@ -84,6 +84,8 @@ type GameSave struct {
 	TorchBurnDuration          int     `json:"torch_burn_duration,omitempty"`
 	TorchBurnInterval          int     `json:"torch_burn_interval,omitempty"`
 	TorchBurnDamage            int     `json:"torch_burn_damage,omitempty"`
+	TorchLightRadius           float64 `json:"torch_light_radius,omitempty"`
+	PersonalLightRadius        float64 `json:"personal_light_radius,omitempty"`
 }
 
 const defaultPath = "save.json"

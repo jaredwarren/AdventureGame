@@ -339,8 +339,8 @@ func (r *Renderer) DrawWorld(w *world.World) {
 	}
 
 	// Apply Night Overlay Shader
-	if (w.HasAmbientLightOverride && w.AmbientLightOverride < 1.0) || w.TimeOfDay < 1200 || w.TimeOfDay >= 9600 {
-		mult := w.LightMultiplier()
+	mult := w.LightMultiplier()
+	if mult < 1.0 {
 		alpha := float32((1.0 - mult) * 1.175)
 		if alpha > 0.94 {
 			alpha = 0.94
@@ -356,13 +356,13 @@ func (r *Renderer) DrawWorld(w *world.World) {
 
 			lightR := float32(0.0)
 			if w.HasTorch {
-				lightR = 85.0
+				lightR = float32(w.Player.EffectiveTorchLightRadius())
 			}
 
 			op := &ebiten.DrawRectShaderOptions{}
 			op.Uniforms = map[string]any{
 				"LightSource":    []float32{px, py},
-				"PersonalRadius": float32(35.0),
+				"PersonalRadius": float32(w.Player.EffectivePersonalLightRadius()),
 				"LightRadius":    lightR,
 				"AmbientColor":   []float32{0.03 * alpha, 0.03 * alpha, 0.15 * alpha, alpha},
 			}

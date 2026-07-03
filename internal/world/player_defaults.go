@@ -34,6 +34,8 @@ var defaultPlayerTuning = Player{
 	TorchBurnDuration:          72,
 	TorchBurnInterval:          12,
 	TorchBurnDamage:            1,
+	TorchLightRadius:           85.0,
+	PersonalLightRadius:        35.0,
 }
 
 // DefaultPlayerTuning returns a copy of the canonical player tuning defaults.
@@ -173,4 +175,12 @@ func (p Player) EffectiveTorchBurnInterval() int {
 
 func (p Player) EffectiveTorchBurnDamage() int {
 	return intOrDefault(p.TorchBurnDamage, defaultPlayerTuning.TorchBurnDamage)
+}
+
+func (p Player) EffectiveTorchLightRadius() float64 {
+	return floatOrDefault(p.TorchLightRadius, defaultPlayerTuning.TorchLightRadius)
+}
+
+func (p Player) EffectivePersonalLightRadius() float64 {
+	return floatOrDefault(p.PersonalLightRadius, defaultPlayerTuning.PersonalLightRadius)
 }

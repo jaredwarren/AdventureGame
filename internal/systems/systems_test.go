@@ -7,8 +7,10 @@
 package systems_test
 
 import (
+	"math"
 	"testing"
 
+	"github.com/jaredwarren/game-test/internal/balance"
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/systems"
 	"github.com/jaredwarren/game-test/internal/world"
@@ -472,7 +474,8 @@ func TestBombSystem_CrackedWallDestruction(t *testing.T) {
 
 func TestStaminaSystem_DrainAndRegen(t *testing.T) {
 	w := newTestWorld()
-	w.Player.Stamina = 100
+	maxStam := w.MaxStamina()
+	w.Player.Stamina = maxStam
 
 	p := systems.Default()
 
@@ -484,7 +487,7 @@ func TestStaminaSystem_DrainAndRegen(t *testing.T) {
 		t.Fatalf("pipeline tick error: %v", err)
 	}
 
-	if w.Player.Stamina >= 100 {
+	if w.Player.Stamina >= maxStam {
 		t.Errorf("expected stamina to drain while sprinting, got %d", w.Player.Stamina)
 	}
 
@@ -499,5 +502,33 @@ func TestStaminaSystem_DrainAndRegen(t *testing.T) {
 
 	if w.Player.Stamina <= drainedStamina {
 		t.Errorf("expected stamina to regen when not sprinting, got %d (was %d)", w.Player.Stamina, drainedStamina)
+	}
+}
+
+func TestEnemyAISystem_CustomNightBuffsMultiplier(t *testing.T) {
+	w := newTestWorld()
+	w.TimeOfDay = 0 // Night!
+	w.Balance = balance.Default()
+	w.Balance.NightBuffs = balance.NightBuffs{
+		AggroMultiplier: 2.0, // 25 * 2.0 = 50 aggro radius
+		SpeedMultiplier: 3.0, // 1.0 * 3.0 = 3.0 speed
+	}
+
+	// Player is at (16, 16), center (22, 22).
+	// Place enemy at (50, 16), center (56, 22), distance 34 px from player (out of 25 aggro, but within 50 aggro).
+	enemy := world.NewEnemy(world.NoEntity, 50, 16, 10, false)
+	enemy.AI.AggroRadius = 25
+	enemy.AI.Speed = 1.0
+	w.Enemies = []world.Enemy{enemy}
+
+	var bus systems.EventBus
+	ai := systems.EnemyAISystem{}
+	if err := ai.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("EnemyAISystem failed: %v", err)
+	}
+
+	// Enemy should have moved left by speed ~3.0 (X decreased from 50 to ~47)
+	if math.Abs(w.Enemies[0].X-47.0) > 0.1 {
+		t.Errorf("expected enemy X to be ~47.0 with 3.0x speed multiplier, got %f", w.Enemies[0].X)
 	}
 }

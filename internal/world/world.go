@@ -26,6 +26,7 @@ package world
 import (
 	"math"
 
+	"github.com/jaredwarren/game-test/internal/balance"
 	"github.com/jaredwarren/game-test/internal/geom"
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/world/tile"
@@ -176,6 +177,8 @@ type Player struct {
 	TorchBurnDuration          int
 	TorchBurnInterval          int
 	TorchBurnDamage            int
+	TorchLightRadius           float64
+	PersonalLightRadius        float64
 }
 
 type World struct {
@@ -230,9 +233,21 @@ type World struct {
 	// transition.
 	DoorCooldown int
 
+	// Balance is the active GameBalance configuration; when nil, EffectiveBalance
+	// falls back to balance.Default().
+	Balance *balance.GameBalance
+
 	// nextID feeds allocID(). Unexported so external code can't mint IDs
 	// out of band; use the Spawn* methods instead.
 	nextID uint32
+}
+
+// EffectiveBalance returns w.Balance if non-nil, or balance.Default() otherwise.
+func (w *World) EffectiveBalance() *balance.GameBalance {
+	if w != nil && w.Balance != nil {
+		return w.Balance
+	}
+	return balance.Default()
 }
 
 func (w *World) gidAt(tx, ty int) int {
@@ -626,7 +641,7 @@ func (w *World) TryDamageFaceTile(kind DamageKind) (ok bool, saveKey string) {
 
 // ShrineHeal is the “poor” shrine interaction (no coins). Rich interaction is priced in the shop.
 func (w *World) ShrineHeal() {
-	heal := progression.DefaultEconomy().ShrineHealAmount
+	heal := w.EffectiveBalance().Economy.ShrineHealAmount
 	if heal <= 0 || w.HP >= w.MaxHP() {
 		return
 	}
@@ -655,25 +670,27 @@ func (w *World) UpgradeRandomStat(rng func(int) int) {
 const CycleLength = 14400
 
 func (w *World) IsNight() bool {
-	// Twilight and night is when w.TimeOfDay is outside [1200, 10800)
-	return w.TimeOfDay < 1200 || w.TimeOfDay >= 10800
+	dn := w.EffectiveBalance().DayNight
+	return w.TimeOfDay < dn.NightEndTick || w.TimeOfDay >= dn.NightStartTick
 }
 
 func (w *World) LightMultiplier() float64 {
 	if w.HasAmbientLightOverride {
 		return w.AmbientLightOverride
 	}
+	dn := w.EffectiveBalance().DayNight
 	t := float64(w.TimeOfDay)
-	if t >= 0 && t < 1200 {
-		return 0.2 + (t/1200.0)*0.8
+	if t >= 0 && t < float64(dn.NightEndTick) {
+		return dn.MinAmbientLight + (t/float64(dn.NightEndTick))*(1.0-dn.MinAmbientLight)
 	}
-	if t >= 1200 && t < 9600 {
+	if t >= float64(dn.NightEndTick) && t < float64(dn.DuskStartTick) {
 		return 1.0
 	}
-	if t >= 9600 && t < 10800 {
-		return 1.0 - ((t-9600.0)/1200.0)*0.8
+	duskDuration := float64(dn.DuskEndTick - dn.DuskStartTick)
+	if duskDuration > 0 && t >= float64(dn.DuskStartTick) && t < float64(dn.DuskEndTick) {
+		return 1.0 - ((t-float64(dn.DuskStartTick))/duskDuration)*(1.0-dn.MinAmbientLight)
 	}
-	return 0.2
+	return dn.MinAmbientLight
 }
 
 // BreakTileAt breaks the tile at tx, ty with the given damage kind.
@@ -703,10 +720,6 @@ type ActiveFlame struct {
 	Timer  int
 }
 
-// DefaultTreeBurnDuration is the frame count for a tree to burn before breaking into ashes/stump.
-// TODO(phase-2): move to balance.GameBalance.Hazards
-const DefaultTreeBurnDuration = 90
-
 // TryIgniteTree ignites a tree tile at tx, ty. Returns true if the tree was successfully ignited.
 func (w *World) TryIgniteTree(tx, ty int) bool {
 	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
@@ -733,7 +746,7 @@ func (w *World) TryIgniteTree(tx, ty int) bool {
 		Y:     by,
 		TX:    tx,
 		TY:    ty,
-		Timer: DefaultTreeBurnDuration,
+		Timer: w.EffectiveBalance().Hazards.TreeBurnDuration,
 	})
 	return true
 }

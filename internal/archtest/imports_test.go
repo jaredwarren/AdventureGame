@@ -32,6 +32,7 @@ var pureCorePackages = []string{
 	"internal/world",
 	"internal/tiled",
 	"internal/progression",
+	"internal/balance",
 	"internal/save",
 	"internal/geom",
 	"internal/render",
@@ -60,7 +61,10 @@ var allowedInternalImports = map[string][]string{
 	"internal/geom":        {},
 	"internal/tiled":       {},
 	"internal/progression": {},
-	"internal/render":      {},
+	"internal/balance": {
+		"internal/progression",
+	},
+	"internal/render": {},
 	"internal/save": {
 		// TODO(phase-4): remove internal/world when save codec is fully decoupled
 		"internal/world",
@@ -80,6 +84,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/geom",
 		"internal/tiled",
 		"internal/progression",
+		"internal/balance",
 		"internal/world/enemy",
 		"internal/world/pickup",
 		"internal/world/tile",
@@ -102,6 +107,7 @@ var allowedInternalImports = map[string][]string{
 	"internal/systems": {
 		"internal/world",
 		"internal/geom",
+		"internal/balance",
 	},
 	"internal/dungeon": {
 		"internal/tiled",
@@ -293,6 +299,29 @@ func repoRoot(t *testing.T) string {
 			return dir
 		}
 	}
-	t.Fatalf("no go.mod found from %s", wd)
+	t.Fatalf("could not find go.mod above %s", wd)
 	return ""
+}
+
+func TestPlatformDoesNotImportBalanceOrProgression(t *testing.T) {
+	root := repoRoot(t)
+	platformDir := filepath.Join(root, "internal/platform")
+	if _, err := os.Stat(platformDir); os.IsNotExist(err) {
+		return
+	}
+	banned := []string{
+		"github.com/jaredwarren/game-test/internal/balance",
+		"github.com/jaredwarren/game-test/internal/progression",
+	}
+	walkGoFiles(t, platformDir, func(path string) {
+		imports := readImports(t, path)
+		for _, imp := range imports {
+			for _, b := range banned {
+				if imp == b {
+					rel, _ := filepath.Rel(root, path)
+					t.Errorf("file %s imports %s, which is forbidden in internal/platform", rel, imp)
+				}
+			}
+		}
+	})
 }

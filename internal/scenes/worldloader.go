@@ -96,7 +96,7 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 	if carry != nil && (opts.Save == nil || opts.Save.MapID != mapID) {
 		carry.ApplyTo(w)
 	}
-	w.DoorCooldown = 60
+	w.DoorCooldown = w.EffectiveBalance().DoorCooldowns.MapLoadFrames
 
 	sess.World = w
 	ApplyMapProgress(w, progress)
@@ -145,26 +145,29 @@ func WarpDoor(assets services.AssetCache, sess *Session, cam *render.Camera, d *
 	if err := EnterMap(assets, sess, target, MapLoadOpts{Save: carry}); err != nil {
 		return err
 	}
-	sess.World.DoorCooldown = 90
+	sess.World.DoorCooldown = sess.World.EffectiveBalance().DoorCooldowns.WarpFrames
 	return nil
 }
 
-// Respawn warps to field1 while preserving run progress (stats, currency,
-// keys, tuning). HP is set to half max afterward. On error the World is cleared.
+// Respawn warps to configured respawn map while preserving run progress (stats, currency,
+// keys, tuning). On error the World is cleared.
 func Respawn(assets services.AssetCache, sess *Session) {
 	var carry *RunState
+	targetMap := "field1"
 	if sess.World != nil {
 		rs := RunStateFromWorld(sess.World)
 		carry = &rs
+		targetMap = sess.World.EffectiveBalance().Respawn.MapID
 	}
-	if err := EnterMap(assets, sess, "field1", MapLoadOpts{CarryRunState: carry}); err != nil {
+	if err := EnterMap(assets, sess, targetMap, MapLoadOpts{CarryRunState: carry}); err != nil {
 		sess.World = nil
 		return
 	}
 	if sess.World != nil {
-		sess.World.HP = sess.World.MaxHP() / 2
-		if sess.World.HP < 2 {
-			sess.World.HP = 2
+		resp := sess.World.EffectiveBalance().Respawn
+		sess.World.HP = int(float64(sess.World.MaxHP()) * resp.HPFraction)
+		if sess.World.HP < resp.HPMinimum {
+			sess.World.HP = resp.HPMinimum
 		}
 	}
 }

@@ -81,6 +81,9 @@ func applyEnemyDamage(w *world.World, bus *EventBus, idx int, dmg int, originX, 
 		e.X, e.Y = nx, ny
 	}
 	killed := before > 0 && e.HP <= 0
+	if killed && e.IsBoss {
+		w.Currency += w.EffectiveBalance().Economy.BossKillCoinBonus
+	}
 	tryPush(bus, HitEvent{
 		EnemyID:     e.ID,
 		Damage:      dmg,

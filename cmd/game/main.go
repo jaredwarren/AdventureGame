@@ -26,6 +26,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 
 	"github.com/jaredwarren/game-test/assets"
+	"github.com/jaredwarren/game-test/internal/balance"
 	"github.com/jaredwarren/game-test/internal/game"
 	"github.com/jaredwarren/game-test/internal/input"
 	ebitenplat "github.com/jaredwarren/game-test/internal/platform/ebiten"
@@ -38,7 +39,21 @@ const configSubdir = "game-test"
 
 func main() {
 	editMap := flag.String("edit", "", "open the in-engine .tmj editor for this map id (e.g. field1); reads/writes assets/maps/<id>.tmj on disk")
+	balancePath := flag.String("balance", "", "path to optional balance.json overlay file for dev playtesting")
 	flag.Parse()
+
+	if *balancePath != "" {
+		data, err := os.ReadFile(*balancePath)
+		if err != nil {
+			log.Printf("[balance] cannot read balance file %q: %v", *balancePath, err)
+		} else {
+			if _, err := balance.Load(data); err != nil {
+				log.Printf("[balance] cannot parse balance file %q: %v", *balancePath, err)
+			} else {
+				log.Printf("[balance] loaded balance overlay from %q", *balancePath)
+			}
+		}
+	}
 
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowTitle("game-test (Ebiten)")

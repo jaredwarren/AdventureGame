@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/jaredwarren/game-test/internal/services"
+	"github.com/jaredwarren/game-test/internal/systems"
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
@@ -38,18 +39,25 @@ func TestSprintStaminaLogic(t *testing.T) {
 	// Create scene and world
 	s := &PlayScene{}
 	w := &world.World{}
-	w.Stats.Resolve = 1 // MaxStamina = 110
+	w.Stats.Resolve = 1 // MaxStamina = 100
 	w.Player.Stamina = w.MaxStamina()
 
 	mi := &mockInput{}
 	ctx := &mockGameContext{input: mi}
+	staminaSys := systems.StaminaSystem{}
+	var bus systems.EventBus
+
+	stepTick := func() {
+		s.handleMovement(ctx, w)
+		_ = staminaSys.Update(w, &bus, 1.0/60)
+	}
 
 	// 1. Stand still, hold Sprint. Stamina should NOT drain, speed should be base.
 	mi.sprintDown = true
 	mi.axisX = 0
 	mi.axisY = 0
 
-	s.handleMovement(ctx, w)
+	stepTick()
 	if w.Player.Stamina != w.MaxStamina() {
 		t.Errorf("expected stamina to remain at max when standing still, got %d", w.Player.Stamina)
 	}
@@ -59,7 +67,7 @@ func TestSprintStaminaLogic(t *testing.T) {
 	w.Player.Stamina = 10
 
 	// Move one tick
-	s.handleMovement(ctx, w)
+	stepTick()
 	if w.Player.Stamina != 9 {
 		t.Errorf("expected stamina to drain by 1, got %d", w.Player.Stamina)
 	}
@@ -69,7 +77,7 @@ func TestSprintStaminaLogic(t *testing.T) {
 
 	// 3. Keep moving and holding Sprint until stamina is depleted.
 	for w.Player.Stamina > 0 {
-		s.handleMovement(ctx, w)
+		stepTick()
 	}
 
 	if w.Player.Stamina != 0 {
@@ -82,7 +90,7 @@ func TestSprintStaminaLogic(t *testing.T) {
 	// 4. Continue holding Sprint while moving. Player should not sprint, and stamina should regenerate.
 	// (Stamina regens every even tick when not sprinting)
 	w.Tick = 2
-	s.handleMovement(ctx, w)
+	stepTick()
 	if w.Player.Stamina != 1 {
 		t.Errorf("expected stamina to regenerate to 1 when exhausted even if sprint is held, got %d", w.Player.Stamina)
 	}
@@ -92,7 +100,7 @@ func TestSprintStaminaLogic(t *testing.T) {
 
 	// 5. Release Sprint key. Exhaustion flag should be cleared.
 	mi.sprintDown = false
-	s.handleMovement(ctx, w)
+	stepTick()
 	if w.Player.SprintExhausted {
 		t.Error("expected sprint exhaustion to clear once Sprint key is released")
 	}
@@ -100,7 +108,7 @@ func TestSprintStaminaLogic(t *testing.T) {
 	// 6. Press Sprint key again. Player should be able to sprint again.
 	mi.sprintDown = true
 	// Drains from 2 to 1
-	s.handleMovement(ctx, w)
+	stepTick()
 	if w.Player.Stamina != 1 {
 		t.Errorf("expected stamina to drain to 1, got %d", w.Player.Stamina)
 	}
@@ -109,7 +117,7 @@ func TestSprintStaminaLogic(t *testing.T) {
 	}
 
 	// Drains from 1 to 0
-	s.handleMovement(ctx, w)
+	stepTick()
 	if w.Player.Stamina != 0 {
 		t.Errorf("expected stamina to drain to 0, got %d", w.Player.Stamina)
 	}
