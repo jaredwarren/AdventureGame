@@ -1,0 +1,91 @@
+{
+  "compressionlevel": -1,
+  "width": 7,
+  "height": 7,
+  "infinite": false,
+  "tilewidth": 16,
+  "tileheight": 16,
+  "type": "map",
+  "version": "1.10",
+  "orientation": "orthogonal",
+  "layers": [
+    {
+      "id": 1,
+      "type": "tilelayer",
+      "name": "ground",
+      "visible": true,
+      "opacity": 1,
+      "width": 7,
+      "height": 7,
+      "data": [
+        2, 2, 7, 7, 7, 2, 2,
+        2, 7, 7, 7, 7, 7, 2,
+        7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7,
+        2, 7, 7, 7, 7, 7, 2,
+        2, 2, 7, 7, 7, 2, 2
+      ]
+    },
+    {
+      "id": 2,
+      "type": "objectgroup",
+      "name": "markers",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        {
+          "id": 1,
+          "name": "key",
+          "type": "pickup",
+          "x": 56,
+          "y": 56,
+          "properties": [
+            { "name": "kind", "type": "string", "value": "key" },
+            { "name": "persistent", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "socket_N",
+          "type": "marker",
+          "x": 56,
+          "y": 0,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "N" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "socket_S",
+          "type": "marker",
+          "x": 56,
+          "y": 112,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "S" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "socket_W",
+          "type": "marker",
+          "x": 0,
+          "y": 56,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "W" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "socket_E",
+          "type": "marker",
+          "x": 112,
+          "y": 56,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "E" }
+          ]
+        }
+      ]
+    }
+  ]
+}

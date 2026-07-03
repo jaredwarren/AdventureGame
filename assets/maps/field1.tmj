@@ -435,7 +435,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "dungeon"
+              "value": "dun:42:1"
             },
             {
               "name": "spawn_x",

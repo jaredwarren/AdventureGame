@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/jaredwarren/game-test/internal/dungeon"
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/replay"
 	"github.com/jaredwarren/game-test/internal/services"
@@ -308,5 +309,82 @@ func TestReplayBombPlacementAndExplosion(t *testing.T) {
 	}
 	if worldA.Bombs != 1 || worldB.Bombs != 1 {
 		t.Errorf("expected bomb inventory count 1, got A=%d B=%d", worldA.Bombs, worldB.Bombs)
+	}
+}
+
+func TestReplaySeededDungeonSession(t *testing.T) {
+	lib, err := dungeon.LoadRoomLibrary(map[string][]byte{
+		"start.tmj": []byte(`{
+			"width": 7, "height": 7, "tilewidth": 16, "tileheight": 16,
+			"layers": [
+				{"type": "tilelayer", "name": "ground", "width": 7, "height": 7, "data": [
+					2,2,7,7,7,2,2, 2,7,7,7,7,7,2, 7,7,7,7,7,7,7, 7,7,7,7,7,7,7, 7,7,7,7,7,7,7, 2,7,7,7,7,7,2, 2,2,7,7,7,2,2
+				]},
+				{"type": "objectgroup", "name": "markers", "objects": [
+					{"id": 1, "name": "spawn", "type": "spawn", "x": 56, "y": 56}
+				]}
+			]
+		}`),
+		"combat.tmj": []byte(`{
+			"width": 7, "height": 7, "tilewidth": 16, "tileheight": 16,
+			"layers": [
+				{"type": "tilelayer", "name": "ground", "width": 7, "height": 7, "data": [
+					2,2,7,7,7,2,2, 2,7,7,7,7,7,2, 7,7,7,7,7,7,7, 7,7,7,7,7,7,7, 7,7,7,7,7,7,7, 2,7,7,7,7,7,2, 2,2,7,7,7,2,2
+				]}
+			]
+		}`),
+	})
+	if err != nil {
+		t.Fatalf("LoadRoomLibrary err: %v", err)
+	}
+
+	tm, _, err := dungeon.Generate(42, lib)
+	if err != nil {
+		t.Fatalf("Generate err: %v", err)
+	}
+
+	script := make([][]services.Action, 60)
+	for i := 0; i < 30; i++ {
+		script[i] = []services.Action{services.ActionMoveRight}
+	}
+	for i := 30; i < 60; i++ {
+		script[i] = []services.Action{services.ActionMoveDown}
+	}
+
+	stream := replay.NewStream(60)
+	src := newFakeInput(script)
+	rec := replay.NewRecorder(src, stream)
+	for range script {
+		src.advance()
+		rec.BeginTick()
+	}
+
+	runDungeonOnce := func() ([][]systems.Event, *world.World) {
+		w, err := world.BuildFromTiled(tm, "dun:42:1", progression.DefaultStats(), nil)
+		if err != nil {
+			t.Fatalf("BuildFromTiled err: %v", err)
+		}
+		pipe := systems.Default()
+		pb := replay.NewPlayback(stream)
+		var trace [][]systems.Event
+		for pb.Step() {
+			evs, err := playTick(pb, w, pipe)
+			if err != nil {
+				t.Fatalf("run: %v", err)
+			}
+			trace = append(trace, cloneEvents(evs))
+		}
+		return trace, w
+	}
+
+	traceA, worldA := runDungeonOnce()
+	traceB, worldB := runDungeonOnce()
+
+	if !reflect.DeepEqual(traceA, traceB) {
+		t.Error("seeded dungeon replays produced different event traces")
+	}
+	if worldA.Player.X != worldB.Player.X || worldA.Player.Y != worldB.Player.Y {
+		t.Errorf("seeded dungeon player position mismatch: (%f, %f) vs (%f, %f)",
+			worldA.Player.X, worldA.Player.Y, worldB.Player.X, worldB.Player.Y)
 	}
 }

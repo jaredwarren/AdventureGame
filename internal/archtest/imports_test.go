@@ -75,6 +75,8 @@ var allowedInternalImports = map[string][]string{
 	"internal/replay": {
 		"internal/services",
 		"internal/input",
+		"internal/tiled",
+		"internal/dungeon",
 	},
 	"internal/services": {
 		"internal/world",
@@ -117,6 +119,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/save",
 		"internal/tiled",
 		"internal/balance",
+		"internal/dungeon",
 	},
 	"internal/dungeon": {
 		"internal/tiled",

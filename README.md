@@ -54,7 +54,7 @@ make check
 When reporting a bug:
 
 1. Pause (`P`). The overlay shows player stats, **weekly epoch**, and quicksave status.
-2. Press **`C`** to copy a **bug digest** (`map`, `hp`, `weekly` epoch, save path) to the system clipboard—paste it into the issue.
+2. Press **`C`** to copy a **bug digest** (`map`, `hp`, `weekly` epoch, `dungeon` digest, save path) to the system clipboard—paste it into the issue.
 
 ## Editing maps (single asset pipeline)
 

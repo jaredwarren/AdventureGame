@@ -11,6 +11,7 @@ package scenes
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/save"
@@ -72,7 +73,10 @@ func (s *PauseScene) Draw(ctx GameContext) {
 	r.DrawText(40, 88, fmt.Sprintf("reduce_shake=%v (R toggle)", r.Camera().ReduceShake))
 	r.DrawText(40, 104, "S quicksave  L quickload")
 	r.DrawText(40, 120, fmt.Sprintf("weekly_epoch %d", sess.WeeklySeed))
-	r.DrawText(40, 144, "C copy bug digest")
+	if sess.World != nil && strings.HasPrefix(sess.World.MapID, "dun:") && sess.LastDungeonDigest != "" {
+		r.DrawText(40, 132, fmt.Sprintf("dungeon: %s", sess.LastDungeonDigest))
+	}
+	r.DrawText(40, 148, "C copy bug digest")
 
 	if sess.ShowDebugOverlay {
 		DrawDebugOverlay(r, sess, s.ID(), DebugOverlayExtras{})

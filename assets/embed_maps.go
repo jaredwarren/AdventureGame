@@ -4,5 +4,5 @@ package assets
 
 import "embed"
 
-//go:embed maps/*.tmj
+//go:embed maps/*.tmj maps/rooms/*.tmj
 var MapFS embed.FS

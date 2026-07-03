@@ -18,6 +18,7 @@ import (
 	"math/rand"
 	"os"
 
+	"github.com/jaredwarren/game-test/assets"
 	"github.com/jaredwarren/game-test/internal/dungeon"
 	"github.com/jaredwarren/game-test/internal/tiled"
 	"github.com/jaredwarren/game-test/internal/world"
@@ -25,6 +26,7 @@ import (
 
 func main() {
 	outPath := flag.String("o", "", "output path for .tmj (required)")
+	dungeonMode := flag.Bool("dungeon", false, "generate fully stitched dungeon map")
 	cellsW := flag.Int("w", 10, "maze width in cells (>=1)")
 	cellsH := flag.Int("h", 10, "maze height in cells (>=1)")
 	seed := flag.Int64("seed", 0, "RNG seed")
@@ -41,6 +43,35 @@ func main() {
 		fmt.Fprintln(os.Stderr, "gentmj: -o output.tmj is required")
 		flag.Usage()
 		os.Exit(2)
+	}
+
+	if *dungeonMode {
+		libFiles := make(map[string][]byte)
+		for _, name := range []string{"start.tmj", "combat.tmj", "key.tmj", "boss.tmj", "corridor.tmj"} {
+			b, err := assets.MapFS.ReadFile("maps/rooms/" + name)
+			if err != nil {
+				b, err = os.ReadFile("assets/maps/rooms/" + name)
+			}
+			if err == nil {
+				libFiles[name] = b
+			}
+		}
+		lib, err := dungeon.LoadRoomLibrary(libFiles)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gentmj: load room library: %v\n", err)
+			os.Exit(1)
+		}
+		tm, res, err := dungeon.Generate(*seed, lib)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "gentmj: generate dungeon: %v\n", err)
+			os.Exit(1)
+		}
+		if err := tm.WriteFile(*outPath); err != nil {
+			fmt.Fprintf(os.Stderr, "gentmj: write %s: %v\n", *outPath, err)
+			os.Exit(1)
+		}
+		fmt.Fprintf(os.Stderr, "wrote stitched dungeon %s (%dx%d tiles, seed=%d, digest=%s)\n", *outPath, tm.Width, tm.Height, *seed, res.BugDigest())
+		return
 	}
 	if *cellsW < 1 || *cellsH < 1 {
 		fmt.Fprintln(os.Stderr, "gentmj: -w and -h must be >= 1")

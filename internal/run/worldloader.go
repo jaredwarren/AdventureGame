@@ -16,8 +16,10 @@ package run
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/jaredwarren/game-test/internal/dungeon"
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/render"
 	"github.com/jaredwarren/game-test/internal/save"
@@ -55,13 +57,48 @@ type MapLoadOpts struct {
 // After a successful load World.DoorCooldown is primed so the player
 // cannot immediately re-trigger the door they spawned on.
 func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapLoadOpts) error {
-	raw, err := assets.MapData(mapID)
-	if err != nil {
-		return fmt.Errorf("worldloader: read %q: %w", mapID, err)
-	}
-	tm, err := tiled.ParseMap(raw)
-	if err != nil {
-		return fmt.Errorf("worldloader: parse %q: %w", mapID, err)
+	var tm *tiled.Map
+	if strings.HasPrefix(mapID, "dun:") {
+		seed := int64(42)
+		parts := strings.Split(mapID, ":")
+		if len(parts) >= 2 {
+			if parsed, err := strconv.ParseInt(parts[1], 10, 64); err == nil {
+				seed = parsed
+			}
+		}
+		if sess != nil && seed != sess.LastDungeonSeed {
+			sess.ClearDungeonProgress()
+		}
+		libFiles := make(map[string][]byte)
+		for _, rName := range []string{"start.tmj", "combat.tmj", "key.tmj", "boss.tmj", "corridor.tmj"} {
+			data, err := assets.MapData("rooms/" + strings.TrimSuffix(rName, ".tmj"))
+			if err == nil {
+				libFiles[rName] = data
+			}
+		}
+		lib, err := dungeon.LoadRoomLibrary(libFiles)
+		if err != nil {
+			return fmt.Errorf("worldloader: load room library for %q: %w", mapID, err)
+		}
+		genMap, dunResult, err := dungeon.Generate(seed, lib)
+		if err != nil {
+			return fmt.Errorf("worldloader: generate dungeon %q: %w", mapID, err)
+		}
+		tm = genMap
+		if sess != nil {
+			sess.LastDungeonSeed = seed
+			sess.LastDungeonDigest = dunResult.BugDigest()
+		}
+	} else {
+		raw, err := assets.MapData(mapID)
+		if err != nil {
+			return fmt.Errorf("worldloader: read %q: %w", mapID, err)
+		}
+		parsedMap, err := tiled.ParseMap(raw)
+		if err != nil {
+			return fmt.Errorf("worldloader: parse %q: %w", mapID, err)
+		}
+		tm = parsedMap
 	}
 
 	carry := opts.CarryRunState
@@ -266,6 +303,9 @@ func BugDigest(sess *Session) string {
 		fmt.Fprintf(&b, "hp=%d/%d ", w.HP, w.MaxHP())
 	}
 	fmt.Fprintf(&b, "weekly=%d ", sess.WeeklySeed)
+	if sess != nil && sess.LastDungeonDigest != "" && strings.HasPrefix(mapID, "dun:") {
+		fmt.Fprintf(&b, "dungeon=[%s] ", sess.LastDungeonDigest)
+	}
 	fmt.Fprintf(&b, "save=save.json")
 	return strings.TrimSpace(b.String())
 }

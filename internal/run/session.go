@@ -14,7 +14,11 @@
 //   - Services (Input/Audio/Assets/Renderer flow via Context, not Session).
 package run
 
-import "github.com/jaredwarren/game-test/internal/world"
+import (
+	"strings"
+
+	"github.com/jaredwarren/game-test/internal/world"
+)
 
 // Session is the run-scoped mutable state shared across scenes.
 type Session struct {
@@ -34,6 +38,10 @@ type Session struct {
 	// given frame.
 	WeeklySeed int64
 
+	// LastDungeonSeed and LastDungeonDigest record the current active dungeon seed & digest.
+	LastDungeonSeed   int64
+	LastDungeonDigest string
+
 	// HasSave indicates whether the disk has a load-able save file. Set
 	// once at startup; scenes read it to decide whether to offer quick load.
 	HasSave bool
@@ -41,6 +49,18 @@ type Session struct {
 	// ShowDebugOverlay toggles the F3 playtest HUD. Lives on Session (not
 	// any one scene) because every scene respects it.
 	ShowDebugOverlay bool
+}
+
+// ClearDungeonProgress removes all dun:* map progress entries when a new dungeon seed is generated.
+func (s *Session) ClearDungeonProgress() {
+	if s == nil || s.Maps == nil {
+		return
+	}
+	for mapID := range s.Maps {
+		if strings.HasPrefix(mapID, "dun:") {
+			delete(s.Maps, mapID)
+		}
+	}
 }
 
 // ProgressFor returns durable progress for mapID, creating an empty bundle if needed.

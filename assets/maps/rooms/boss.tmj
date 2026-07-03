@@ -1,0 +1,101 @@
+{
+  "compressionlevel": -1,
+  "width": 7,
+  "height": 7,
+  "infinite": false,
+  "tilewidth": 16,
+  "tileheight": 16,
+  "type": "map",
+  "version": "1.10",
+  "orientation": "orthogonal",
+  "layers": [
+    {
+      "id": 1,
+      "type": "tilelayer",
+      "name": "ground",
+      "visible": true,
+      "opacity": 1,
+      "width": 7,
+      "height": 7,
+      "data": [
+        2, 2, 7, 7, 7, 2, 2,
+        2, 7, 7, 7, 7, 7, 2,
+        7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7,
+        2, 7, 7, 7, 7, 7, 2,
+        2, 2, 7, 7, 7, 2, 2
+      ]
+    },
+    {
+      "id": 2,
+      "type": "objectgroup",
+      "name": "markers",
+      "visible": true,
+      "opacity": 1,
+      "objects": [
+        {
+          "id": 1,
+          "name": "boss_slime",
+          "type": "enemy",
+          "x": 56,
+          "y": 48
+        },
+        {
+          "id": 2,
+          "name": "out",
+          "type": "door",
+          "x": 48,
+          "y": 16,
+          "width": 32,
+          "height": 16,
+          "properties": [
+            { "name": "target_map", "type": "string", "value": "field1" },
+            { "name": "spawn_x", "type": "string", "value": "160" },
+            { "name": "spawn_y", "type": "string", "value": "40" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "socket_N",
+          "type": "marker",
+          "x": 56,
+          "y": 0,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "N" }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "socket_S",
+          "type": "marker",
+          "x": 56,
+          "y": 112,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "S" }
+          ]
+        },
+        {
+          "id": 5,
+          "name": "socket_W",
+          "type": "marker",
+          "x": 0,
+          "y": 56,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "W" }
+          ]
+        },
+        {
+          "id": 6,
+          "name": "socket_E",
+          "type": "marker",
+          "x": 112,
+          "y": 56,
+          "properties": [
+            { "name": "socket", "type": "string", "value": "E" }
+          ]
+        }
+      ]
+    }
+  ]
+}
