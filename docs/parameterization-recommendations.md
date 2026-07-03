@@ -20,7 +20,7 @@ Most **player** tuning lives on `world.Player`, initialized in `BuildFromTiled` 
 | Defense | `InvulnFrames`, `EnemyKnockbackForce`, `PlayerKnockbackForce`, `PlayerHazardKnockbackForce` | `InvulnFrames` duplicated as `invulnFrames` const in `enemy_ai.go` |
 | Items | `MaxBombs`, `BombFuseDuration`, `BombRadius`, `BombDamage` | `MaxBombsCarry` const also in `world.go` |
 
-**Progression stats** (`internal/progression/stats.go`) drive derived max HP, stamina, and damage bonus. **Tile behavior** is in `world.TileDef` ([`internal/world/tiledef.go`](../internal/world/tiledef.go)). **Tiled map properties** already support `light_level`, pickup `kind`, door targets, and shrine persistence.
+**Progression stats** (`internal/progression/stats.go`) drive derived max HP, stamina, and damage bonus. **Tile behavior** is in `tile.Def` ([`internal/world/tile/def.go`](../internal/world/tile/def.go)). **Tiled map properties** already support `light_level`, pickup `kind`, door targets, and shrine persistence.
 
 ### Player tuning defaults (section 1 complete)
 

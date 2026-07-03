@@ -42,8 +42,7 @@ make vet
 | Dodge | `Alt` |
 | Shrine (heal / buy stat) | `E` while overlapping shrine (5 coins upgrades a stat; otherwise small heal) |
 | Pause | `P` |
-| **Debug overlay** | `F3` (FPS, map, player, combat timers, counts, dungeon digest) |
-| Dungeon debug (`Tab` in dungeon) | Room **graph** (key/boss) + **Growing Tree** maze preview (top-right; 24×11, blend 0.65, 10% extra passages) |
+| **Debug overlay** | `F3` (scene, map, player, combat timers, stats, entity counts) |
 | **Quicksave** | `S` while paused, or `Ctrl+S` during play |
 | **Quickload** | `L` while paused |
 
@@ -55,8 +54,8 @@ make vet
 
 When reporting a bug:
 
-1. Pause (`P`). The overlay shows **weekly epoch**, **last dungeon seed**, and (in dungeon) a one-line **dungeon graph digest** (`seed`, rooms, start/boss/key, lock edge, edge count).
-2. Press **`C`** to copy a **full bug digest** (map id, HP, weekly epoch, last dungeon seed, dungeon line if applicable) to the system clipboard—paste it into the issue.
+1. Pause (`P`). The overlay shows player stats, **weekly epoch**, and quicksave status.
+2. Press **`C`** to copy a **bug digest** (`map`, `hp`, `weekly` epoch, save path) to the system clipboard—paste it into the issue.
 
 ## Editing maps (single asset pipeline)
 
@@ -78,7 +77,7 @@ make maps-check
 
 - **Placeholder art** — colored rectangles and debug font, not final sprites.
 - **Death** — respawns on **field1** with partial HP (placeholder checkpoint model).
-- **Dungeon layout** — one hand-authored tile shell per run; **graph + key/boss** placement is procedural (tree-shaped graph); see `internal/dungeon`.
+- **Dungeon layout** — currently uses hand-authored `.tmj` maps. Dungeon generation (`internal/dungeon`) is a CLI tool (`cmd/gentmj`) with no runtime integration.
 - **Clipboard** — `C` on pause uses [atotto/clipboard](https://github.com/atotto/clipboard); if it fails on an unusual OS, copy the digest lines manually from the pause screen.
 - **Windows clipboard in GLFW** — upstream stack may have limitations; file an issue with the copied text if clipboard fails.
 
@@ -87,13 +86,18 @@ make maps-check
 | Path | Role |
 |------|------|
 | `cmd/game/main.go` | Entry: window, `RunGame` |
-| `internal/game` | Scenes, input, draw, SFX |
-| `internal/services` | Backend-agnostic ports (Input, Audio, Assets, Clock) |
-| `internal/platform/ebiten` | Ebiten-backed implementations of `services` |
-| `internal/world` | Simulation, Tiled build, combat hooks (ebiten-free) |
-| `internal/dungeon` | Seeded **room graph** (key/boss) + **Growing Tree** grid mazes |
+| `internal/game` | Thin wiring layer: satisfies `ebiten.Game`, owns concrete services bundle, renderer, and scene manager |
+| `internal/scenes` | Scene lifecycle, state management, HUD, and overlays |
+| `internal/systems` | Per-tick simulation systems and event pipeline |
+| `internal/services` | Backend-agnostic ports (Input, Audio, Assets, Clock, Clipboard) |
+| `internal/platform/ebiten` | Ebiten-backed implementations of `services` and renderer |
+| `internal/world` | Simulation state, Tiled build, entity management (ebiten-free) |
+| `internal/dungeon` | Maze generation algorithms and tile painting (CLI tool `cmd/gentmj`) |
 | `internal/tiled` | Tiled JSON parse + encode (`.tmj` round-trip) |
 | `internal/save` | Versioned JSON save |
+| `internal/replay` | Deterministic input recording and replay validation |
+| `internal/input` | Keybindings, input action mapping, and gamepad definitions |
+| `internal/geom` | Integer/float geometry primitives (`Rect`, `Point`, `Vec2`) |
 | `internal/archtest` | Tests that enforce architectural import rules |
 | `assets/maps/` | **Source of truth** for `.tmj` maps (embedded) |
 | `assets/sounds/` | Embedded WAV SFX |

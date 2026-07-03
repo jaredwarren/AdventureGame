@@ -59,9 +59,8 @@ func (s *TitleScene) Draw(ctx GameContext) {
 	r.DrawText(40, 72, "ENTER new game   K load save")
 	r.DrawText(40, 96, "arrows move  Z sword  X bomb")
 	r.DrawText(40, 112, "shift sprint  alt dodge  E shrine")
-	r.DrawText(40, 128, "P pause  TAB in dungeon:")
-	r.DrawText(40, 144, "room graph + growing tree maze")
-	r.DrawText(40, 160, "F3 playtest debug overlay")
+	r.DrawText(40, 128, "P pause")
+	r.DrawText(40, 144, "F3 playtest debug overlay")
 	if ctx.Session().ShowDebugOverlay {
 		DrawDebugOverlay(r, ctx.Session(), s.ID(), DebugOverlayExtras{})
 	}

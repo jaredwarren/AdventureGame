@@ -11,7 +11,7 @@ Use this as the starting line so future work is incremental, not duplicate.
 - Ebiten game loop, 320×240 logical resolution, title → play → pause scenes.
 - Tiled JSON maps under **`assets/maps/`** only (embedded at build via [`assets/embed_maps.go`](../assets/embed_maps.go)); object markers (spawn, enemy, pickup, door, shrine).
 - Tile collision, sliding movement, sword swing, enemies, pickups, HUD, stamina sprint, dodge, hitstop, screenshake, placeholder SFX.
-- Versioned save/load (`internal/save`), dungeon **tree** graph + key/boss placement + debug graph overlay (`internal/dungeon`).
+- Versioned save/load (`internal/save`); dungeon generation (`internal/dungeon`) is currently a CLI-only tool (`cmd/gentmj`) with no runtime integration.
 - Five stats + shrine spend/heal (`internal/progression`, `internal/world`).
 - Weekly epoch display (hook for future challenge seeds).
 
@@ -26,7 +26,7 @@ Use this as the starting line so future work is incremental, not duplicate.
 1. ~~**Repository hygiene**~~ — [`.gitignore`](../.gitignore) ignores `save.json`, `bin/`, build artifacts, OS/editor noise. **[Makefile](../Makefile)** targets: `run`, `test`, `fmt`, `vet`, `clean`, `maps-check`, `build`.
 2. ~~**Single asset pipeline**~~ — **Only** [`assets/maps/*.tmj`](../assets/maps/) is edited; maps embed from [`assets/embed_maps.go`](../assets/embed_maps.go). Rebuild (`go build` / `go run`) picks up changes—**no copy step**.
 3. ~~**Runbook**~~ — README sections *How to play*, *Saving*, *Bug reports*, *Known limitations*.
-4. ~~**Seed visibility**~~ — Pause shows `weekly_epoch`, `last_dungeon_seed`, and [`dungeon.Result.BugDigest()`](../internal/dungeon/gen.go) in dungeon mode. **`C`** copies a full digest via [atotto/clipboard](https://github.com/atotto/clipboard).
+4. ~~**Seed visibility**~~ — Pause shows `weekly_epoch` and player stats. **`C`** copies a bug digest (`map`, `hp`, `weekly` epoch, save path) via [atotto/clipboard](https://github.com/atotto/clipboard).
 
 ---
 
