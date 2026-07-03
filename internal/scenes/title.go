@@ -6,6 +6,7 @@
 package scenes
 
 import (
+	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/save"
 	"github.com/jaredwarren/game-test/internal/services"
 )
@@ -28,7 +29,7 @@ func (s *TitleScene) Update(ctx GameContext) error {
 	}
 	if in.JustPressed(services.ActionConfirm) {
 		sess.ClearPersistedProgress()
-		if err := OpenWorld(ctx.Assets(), sess, "field1", nil); err != nil {
+		if err := run.OpenWorld(ctx.Assets(), sess, "field1", nil); err != nil {
 			return err
 		}
 		ctx.Manager().Replace(ScenePlay, nil)
@@ -40,7 +41,7 @@ func (s *TitleScene) Update(ctx GameContext) error {
 		if err != nil {
 			return err
 		}
-		if err := LoadGameFromSave(ctx.Assets(), sess, ctx.Renderer().Camera(), sv); err != nil {
+		if err := run.LoadGameFromSave(ctx.Assets(), sess, ctx.Renderer().Camera(), sv); err != nil {
 			return err
 		}
 		// Extra grace period beyond the worldloader default; the player

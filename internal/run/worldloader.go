@@ -12,7 +12,7 @@
 // Out of scope:
 //   - UI / input handling (that's the scenes' job).
 //   - Rendering (that's the Renderer's job).
-package scenes
+package run
 
 import (
 	"fmt"

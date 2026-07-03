@@ -1,13 +1,12 @@
 // Package scenes contains the scene-graph abstractions (Scene, Context,
-// Manager, Session) and the concrete scene implementations (title, play,
-// pause, editor) plus their orchestration helpers (worldloader, overlays).
+// Manager) and the concrete scene implementations (title, play, pause,
+// editor) plus overlays and particles.
 //
 // Architecture boundary:
 //
 //   - This package is pure core: it imports the simulation/core packages
-//     (world, dungeon, save, tiled, geom, progression, render) and the
-//     service ports (services.Input/Audio/AssetCache/Renderer) but NEVER
-//     imports anything under internal/platform or github.com/hajimehoshi/ebiten.
+//     (world, systems, run, services, render) and NEVER imports anything
+//     under internal/platform or github.com/hajimehoshi/ebiten.
 //     The arch-guard test (internal/archtest) enforces this.
 //
 //   - Scenes never see a *ebiten.Image. All drawing flows through
@@ -17,22 +16,26 @@
 // Scene lifecycle:
 //
 //   - Scenes implement the Scene interface. Update may call
-//     ctx.Manager.Replace(nextID, params); the transition is deferred until
-//     the current Update returns so Draw always observes a consistent scene.
+//     ctx.Manager.Replace(nextID, params) or PushOverlay; transitions are
+//     deferred until the current Update returns so Draw always observes a
+//     consistent scene.
 //
 //   - Enter runs exactly once when a scene becomes active. Exit runs once
 //     when it is replaced out. Neither runs during normal Update/Draw ticks.
 //
-// Single-slot model:
+// Two-slot model:
 //
-//   - The manager keeps a single active scene. Push/Pop stacks (pause-over-
-//     play overlays) are a future extension; today every transition is a
-//     Replace and a stack would be dead weight.
+//   - The manager keeps a base scene plus at most one overlay (pause, shop).
+//     PushOverlay / PopOverlay are intentionally not a general stack.
+//     While an overlay is active: only the overlay Update runs; the base
+//     scene Draw runs first, then the overlay Draw. This preserves base
+//     scene-local state (particles, toasts) across pause and shop.
 package scenes
 
 import (
 	"fmt"
 
+	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/services"
 )
 
@@ -59,7 +62,7 @@ type GameContext interface {
 	Renderer() services.Renderer
 	Clipboard() services.Clipboard
 
-	Session() *Session
+	Session() *run.Session
 	Manager() *Manager
 }
 
@@ -93,17 +96,24 @@ type Scene interface {
 // transition to it.
 type Factory func() Scene
 
-// Manager routes Update/Draw to the current scene and applies deferred
-// transitions at safe points.
+// Manager routes Update/Draw to the base scene and optional overlay.
 type Manager struct {
 	factories map[SceneID]Factory
 	current   Scene
+	overlay   Scene
 
-	// pending captures a Replace request issued during Update. It is
-	// consumed between the current frame's Update and Draw so Draw always
-	// sees the post-transition scene.
-	pending     *transition
+	// pending captures a Replace request issued during Update.
+	pending *transition
+	// overlayPending captures PushOverlay / PopOverlay requests.
+	overlayPending *overlayTransition
+
 	transitions int
+}
+
+type overlayTransition struct {
+	push   bool
+	id     SceneID
+	params map[string]any
 }
 
 type transition struct {
@@ -130,37 +140,84 @@ func (m *Manager) Register(id SceneID, f Factory) {
 // applied. Exposed for debug overlays only.
 func (m *Manager) Current() Scene { return m.current }
 
-// Replace queues a transition to id with optional params. The swap is
-// deferred; the currently-running Update will finish before the new scene's
-// Enter runs. Calling Replace twice in one frame keeps the last request.
+// Replace queues a full scene swap (title, play, editor). Clears any overlay.
 func (m *Manager) Replace(id SceneID, params map[string]any) {
 	m.pending = &transition{id: id, params: params}
 }
 
+// PushOverlay queues a single overlay scene over the current base scene.
+// Only one overlay is supported; a second push replaces the pending request.
+func (m *Manager) PushOverlay(id SceneID, params map[string]any) {
+	m.overlayPending = &overlayTransition{push: true, id: id, params: params}
+}
+
+// PopOverlay queues removal of the active overlay.
+func (m *Manager) PopOverlay() {
+	m.overlayPending = &overlayTransition{push: false}
+}
+
+// OverlayActive reports whether an overlay scene is showing.
+func (m *Manager) OverlayActive() bool { return m.overlay != nil }
+
 // apply performs any pending transition. Safe to call multiple times per
 // frame; it's a no-op when nothing is queued.
 func (m *Manager) apply(ctx GameContext) error {
-	if m.pending == nil {
-		return nil
-	}
-	t := m.pending
-	m.pending = nil
-
-	factory, ok := m.factories[t.id]
-	if !ok {
-		return fmt.Errorf("scene manager: no factory registered for %q", t.id)
-	}
-	next := factory()
-
-	if m.current != nil {
-		if err := m.current.Exit(ctx); err != nil {
-			return fmt.Errorf("scene %s.Exit: %w", m.current.ID(), err)
+	if m.pending != nil {
+		t := m.pending
+		m.pending = nil
+		if m.overlay != nil {
+			if err := m.overlay.Exit(ctx); err != nil {
+				return fmt.Errorf("overlay %s.Exit: %w", m.overlay.ID(), err)
+			}
+			m.overlay = nil
+		}
+		factory, ok := m.factories[t.id]
+		if !ok {
+			return fmt.Errorf("scene manager: no factory registered for %q", t.id)
+		}
+		next := factory()
+		if m.current != nil {
+			if err := m.current.Exit(ctx); err != nil {
+				return fmt.Errorf("scene %s.Exit: %w", m.current.ID(), err)
+			}
+		}
+		m.current = next
+		m.transitions++
+		if err := next.Enter(ctx, t.params); err != nil {
+			return fmt.Errorf("scene %s.Enter: %w", next.ID(), err)
 		}
 	}
-	m.current = next
-	m.transitions++
-	if err := next.Enter(ctx, t.params); err != nil {
-		return fmt.Errorf("scene %s.Enter: %w", next.ID(), err)
+	return m.applyOverlay(ctx)
+}
+
+func (m *Manager) applyOverlay(ctx GameContext) error {
+	if m.overlayPending == nil {
+		return nil
+	}
+	ot := m.overlayPending
+	m.overlayPending = nil
+	if !ot.push {
+		if m.overlay != nil {
+			if err := m.overlay.Exit(ctx); err != nil {
+				return fmt.Errorf("overlay %s.Exit: %w", m.overlay.ID(), err)
+			}
+			m.overlay = nil
+		}
+		return nil
+	}
+	factory, ok := m.factories[ot.id]
+	if !ok {
+		return fmt.Errorf("scene manager: no factory registered for overlay %q", ot.id)
+	}
+	next := factory()
+	if m.overlay != nil {
+		if err := m.overlay.Exit(ctx); err != nil {
+			return fmt.Errorf("overlay %s.Exit: %w", m.overlay.ID(), err)
+		}
+	}
+	m.overlay = next
+	if err := next.Enter(ctx, ot.params); err != nil {
+		return fmt.Errorf("overlay %s.Enter: %w", next.ID(), err)
 	}
 	return nil
 }
@@ -175,19 +232,30 @@ func (m *Manager) Update(ctx GameContext) error {
 	if m.current == nil {
 		return fmt.Errorf("scene manager: no scene set; call Replace before Update")
 	}
+	if m.overlay != nil {
+		if err := m.overlay.Update(ctx); err != nil {
+			return err
+		}
+		return m.applyOverlay(ctx)
+	}
 	if err := m.current.Update(ctx); err != nil {
 		return err
 	}
-	return m.apply(ctx)
+	if err := m.apply(ctx); err != nil {
+		return err
+	}
+	return m.applyOverlay(ctx)
 }
 
-// Draw delegates to the active scene. If no scene is set (e.g. an early
-// transition errored), draws nothing rather than calling a half-alive scene.
+// Draw delegates to the base scene, then any active overlay.
 func (m *Manager) Draw(ctx GameContext) {
 	if m.current == nil {
 		return
 	}
 	m.current.Draw(ctx)
+	if m.overlay != nil {
+		m.overlay.Draw(ctx)
+	}
 }
 
 // Transitions reports how many Enter/Exit cycles have completed since the

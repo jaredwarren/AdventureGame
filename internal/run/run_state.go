@@ -1,4 +1,4 @@
-package scenes
+package run
 
 import (
 	"github.com/jaredwarren/game-test/internal/progression"

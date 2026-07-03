@@ -27,6 +27,7 @@ import (
 
 	ebitenplat "github.com/jaredwarren/game-test/internal/platform/ebiten"
 	"github.com/jaredwarren/game-test/internal/render"
+	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/save"
 	"github.com/jaredwarren/game-test/internal/scenes"
 	"github.com/jaredwarren/game-test/internal/services"
@@ -39,7 +40,7 @@ import (
 // because App needs BeginFrame/EndFrame, which are not part of the
 // scene-facing interface.
 type App struct {
-	session  *scenes.Session
+	session  *run.Session
 	renderer *ebitenplat.Renderer
 	manager  *scenes.Manager
 
@@ -52,7 +53,7 @@ type appContext struct {
 	assets    services.AssetCache
 	renderer  services.Renderer
 	clipboard services.Clipboard
-	session   *scenes.Session
+	session   *run.Session
 	manager   *scenes.Manager
 }
 
@@ -61,7 +62,7 @@ func (c *appContext) Audio() services.Audio         { return c.audio }
 func (c *appContext) Assets() services.AssetCache   { return c.assets }
 func (c *appContext) Renderer() services.Renderer   { return c.renderer }
 func (c *appContext) Clipboard() services.Clipboard { return c.clipboard }
-func (c *appContext) Session() *scenes.Session      { return c.session }
+func (c *appContext) Session() *run.Session         { return c.session }
 func (c *appContext) Manager() *scenes.Manager      { return c.manager }
 
 // Services bundles the backend ports App requires. Input/Audio/Assets are
@@ -81,7 +82,7 @@ func NewApp(svc Services, editorMapID string) (*App, error) {
 		return nil, fmt.Errorf("game: services.Input/Audio/Assets must all be non-nil")
 	}
 
-	sess := scenes.NewSession()
+	sess := run.NewSession()
 	if _, err := save.Load(""); err == nil {
 		sess.HasSave = true
 	}

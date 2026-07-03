@@ -3,7 +3,7 @@
 // Notes:
 //
 //   - PauseScene does not run World.UpdateSim. It only processes input and
-//     calls the worldloader helpers; the gameplay sim is literally paused.
+//     calls run loader helpers; the gameplay sim is literally paused.
 //   - Clipboard access for "copy bug digest" flows through the
 //     services.Clipboard port; on a headless Context (ctx.Clipboard nil)
 //     the action silently no-ops.
@@ -12,6 +12,7 @@ package scenes
 import (
 	"fmt"
 
+	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/save"
 	"github.com/jaredwarren/game-test/internal/services"
 )
@@ -34,11 +35,11 @@ func (s *PauseScene) Update(ctx GameContext) error {
 		sess.ShowDebugOverlay = !sess.ShowDebugOverlay
 	}
 	if in.JustPressed(services.ActionPause) {
-		ctx.Manager().Replace(ScenePlay, nil)
+		ctx.Manager().PopOverlay()
 		return nil
 	}
 	if in.JustPressed(services.ActionCopyBugDigest) && ctx.Clipboard() != nil {
-		_ = ctx.Clipboard().WriteText(BugDigest(sess))
+		_ = ctx.Clipboard().WriteText(run.BugDigest(sess))
 	}
 	if in.JustPressed(services.ActionToggleReduceShake) {
 		cam.ReduceShake = !cam.ReduceShake
@@ -46,11 +47,11 @@ func (s *PauseScene) Update(ctx GameContext) error {
 	// Pause save: "S" alone. We explicitly exclude Ctrl+S so QuickLoad
 	// ("L") and a chorded save can't both fire on the same frame.
 	if in.JustPressed(services.ActionQuickSave) && !in.IsModifierDown(services.ModCtrl) {
-		_ = save.Save("", BuildSave(sess, cam))
+		_ = save.Save("", run.BuildSave(sess, cam))
 	}
 	if in.JustPressed(services.ActionQuickLoad) {
 		if sv, err := save.Load(""); err == nil {
-			_ = LoadGameFromSave(ctx.Assets(), sess, cam, sv)
+			_ = run.LoadGameFromSave(ctx.Assets(), sess, cam, sv)
 		}
 	}
 	return nil
@@ -60,8 +61,7 @@ func (s *PauseScene) Draw(ctx GameContext) {
 	sess := ctx.Session()
 	r := ctx.Renderer()
 
-	r.DrawWorld(sess.World)
-	DrawHUD(r, sess.World, sess)
+	DrawOverlayDim(r)
 
 	r.DrawText(80, 40, "PAUSED (P resume)")
 	if sess.World != nil {

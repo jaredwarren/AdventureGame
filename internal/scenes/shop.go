@@ -145,7 +145,7 @@ func (s *ShopScene) Update(ctx GameContext) error {
 	}
 
 	if in.JustPressed(services.ActionCancel) || in.JustPressed(services.ActionPause) || in.JustPressed(services.ActionInteract) {
-		ctx.Manager().Replace(ScenePlay, nil)
+		ctx.Manager().PopOverlay()
 	}
 
 	return nil
@@ -156,11 +156,7 @@ func (s *ShopScene) Draw(ctx GameContext) {
 	r := ctx.Renderer()
 	w := sess.World
 
-	// Draw the paused world in the background
-	if w != nil {
-		r.DrawWorld(w)
-		DrawHUD(r, w, sess)
-	}
+	DrawOverlayDim(r)
 
 	// Draw shop overlay card
 	px, py := float32(60), float32(30)

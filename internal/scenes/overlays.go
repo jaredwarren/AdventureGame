@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"image/color"
 
+	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
 )
@@ -27,7 +28,7 @@ type DebugOverlayExtras struct {
 
 // DrawHUD renders hearts, coins, keys, player pixel position (x,y),
 // bomb count / torch flag, stamina bar, and the weekly epoch stamp. No-op when w is nil.
-func DrawHUD(r services.Renderer, w *world.World, sess *Session) {
+func DrawHUD(r services.Renderer, w *world.World, sess *run.Session) {
 	if w == nil {
 		return
 	}
@@ -83,7 +84,7 @@ func DrawHUD(r services.Renderer, w *world.World, sess *Session) {
 }
 
 // DrawDebugOverlay renders the F3 playtest HUD. Pure read.
-func DrawDebugOverlay(r services.Renderer, sess *Session, sceneID SceneID, extras DebugOverlayExtras) {
+func DrawDebugOverlay(r services.Renderer, sess *run.Session, sceneID SceneID, extras DebugOverlayExtras) {
 	const lineH = 12
 	px, py := 4, 44
 	panelW, panelH := float32(214), float32(176)
@@ -198,4 +199,9 @@ func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
 
 	// Footer hint.
 	r.DrawText(tx, int(panelY)+int(panelH)-14, "up/dn select  Enter confirm  Esc close")
+}
+
+// DrawOverlayDim darkens the framebuffer under a pause/shop overlay.
+func DrawOverlayDim(r services.Renderer) {
+	r.FillRect(0, 0, 320, 240, color.RGBA{0, 0, 0, 100})
 }

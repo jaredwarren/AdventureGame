@@ -41,6 +41,7 @@ var pureCorePackages = []string{
 	"internal/systems",
 	"internal/input",
 	"internal/replay",
+	"internal/run",
 }
 
 // bannedImports lists import paths (prefix match) that pureCorePackages must not use.
@@ -109,6 +110,14 @@ var allowedInternalImports = map[string][]string{
 		"internal/geom",
 		"internal/balance",
 	},
+	"internal/run": {
+		"internal/world",
+		"internal/services",
+		"internal/render",
+		"internal/progression",
+		"internal/save",
+		"internal/tiled",
+	},
 	"internal/dungeon": {
 		"internal/tiled",
 		"internal/geom",
@@ -123,6 +132,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/save",
 		"internal/tiled",
 		"internal/dungeon",
+		"internal/run",
 	},
 	"internal/platform/ebiten": {
 		"internal/services",
@@ -136,6 +146,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/services",
 		"internal/render",
 		"internal/save",
+		"internal/run",
 	},
 }
 

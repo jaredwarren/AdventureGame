@@ -12,7 +12,7 @@
 //   - Scene-local state (PlayScene stores hitStop/dodgeImpulse/etc. itself).
 //   - Rendering state (Camera lives on Renderer).
 //   - Services (Input/Audio/Assets/Renderer flow via Context, not Session).
-package scenes
+package run
 
 import "github.com/jaredwarren/game-test/internal/world"
 
