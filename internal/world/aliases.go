@@ -70,9 +70,9 @@ var (
 	AllPickups     = pickup.All
 )
 
-func PickupKindFromTiled(name string) *PickupKind  { return pickup.FromTiled(name) }
-func PickupKindByID(id int) (*PickupKind, bool)    { return pickup.ByID(id) }
-func RegisterPickup(k *PickupKind)                  { pickup.Register(k) }
+func PickupKindFromTiled(name string) *PickupKind { return pickup.FromTiled(name) }
+func PickupKindByID(id int) (*PickupKind, bool)   { return pickup.ByID(id) }
+func RegisterPickup(k *PickupKind)                { pickup.Register(k) }
 func PersistentPickupSaveKey(mapID string, id int) string {
 	return pickup.PersistentSaveKey(mapID, id)
 }

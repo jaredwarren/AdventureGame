@@ -21,7 +21,7 @@ type PauseScene struct{}
 
 func newPauseScene() Scene { return &PauseScene{} }
 
-func (s *PauseScene) ID() SceneID                                     { return ScenePause }
+func (s *PauseScene) ID() SceneID                                        { return ScenePause }
 func (s *PauseScene) Enter(ctx GameContext, params map[string]any) error { return nil }
 func (s *PauseScene) Exit(ctx GameContext) error                         { return nil }
 

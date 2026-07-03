@@ -45,9 +45,9 @@ type PlayScene struct {
 	showItemMenu   bool
 	itemMenuCursor int
 
-	toastItem     *world.PickupKind
-	toastTimer    int
-	toastMessage  string
+	toastItem    *world.PickupKind
+	toastTimer   int
+	toastMessage string
 }
 
 func newPlayScene() Scene {
@@ -58,7 +58,7 @@ func newPlayScene() Scene {
 	}
 }
 
-func (s *PlayScene) ID() SceneID                                     { return ScenePlay }
+func (s *PlayScene) ID() SceneID                                        { return ScenePlay }
 func (s *PlayScene) Enter(ctx GameContext, params map[string]any) error { return nil }
 func (s *PlayScene) Exit(ctx GameContext) error                         { return nil }
 
@@ -575,7 +575,7 @@ func (s *PlayScene) Draw(ctx GameContext) {
 			} else {
 				cycleLen = 2
 			}
-			isFlash := (b.Timer / (cycleLen / 2)) % 2 == 0
+			isFlash := (b.Timer/(cycleLen/2))%2 == 0
 
 			bodyColor := color.RGBA{20, 20, 20, 255}
 			if isFlash {

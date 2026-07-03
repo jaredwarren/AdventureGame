@@ -54,36 +54,36 @@ type GameSave struct {
 	TimeOfDay         int            `json:"time_of_day"`
 	SelectedItem      world.ItemSlot `json:"selected_item"`
 
-	SwingDuration         int            `json:"swing_duration,omitempty"`
-	MaxSwingCD            int            `json:"max_swing_cd,omitempty"`
-	SwingActiveStart      int            `json:"swing_active_start,omitempty"`
-	SwingActiveEnd        int            `json:"swing_active_end,omitempty"`
-	TorchSwingDuration    int            `json:"torch_swing_duration,omitempty"`
-	MaxTorchSwingCD       int            `json:"max_torch_swing_cd,omitempty"`
-	TorchSwingActiveStart int            `json:"torch_swing_active_start,omitempty"`
-	TorchSwingActiveEnd   int            `json:"torch_swing_active_end,omitempty"`
-	BaseSpeed             float64        `json:"base_speed,omitempty"`
-	SprintSpeed           float64        `json:"sprint_speed,omitempty"`
-	DodgeStaminaCost      int            `json:"dodge_stamina_cost,omitempty"`
-	DodgeDuration         int            `json:"dodge_duration,omitempty"`
-	DodgeMaxImpulse       int            `json:"dodge_max_impulse,omitempty"`
-	DodgeSpeed            float64        `json:"dodge_speed,omitempty"`
-	StaminaRegenInterval       int            `json:"stamina_regen_interval,omitempty"`
-	SwordReach                 float64        `json:"sword_reach,omitempty"`
-	SwordThickness             float64        `json:"sword_thickness,omitempty"`
-	TorchReach                 float64        `json:"torch_reach,omitempty"`
-	TorchThickness             float64        `json:"torch_thickness,omitempty"`
-	InvulnFrames               int            `json:"invuln_frames,omitempty"`
-	EnemyKnockbackForce        float64        `json:"enemy_knockback_force,omitempty"`
-	PlayerKnockbackForce       float64        `json:"player_knockback_force,omitempty"`
-	PlayerHazardKnockbackForce float64        `json:"player_hazard_knockback_force,omitempty"`
-	MaxBombs                   int            `json:"max_bombs,omitempty"`
-	BombFuseDuration           int            `json:"bomb_fuse_duration,omitempty"`
-	BombRadius                 float64        `json:"bomb_radius,omitempty"`
-	BombDamage                 int            `json:"bomb_damage,omitempty"`
-	TorchBurnDuration          int            `json:"torch_burn_duration,omitempty"`
-	TorchBurnInterval          int            `json:"torch_burn_interval,omitempty"`
-	TorchBurnDamage            int            `json:"torch_burn_damage,omitempty"`
+	SwingDuration              int     `json:"swing_duration,omitempty"`
+	MaxSwingCD                 int     `json:"max_swing_cd,omitempty"`
+	SwingActiveStart           int     `json:"swing_active_start,omitempty"`
+	SwingActiveEnd             int     `json:"swing_active_end,omitempty"`
+	TorchSwingDuration         int     `json:"torch_swing_duration,omitempty"`
+	MaxTorchSwingCD            int     `json:"max_torch_swing_cd,omitempty"`
+	TorchSwingActiveStart      int     `json:"torch_swing_active_start,omitempty"`
+	TorchSwingActiveEnd        int     `json:"torch_swing_active_end,omitempty"`
+	BaseSpeed                  float64 `json:"base_speed,omitempty"`
+	SprintSpeed                float64 `json:"sprint_speed,omitempty"`
+	DodgeStaminaCost           int     `json:"dodge_stamina_cost,omitempty"`
+	DodgeDuration              int     `json:"dodge_duration,omitempty"`
+	DodgeMaxImpulse            int     `json:"dodge_max_impulse,omitempty"`
+	DodgeSpeed                 float64 `json:"dodge_speed,omitempty"`
+	StaminaRegenInterval       int     `json:"stamina_regen_interval,omitempty"`
+	SwordReach                 float64 `json:"sword_reach,omitempty"`
+	SwordThickness             float64 `json:"sword_thickness,omitempty"`
+	TorchReach                 float64 `json:"torch_reach,omitempty"`
+	TorchThickness             float64 `json:"torch_thickness,omitempty"`
+	InvulnFrames               int     `json:"invuln_frames,omitempty"`
+	EnemyKnockbackForce        float64 `json:"enemy_knockback_force,omitempty"`
+	PlayerKnockbackForce       float64 `json:"player_knockback_force,omitempty"`
+	PlayerHazardKnockbackForce float64 `json:"player_hazard_knockback_force,omitempty"`
+	MaxBombs                   int     `json:"max_bombs,omitempty"`
+	BombFuseDuration           int     `json:"bomb_fuse_duration,omitempty"`
+	BombRadius                 float64 `json:"bomb_radius,omitempty"`
+	BombDamage                 int     `json:"bomb_damage,omitempty"`
+	TorchBurnDuration          int     `json:"torch_burn_duration,omitempty"`
+	TorchBurnInterval          int     `json:"torch_burn_interval,omitempty"`
+	TorchBurnDamage            int     `json:"torch_burn_damage,omitempty"`
 }
 
 const defaultPath = "save.json"

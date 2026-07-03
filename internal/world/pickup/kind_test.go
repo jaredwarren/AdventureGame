@@ -6,13 +6,13 @@ type rewardStub struct {
 	currency int
 }
 
-func (s *rewardStub) PickupAddCurrency(n int)    { s.currency += n }
-func (s *rewardStub) PickupHeal(int)             {}
-func (s *rewardStub) PickupPlayerHP() int        { return 1 }
-func (s *rewardStub) PickupMaxHP() int           { return 10 }
-func (s *rewardStub) PickupAddBomb()             {}
-func (s *rewardStub) PickupAddSmallKey()         {}
-func (s *rewardStub) PickupGrantTorch()          {}
+func (s *rewardStub) PickupAddCurrency(n int) { s.currency += n }
+func (s *rewardStub) PickupHeal(int)          {}
+func (s *rewardStub) PickupPlayerHP() int     { return 1 }
+func (s *rewardStub) PickupMaxHP() int        { return 10 }
+func (s *rewardStub) PickupAddBomb()          {}
+func (s *rewardStub) PickupAddSmallKey()      {}
+func (s *rewardStub) PickupGrantTorch()       {}
 
 func TestFromTiled(t *testing.T) {
 	t.Parallel()

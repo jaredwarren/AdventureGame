@@ -29,4 +29,3 @@ var TileAtlasJSON []byte
 
 //go:embed lake_island_scene.png
 var LakeIslandScenePNG []byte
-

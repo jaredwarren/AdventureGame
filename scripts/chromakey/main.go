@@ -6,10 +6,11 @@
 //	go run ./scripts/chromakey -near 90 -fringe 3 input.png output.png
 //
 // Flags:
-//   -near   max RGB distance from #ff00ff (0 = off)
-//   -pink   max RGB distance from typical sheet pink (252,55,248); default 78; 0 = off
-//   -fringe neighbor cleanup iterations (removes halos next to transparency); default 2
-//   -edge   max RGB distance from pink for fringe pass only; default 118 (looser than -pink)
+//
+//	-near   max RGB distance from #ff00ff (0 = off)
+//	-pink   max RGB distance from typical sheet pink (252,55,248); default 78; 0 = off
+//	-fringe neighbor cleanup iterations (removes halos next to transparency); default 2
+//	-edge   max RGB distance from pink for fringe pass only; default 118 (looser than -pink)
 package main
 
 import (

@@ -531,9 +531,9 @@ func (r *Renderer) drawShrine(sh world.Shrine, ox, oy float64, tick int) {
 
 	// Pedestal Pillar Shaft (6x6 in middle)
 	r.FillRect(sx+5, sy+shh-11, sw-10, 5, color.RGBA{0x80, 0x80, 0x85, 0xff})
-	
+
 	// Pillar side shadow and highlight lines
-	r.FillRect(sx+5, sy+shh-11, 1, 5, color.RGBA{0xa0, 0xa0, 0xa5, 0xff}) // left highlight
+	r.FillRect(sx+5, sy+shh-11, 1, 5, color.RGBA{0xa0, 0xa0, 0xa5, 0xff})    // left highlight
 	r.FillRect(sx+sw-6, sy+shh-11, 1, 5, color.RGBA{0x55, 0x55, 0x5a, 0xff}) // right shadow
 
 	// Pedestal Top Altar slab (12x2)
@@ -713,4 +713,3 @@ func drawTorchAt(screen *ebiten.Image, cx, cy float32, angle float64, alpha floa
 		cx+(actualFlameEnd-3.0)*cos, cy+(actualFlameEnd-3.0)*sin,
 		1.5, flameCoreCol, true)
 }
-

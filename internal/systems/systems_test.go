@@ -410,4 +410,3 @@ func TestPickupSystem_ChestsAreIgnored(t *testing.T) {
 		t.Errorf("expected 0 events, got %d", bus.Len())
 	}
 }
-

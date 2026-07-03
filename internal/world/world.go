@@ -35,7 +35,7 @@ import (
 type ItemSlot int
 
 const (
-	ItemSlotBomb  ItemSlot = iota // default
+	ItemSlotBomb ItemSlot = iota // default
 	ItemSlotTorch
 )
 
@@ -134,29 +134,29 @@ type Player struct {
 	Hitbox
 	Facing
 
-	Swing                  int // >0 while sword animation runs; only mid-window counts as hit frames (see SwordHitbox)
-	SwingCD                int // frames until another Z press is accepted
-	TorchSwing             int // >0 while torch swing runs; same active window as sword (see TorchHitbox)
-	TorchSwingCD           int // frames until another torch press is accepted
-	Invuln                 int // i-frames after taking damage
-	DodgeTimer             int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
-	Stamina                int // drained by sprint; refilled when not sprinting
-	SprintHeld             bool
-	SprintExhausted        bool
-	SwingDuration          int
-	MaxSwingCD             int
-	SwingActiveStart       int
-	SwingActiveEnd         int
-	TorchSwingDuration     int
-	MaxTorchSwingCD        int
-	TorchSwingActiveStart  int
-	TorchSwingActiveEnd    int
-	BaseSpeed              float64
-	SprintSpeed            float64
-	DodgeStaminaCost       int
-	DodgeDuration          int
-	DodgeMaxImpulse        int
-	DodgeSpeed             float64
+	Swing                      int // >0 while sword animation runs; only mid-window counts as hit frames (see SwordHitbox)
+	SwingCD                    int // frames until another Z press is accepted
+	TorchSwing                 int // >0 while torch swing runs; same active window as sword (see TorchHitbox)
+	TorchSwingCD               int // frames until another torch press is accepted
+	Invuln                     int // i-frames after taking damage
+	DodgeTimer                 int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
+	Stamina                    int // drained by sprint; refilled when not sprinting
+	SprintHeld                 bool
+	SprintExhausted            bool
+	SwingDuration              int
+	MaxSwingCD                 int
+	SwingActiveStart           int
+	SwingActiveEnd             int
+	TorchSwingDuration         int
+	MaxTorchSwingCD            int
+	TorchSwingActiveStart      int
+	TorchSwingActiveEnd        int
+	BaseSpeed                  float64
+	SprintSpeed                float64
+	DodgeStaminaCost           int
+	DodgeDuration              int
+	DodgeMaxImpulse            int
+	DodgeSpeed                 float64
 	StaminaRegenInterval       int
 	SwordReach                 float64
 	SwordThickness             float64
@@ -727,4 +727,3 @@ func (w *World) TryIgniteTree(tx, ty int) bool {
 	})
 	return true
 }
-

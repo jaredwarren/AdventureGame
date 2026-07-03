@@ -307,4 +307,3 @@ func TestAmbientLightOverride(t *testing.T) {
 		t.Errorf("expected LightMultiplier to be 0.45, got %f", mult)
 	}
 }
-

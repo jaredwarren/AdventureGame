@@ -10,50 +10,50 @@ import (
 // world clock. Map transitions and saves marshal through this type so field
 // lists stay in one place.
 type RunState struct {
-	HP       int
-	Currency int
-	Bombs    int
-	HasTorch bool
-	SmallKey int
-	Stats    progression.Stats
-	TimeOfDay         int
-	SelectedItem      world.ItemSlot
-	SprintHeld        bool
-	SprintExhausted   bool
-	PlayerTuning playerTuning
+	HP              int
+	Currency        int
+	Bombs           int
+	HasTorch        bool
+	SmallKey        int
+	Stats           progression.Stats
+	TimeOfDay       int
+	SelectedItem    world.ItemSlot
+	SprintHeld      bool
+	SprintExhausted bool
+	PlayerTuning    playerTuning
 }
 
 type playerTuning struct {
-	SwingDuration         int
-	MaxSwingCD            int
-	SwingActiveStart      int
-	SwingActiveEnd        int
-	TorchSwingDuration    int
-	MaxTorchSwingCD       int
-	TorchSwingActiveStart int
-	TorchSwingActiveEnd   int
-	BaseSpeed             float64
-	SprintSpeed           float64
-	DodgeStaminaCost      int
-	DodgeDuration         int
-	DodgeMaxImpulse       int
-	DodgeSpeed            float64
-	StaminaRegenInterval  int
-	SwordReach            float64
-	SwordThickness        float64
-	TorchReach            float64
-	TorchThickness        float64
-	InvulnFrames          int
-	EnemyKnockbackForce   float64
-	PlayerKnockbackForce  float64
+	SwingDuration              int
+	MaxSwingCD                 int
+	SwingActiveStart           int
+	SwingActiveEnd             int
+	TorchSwingDuration         int
+	MaxTorchSwingCD            int
+	TorchSwingActiveStart      int
+	TorchSwingActiveEnd        int
+	BaseSpeed                  float64
+	SprintSpeed                float64
+	DodgeStaminaCost           int
+	DodgeDuration              int
+	DodgeMaxImpulse            int
+	DodgeSpeed                 float64
+	StaminaRegenInterval       int
+	SwordReach                 float64
+	SwordThickness             float64
+	TorchReach                 float64
+	TorchThickness             float64
+	InvulnFrames               int
+	EnemyKnockbackForce        float64
+	PlayerKnockbackForce       float64
 	PlayerHazardKnockbackForce float64
-	MaxBombs              int
-	BombFuseDuration      int
-	BombRadius            float64
-	BombDamage            int
-	TorchBurnDuration     int
-	TorchBurnInterval     int
-	TorchBurnDamage       int
+	MaxBombs                   int
+	BombFuseDuration           int
+	BombRadius                 float64
+	BombDamage                 int
+	TorchBurnDuration          int
+	TorchBurnInterval          int
+	TorchBurnDamage            int
 }
 
 // RunStateFromWorld snapshots portable run state from a live world.
@@ -84,15 +84,15 @@ func RunStateFromSave(s *save.GameSave) RunState {
 	}
 	def := world.DefaultPlayerTuning()
 	return RunState{
-		HP:            s.HP,
-		Currency:      s.Currency,
-		Bombs:         s.Bombs,
-		HasTorch:      s.HasTorch,
-		SmallKey:      max(0, s.SmallKey),
-		Stats:         StatsFromSave(s),
-		TimeOfDay:     s.TimeOfDay,
-		SelectedItem:  s.SelectedItem,
-		PlayerTuning:  playerTuningFromSave(s, def),
+		HP:           s.HP,
+		Currency:     s.Currency,
+		Bombs:        s.Bombs,
+		HasTorch:     s.HasTorch,
+		SmallKey:     max(0, s.SmallKey),
+		Stats:        StatsFromSave(s),
+		TimeOfDay:    s.TimeOfDay,
+		SelectedItem: s.SelectedItem,
+		PlayerTuning: playerTuningFromSave(s, def),
 	}
 }
 
@@ -145,71 +145,71 @@ func (rs RunState) ToGameSave(mapID string, px, py float64) *save.GameSave {
 
 func playerTuningFromPlayer(p world.Player) playerTuning {
 	return playerTuning{
-		SwingDuration:         p.SwingDuration,
-		MaxSwingCD:            p.MaxSwingCD,
-		SwingActiveStart:      p.SwingActiveStart,
-		SwingActiveEnd:        p.SwingActiveEnd,
-		TorchSwingDuration:    p.TorchSwingDuration,
-		MaxTorchSwingCD:       p.MaxTorchSwingCD,
-		TorchSwingActiveStart: p.TorchSwingActiveStart,
-		TorchSwingActiveEnd:   p.TorchSwingActiveEnd,
-		BaseSpeed:             p.BaseSpeed,
-		SprintSpeed:           p.SprintSpeed,
-		DodgeStaminaCost:      p.DodgeStaminaCost,
-		DodgeDuration:         p.DodgeDuration,
-		DodgeMaxImpulse:       p.DodgeMaxImpulse,
-		DodgeSpeed:            p.DodgeSpeed,
-		StaminaRegenInterval:  p.StaminaRegenInterval,
-		SwordReach:            p.SwordReach,
-		SwordThickness:        p.SwordThickness,
-		TorchReach:            p.TorchReach,
-		TorchThickness:        p.TorchThickness,
-		InvulnFrames:          p.InvulnFrames,
-		EnemyKnockbackForce:   p.EnemyKnockbackForce,
-		PlayerKnockbackForce:  p.PlayerKnockbackForce,
+		SwingDuration:              p.SwingDuration,
+		MaxSwingCD:                 p.MaxSwingCD,
+		SwingActiveStart:           p.SwingActiveStart,
+		SwingActiveEnd:             p.SwingActiveEnd,
+		TorchSwingDuration:         p.TorchSwingDuration,
+		MaxTorchSwingCD:            p.MaxTorchSwingCD,
+		TorchSwingActiveStart:      p.TorchSwingActiveStart,
+		TorchSwingActiveEnd:        p.TorchSwingActiveEnd,
+		BaseSpeed:                  p.BaseSpeed,
+		SprintSpeed:                p.SprintSpeed,
+		DodgeStaminaCost:           p.DodgeStaminaCost,
+		DodgeDuration:              p.DodgeDuration,
+		DodgeMaxImpulse:            p.DodgeMaxImpulse,
+		DodgeSpeed:                 p.DodgeSpeed,
+		StaminaRegenInterval:       p.StaminaRegenInterval,
+		SwordReach:                 p.SwordReach,
+		SwordThickness:             p.SwordThickness,
+		TorchReach:                 p.TorchReach,
+		TorchThickness:             p.TorchThickness,
+		InvulnFrames:               p.InvulnFrames,
+		EnemyKnockbackForce:        p.EnemyKnockbackForce,
+		PlayerKnockbackForce:       p.PlayerKnockbackForce,
 		PlayerHazardKnockbackForce: p.PlayerHazardKnockbackForce,
-		MaxBombs:              p.MaxBombs,
-		BombFuseDuration:      p.BombFuseDuration,
-		BombRadius:            p.BombRadius,
-		BombDamage:            p.BombDamage,
-		TorchBurnDuration:     p.TorchBurnDuration,
-		TorchBurnInterval:     p.TorchBurnInterval,
-		TorchBurnDamage:       p.TorchBurnDamage,
+		MaxBombs:                   p.MaxBombs,
+		BombFuseDuration:           p.BombFuseDuration,
+		BombRadius:                 p.BombRadius,
+		BombDamage:                 p.BombDamage,
+		TorchBurnDuration:          p.TorchBurnDuration,
+		TorchBurnInterval:          p.TorchBurnInterval,
+		TorchBurnDamage:            p.TorchBurnDamage,
 	}
 }
 
 func playerTuningFromSave(s *save.GameSave, def world.Player) playerTuning {
 	return playerTuning{
-		SwingDuration:         tuningInt(s.SwingDuration, def.SwingDuration),
-		MaxSwingCD:            tuningInt(s.MaxSwingCD, def.MaxSwingCD),
-		SwingActiveStart:      tuningInt(s.SwingActiveStart, def.SwingActiveStart),
-		SwingActiveEnd:        tuningInt(s.SwingActiveEnd, def.SwingActiveEnd),
-		TorchSwingDuration:    tuningInt(s.TorchSwingDuration, def.TorchSwingDuration),
-		MaxTorchSwingCD:       tuningInt(s.MaxTorchSwingCD, def.MaxTorchSwingCD),
-		TorchSwingActiveStart: tuningInt(s.TorchSwingActiveStart, def.TorchSwingActiveStart),
-		TorchSwingActiveEnd:   tuningInt(s.TorchSwingActiveEnd, def.TorchSwingActiveEnd),
-		BaseSpeed:             tuningFloat(s.BaseSpeed, def.BaseSpeed),
-		SprintSpeed:           tuningFloat(s.SprintSpeed, def.SprintSpeed),
-		DodgeStaminaCost:      tuningInt(s.DodgeStaminaCost, def.DodgeStaminaCost),
-		DodgeDuration:         tuningInt(s.DodgeDuration, def.DodgeDuration),
-		DodgeMaxImpulse:       tuningInt(s.DodgeMaxImpulse, def.DodgeMaxImpulse),
-		DodgeSpeed:            tuningFloat(s.DodgeSpeed, def.DodgeSpeed),
-		StaminaRegenInterval:  tuningInt(s.StaminaRegenInterval, def.StaminaRegenInterval),
-		SwordReach:            tuningFloat(s.SwordReach, def.SwordReach),
-		SwordThickness:        tuningFloat(s.SwordThickness, def.SwordThickness),
-		TorchReach:            tuningFloat(s.TorchReach, def.TorchReach),
-		TorchThickness:        tuningFloat(s.TorchThickness, def.TorchThickness),
-		InvulnFrames:          tuningInt(s.InvulnFrames, def.InvulnFrames),
-		EnemyKnockbackForce:   tuningFloat(s.EnemyKnockbackForce, def.EnemyKnockbackForce),
-		PlayerKnockbackForce:  tuningFloat(s.PlayerKnockbackForce, def.PlayerKnockbackForce),
+		SwingDuration:              tuningInt(s.SwingDuration, def.SwingDuration),
+		MaxSwingCD:                 tuningInt(s.MaxSwingCD, def.MaxSwingCD),
+		SwingActiveStart:           tuningInt(s.SwingActiveStart, def.SwingActiveStart),
+		SwingActiveEnd:             tuningInt(s.SwingActiveEnd, def.SwingActiveEnd),
+		TorchSwingDuration:         tuningInt(s.TorchSwingDuration, def.TorchSwingDuration),
+		MaxTorchSwingCD:            tuningInt(s.MaxTorchSwingCD, def.MaxTorchSwingCD),
+		TorchSwingActiveStart:      tuningInt(s.TorchSwingActiveStart, def.TorchSwingActiveStart),
+		TorchSwingActiveEnd:        tuningInt(s.TorchSwingActiveEnd, def.TorchSwingActiveEnd),
+		BaseSpeed:                  tuningFloat(s.BaseSpeed, def.BaseSpeed),
+		SprintSpeed:                tuningFloat(s.SprintSpeed, def.SprintSpeed),
+		DodgeStaminaCost:           tuningInt(s.DodgeStaminaCost, def.DodgeStaminaCost),
+		DodgeDuration:              tuningInt(s.DodgeDuration, def.DodgeDuration),
+		DodgeMaxImpulse:            tuningInt(s.DodgeMaxImpulse, def.DodgeMaxImpulse),
+		DodgeSpeed:                 tuningFloat(s.DodgeSpeed, def.DodgeSpeed),
+		StaminaRegenInterval:       tuningInt(s.StaminaRegenInterval, def.StaminaRegenInterval),
+		SwordReach:                 tuningFloat(s.SwordReach, def.SwordReach),
+		SwordThickness:             tuningFloat(s.SwordThickness, def.SwordThickness),
+		TorchReach:                 tuningFloat(s.TorchReach, def.TorchReach),
+		TorchThickness:             tuningFloat(s.TorchThickness, def.TorchThickness),
+		InvulnFrames:               tuningInt(s.InvulnFrames, def.InvulnFrames),
+		EnemyKnockbackForce:        tuningFloat(s.EnemyKnockbackForce, def.EnemyKnockbackForce),
+		PlayerKnockbackForce:       tuningFloat(s.PlayerKnockbackForce, def.PlayerKnockbackForce),
 		PlayerHazardKnockbackForce: tuningFloat(s.PlayerHazardKnockbackForce, def.PlayerHazardKnockbackForce),
-		MaxBombs:              tuningInt(s.MaxBombs, def.MaxBombs),
-		BombFuseDuration:      tuningInt(s.BombFuseDuration, def.BombFuseDuration),
-		BombRadius:            tuningFloat(s.BombRadius, def.BombRadius),
-		BombDamage:            tuningInt(s.BombDamage, def.BombDamage),
-		TorchBurnDuration:     tuningInt(s.TorchBurnDuration, def.TorchBurnDuration),
-		TorchBurnInterval:     tuningInt(s.TorchBurnInterval, def.TorchBurnInterval),
-		TorchBurnDamage:       tuningInt(s.TorchBurnDamage, def.TorchBurnDamage),
+		MaxBombs:                   tuningInt(s.MaxBombs, def.MaxBombs),
+		BombFuseDuration:           tuningInt(s.BombFuseDuration, def.BombFuseDuration),
+		BombRadius:                 tuningFloat(s.BombRadius, def.BombRadius),
+		BombDamage:                 tuningInt(s.BombDamage, def.BombDamage),
+		TorchBurnDuration:          tuningInt(s.TorchBurnDuration, def.TorchBurnDuration),
+		TorchBurnInterval:          tuningInt(s.TorchBurnInterval, def.TorchBurnInterval),
+		TorchBurnDamage:            tuningInt(s.TorchBurnDamage, def.TorchBurnDamage),
 	}
 }
 

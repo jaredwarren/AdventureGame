@@ -10,14 +10,14 @@ import (
 func TestRunState_RoundTripWorld(t *testing.T) {
 	t.Parallel()
 	w := &world.World{
-		HP:       7,
-		Currency: 42,
-		Bombs:    3,
-		HasTorch: true,
-		SmallKey: 2,
-		Stats:    progression.Stats{Vitality: 3, Resolve: 2, Might: 4},
-		TimeOfDay:      1234,
-		SelectedItem:   world.ItemSlotTorch,
+		HP:           7,
+		Currency:     42,
+		Bombs:        3,
+		HasTorch:     true,
+		SmallKey:     2,
+		Stats:        progression.Stats{Vitality: 3, Resolve: 2, Might: 4},
+		TimeOfDay:    1234,
+		SelectedItem: world.ItemSlotTorch,
 	}
 	w.Player.BaseSpeed = 2.5
 	w.Player.MaxBombs = 10

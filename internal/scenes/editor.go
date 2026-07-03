@@ -183,8 +183,6 @@ func (s *EditorScene) worldXY(ctx GameContext) (float64, float64) {
 	return float64(mx), float64(my)
 }
 
-
-
 func (s *EditorScene) newMarkerObject(wx, wy float64) tiled.Object {
 	id := s.tm.NextObjectID
 	s.tm.NextObjectID++

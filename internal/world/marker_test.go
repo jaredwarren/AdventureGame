@@ -18,7 +18,7 @@ func TestMarkerHandlerFor_SpawnPickup(t *testing.T) {
 	t.Parallel()
 	w := &World{
 		MapW: 4, MapH: 4, TileW: TileSize, TileH: TileSize,
-		Tiles: make([]int, 16),
+		Tiles:  make([]int, 16),
 		Player: DefaultPlayerTuning(),
 	}
 	o := &tiled.Object{Type: "pickup", X: 16, Y: 28, Properties: []tiled.Property{

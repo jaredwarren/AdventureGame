@@ -21,12 +21,11 @@ make build
 ./bin/game-test
 ```
 
-**Tests and hygiene:**
+**Tests and hygiene (pre-commit gate):**
 
 ```bash
-make test
-make fmt
-make vet
+make check
+# or individual targets: make test, make fmt, make vet
 ```
 
 ## How to play (playtester runbook)

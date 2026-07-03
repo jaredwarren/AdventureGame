@@ -18,14 +18,14 @@ const (
 )
 
 type Particle struct {
-	X, Y     float64
-	VX, VY   float64
-	Color    color.RGBA
-	Type     ParticleType
-	Size     float32
-	Life     float64 // 1.0 down to 0.0
-	Decay    float64
-	Wobble   float64
+	X, Y   float64
+	VX, VY float64
+	Color  color.RGBA
+	Type   ParticleType
+	Size   float32
+	Life   float64 // 1.0 down to 0.0
+	Decay  float64
+	Wobble float64
 }
 
 func NewDustParticle(x, y float64) *Particle {

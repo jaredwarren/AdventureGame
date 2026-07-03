@@ -15,7 +15,7 @@ type TitleScene struct{}
 
 func newTitleScene() Scene { return &TitleScene{} }
 
-func (s *TitleScene) ID() SceneID                                     { return SceneTitle }
+func (s *TitleScene) ID() SceneID                                        { return SceneTitle }
 func (s *TitleScene) Enter(ctx GameContext, params map[string]any) error { return nil }
 func (s *TitleScene) Exit(ctx GameContext) error                         { return nil }
 

@@ -108,7 +108,7 @@ func autoTileWater(w *World) {
 				w.Tiles[idx] = GIDWaterShoreSW
 			} else if bottom && right {
 				w.Tiles[idx] = GIDWaterShoreSE
-			// 2. Straight shores: Grass on one side
+				// 2. Straight shores: Grass on one side
 			} else if top {
 				w.Tiles[idx] = GIDWaterShoreTop
 			} else if bottom {
@@ -117,7 +117,7 @@ func autoTileWater(w *World) {
 				w.Tiles[idx] = GIDWaterShoreLeft
 			} else if right {
 				w.Tiles[idx] = GIDWaterShoreRight
-			// 3. Concave (inner) corners: Grass diagonally only
+				// 3. Concave (inner) corners: Grass diagonally only
 			} else if tl {
 				w.Tiles[idx] = GIDWaterShoreNWInner
 			} else if tr {
@@ -130,4 +130,3 @@ func autoTileWater(w *World) {
 		}
 	}
 }
-

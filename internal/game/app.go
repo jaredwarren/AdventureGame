@@ -31,6 +31,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/scenes"
 	"github.com/jaredwarren/game-test/internal/services"
 )
+
 // App is the root ebiten.Game implementation. It holds only wiring — no
 // gameplay state — so the dependency graph is legible at a glance.
 //
@@ -60,8 +61,8 @@ func (c *appContext) Audio() services.Audio         { return c.audio }
 func (c *appContext) Assets() services.AssetCache   { return c.assets }
 func (c *appContext) Renderer() services.Renderer   { return c.renderer }
 func (c *appContext) Clipboard() services.Clipboard { return c.clipboard }
-func (c *appContext) Session() *scenes.Session     { return c.session }
-func (c *appContext) Manager() *scenes.Manager     { return c.manager }
+func (c *appContext) Session() *scenes.Session      { return c.session }
+func (c *appContext) Manager() *scenes.Manager      { return c.manager }
 
 // Services bundles the backend ports App requires. Input/Audio/Assets are
 // mandatory; Clipboard may be nil on headless builds (scenes treat a nil

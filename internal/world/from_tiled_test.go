@@ -111,7 +111,7 @@ func TestAutoTileWater(t *testing.T) {
 	// Grass, Water, Water, Water
 	// Grass, Water, Water, Water
 	// Grass, Grass, Grass, Grass
-	
+
 	m := &tiled.Map{
 		Width:      4,
 		Height:     4,
@@ -161,4 +161,3 @@ func TestAutoTileWater(t *testing.T) {
 		t.Errorf("w.Tiles[10] = %d, want GIDWaterShoreSE (%d)", w.Tiles[10], GIDWaterShoreSE)
 	}
 }
-

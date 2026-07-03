@@ -1,4 +1,4 @@
-.PHONY: run test fmt vet clean maps-check build edit edit-% gentmj
+.PHONY: run test fmt vet check clean maps-check build edit edit-% gentmj
 
 # Map id for the in-engine editor (assets/maps/$(MAP).tmj).
 MAP ?= field1
@@ -44,6 +44,8 @@ MH ?= 10
 SEED ?= 0
 gentmj:
 	go run ./cmd/gentmj -o $(OUT) -w $(MW) -h $(MH) -seed $(SEED)
+
+check: fmt vet test
 
 test:
 	go test ./...

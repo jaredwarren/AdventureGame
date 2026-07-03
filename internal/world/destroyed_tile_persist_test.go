@@ -111,4 +111,3 @@ func TestBreakTileAt(t *testing.T) {
 		t.Fatal("expected breaking already destroyed tile to fail")
 	}
 }
-
