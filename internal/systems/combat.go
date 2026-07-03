@@ -28,23 +28,10 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		dmg := w.SwordDamage()
 		for i := range w.Enemies {
 			e := &w.Enemies[i]
-			if e.HP <= 0 {
+			if e.HP <= 0 || !hb.Overlaps(e.Rect()) {
 				continue
 			}
-			if !hb.Overlaps(e.Rect()) {
-				continue
-			}
-			before := e.HP
-			w.DamageEnemy(i, dmg)
-			nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
-			e.X, e.Y = nx, ny
-			killed := before > 0 && e.HP <= 0
-			tryPush(bus, HitEvent{
-				EnemyID: e.ID,
-				Damage:  dmg,
-				Killed:  killed,
-				IsBoss:  e.IsBoss,
-			})
+			applyEnemyDamage(w, bus, i, dmg, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
 		}
 		return nil
 	}
@@ -52,24 +39,11 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		dmg := w.SwordDamage()
 		for i := range w.Enemies {
 			e := &w.Enemies[i]
-			if e.HP <= 0 {
+			if e.HP <= 0 || !hb.Overlaps(e.Rect()) {
 				continue
 			}
-			if !hb.Overlaps(e.Rect()) {
-				continue
-			}
-			before := e.HP
-			w.DamageEnemy(i, dmg)
-			nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
-			e.X, e.Y = nx, ny
+			applyEnemyDamage(w, bus, i, dmg, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
 			w.IgniteEnemy(i)
-			killed := before > 0 && e.HP <= 0
-			tryPush(bus, HitEvent{
-				EnemyID: e.ID,
-				Damage:  dmg,
-				Killed:  killed,
-				IsBoss:  e.IsBoss,
-			})
 		}
 		// Try to ignite a tree in front of us
 		pc := w.PlayerRect()
@@ -91,4 +65,27 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		return nil
 	}
 	return nil
+}
+
+// applyEnemyDamage applies damage to enemy at idx, optional knockback away from (originX, originY),
+// and pushes a HitEvent to bus.
+func applyEnemyDamage(w *world.World, bus *EventBus, idx int, dmg int, originX, originY float64, knockbackForce float64, fromBurnDoT bool) {
+	e := &w.Enemies[idx]
+	if e.HP <= 0 {
+		return
+	}
+	before := e.HP
+	w.DamageEnemy(idx, dmg)
+	if knockbackForce > 0 {
+		nx, ny := knockbackSlide(w, e.X, e.Y, e.W, e.H, originX, originY, knockbackForce, false)
+		e.X, e.Y = nx, ny
+	}
+	killed := before > 0 && e.HP <= 0
+	tryPush(bus, HitEvent{
+		EnemyID:     e.ID,
+		Damage:      dmg,
+		Killed:      killed,
+		IsBoss:      e.IsBoss,
+		FromBurnDoT: fromBurnDoT,
+	})
 }

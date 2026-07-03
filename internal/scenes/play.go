@@ -27,12 +27,6 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
-type ActiveBomb struct {
-	X, Y   float64
-	TX, TY int
-	Timer  int
-}
-
 // PlayScene is the main gameplay scene.
 type PlayScene struct {
 	hitStop      int
@@ -40,7 +34,6 @@ type PlayScene struct {
 
 	pipeline  *systems.Pipeline
 	particles []*Particle
-	bombs     []*ActiveBomb
 
 	showItemMenu   bool
 	itemMenuCursor int
@@ -54,7 +47,6 @@ func newPlayScene() Scene {
 	return &PlayScene{
 		pipeline:  systems.Default(),
 		particles: make([]*Particle, 0),
-		bombs:     make([]*ActiveBomb, 0),
 	}
 }
 
@@ -111,75 +103,23 @@ func (s *PlayScene) Update(ctx GameContext) error {
 	// Update existing particles
 	s.particles = UpdateParticles(s.particles)
 
-	// Update active bombs
-	var activeBombs []*ActiveBomb
-	for _, b := range s.bombs {
-		b.Timer--
-		if b.Timer <= 0 {
-			// Explode!
-			if broke, saveKey := w.BreakTileAt(b.TX, b.TY, world.DamageBomb); broke {
-				ctx.Session().MarkDestroyedTile(w.MapID, saveKey)
-			}
-
-			// Damage nearby enemies within 32 pixels
-			for i := range w.Enemies {
-				enemy := &w.Enemies[i]
-				if enemy.HP <= 0 {
-					continue
-				}
-				ecx, ecy := enemy.Center()
-				dist := math.Hypot(ecx-b.X, ecy-b.Y)
-				bombRadius := w.Player.EffectiveBombRadius()
-				bombDamage := w.Player.EffectiveBombDamage()
-				if dist <= bombRadius {
-					w.DamageEnemy(i, bombDamage) // high damage
-				}
-			}
-
-			// Audio & Camera Shake
-			ctx.Audio().Play("hit.wav", 0.3)
-			ctx.Renderer().Camera().AddShake(12, 4.5)
-
-			// Spawn explosion/debris particles
-			for k := 0; k < 16; k++ {
-				// Debris
-				s.particles = append(s.particles, NewDebrisParticle(b.X, b.Y, color.RGBA{100, 100, 100, 255}))
-				// Embers
-				angle := rand.Float64() * 2 * math.Pi
-				speed := rand.Float64()*2.0 + 1.0
-				s.particles = append(s.particles, &Particle{
-					X:      b.X,
-					Y:      b.Y,
-					VX:     math.Cos(angle) * speed,
-					VY:     math.Sin(angle) * speed,
-					Color:  color.RGBA{255, uint8(100 + rand.Intn(150)), 0, 255},
-					Type:   ParticleEmber,
-					Size:   rand.Float32()*3.0 + 1.5,
-					Life:   1.0,
-					Decay:  rand.Float64()*0.05 + 0.03,
-					Wobble: rand.Float64() * 10,
-				})
-			}
-		} else {
-			// Spawn fuse sparks at top-right of the bomb at the end of the fuse line (x + 3, y - 9)
-			if rand.Float64() < 0.6 {
-				s.particles = append(s.particles, &Particle{
-					X:      b.X + 3,
-					Y:      b.Y - 9,
-					VX:     (rand.Float64() - 0.5) * 0.5,
-					VY:     -rand.Float64()*0.5 - 0.2,
-					Color:  color.RGBA{255, uint8(180 + rand.Intn(75)), 0, 255},
-					Type:   ParticleEmber,
-					Size:   rand.Float32()*1.2 + 0.6,
-					Life:   1.0,
-					Decay:  rand.Float64()*0.05 + 0.05,
-					Wobble: rand.Float64() * 5,
-				})
-			}
-			activeBombs = append(activeBombs, b)
+	// Spawn fuse sparks for active bombs
+	for _, b := range w.ActiveBombs {
+		if rand.Float64() < 0.6 {
+			s.particles = append(s.particles, &Particle{
+				X:      b.X + 3,
+				Y:      b.Y - 9,
+				VX:     (rand.Float64() - 0.5) * 0.5,
+				VY:     -rand.Float64()*0.5 - 0.2,
+				Color:  color.RGBA{255, uint8(180 + rand.Intn(75)), 0, 255},
+				Type:   ParticleEmber,
+				Size:   rand.Float32()*1.2 + 0.6,
+				Life:   1.0,
+				Decay:  rand.Float64()*0.05 + 0.05,
+				Wobble: rand.Float64() * 5,
+			})
 		}
 	}
-	s.bombs = activeBombs
 
 	// Spawn flame particles for active flames
 	for _, f := range w.Flames {
@@ -258,36 +198,7 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 	in := ctx.Input()
 	pr := w.PlayerRect()
 	if in.JustPressed(services.ActionInteract) {
-		chestOpened := false
-		for i := range w.Pickups {
-			p := &w.Pickups[i]
-			if p.PersistentSaveKey != "" && !p.Opened && !p.Gone && pr.OverlapsExpanded(p.Rect(), 2.0) {
-				p.Opened = true
-				chestOpened = true
-
-				w.ApplyPickupReward(p.Kind)
-
-				// Persist save state
-				ctx.Session().MarkPersistentPickupCollected(w.MapID, p.PersistentSaveKey)
-
-				// Play pickup audio
-				ctx.Audio().Play("pickup.wav", 0.25)
-
-				// Spawn sparkle particles (same as systems.PickupEvent reaction)
-				px, py := p.X+p.W*0.5, p.Y+p.H*0.5
-				for k := 0; k < 8; k++ {
-					s.particles = append(s.particles, NewSparkleParticle(px, py))
-				}
-
-				// Set toast notification
-				s.toastItem = p.Kind
-				s.toastTimer = 150
-				s.toastMessage = p.Kind.ToastMessage()
-				break
-			}
-		}
-
-		if !chestOpened {
+		if !w.TryOpenChest() {
 			for _, sh := range w.Shrines {
 				if pr.Overlaps(sh.Rect) {
 					ctx.Manager().Replace(SceneShop, nil)
@@ -320,37 +231,9 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 }
 
 func (s *PlayScene) tryDropBomb(ctx GameContext, w *world.World) {
-	if w.Bombs <= 0 {
-		return
+	if w.TryPlaceBomb() {
+		ctx.Audio().Play("swing.wav", 0.15)
 	}
-	pc := w.PlayerRect()
-	cx := pc.X + pc.W*0.5
-	cy := pc.Y + pc.H*0.5
-	tx := int(cx / world.TileSize)
-	ty := int(cy / world.TileSize)
-	switch w.Player.Dir {
-	case world.DirDown:
-		ty++
-	case world.DirUp:
-		ty--
-	case world.DirLeft:
-		tx--
-	case world.DirRight:
-		tx++
-	}
-	bx := float64(tx*world.TileSize) + world.TileSize*0.5
-	by := float64(ty*world.TileSize) + world.TileSize*0.5
-	for _, b := range s.bombs {
-		if b.TX == tx && b.TY == ty {
-			return
-		}
-	}
-	w.Bombs--
-	s.bombs = append(s.bombs, &ActiveBomb{
-		X: bx, Y: by, TX: tx, TY: ty,
-		Timer: w.Player.EffectiveBombFuseDuration(),
-	})
-	ctx.Audio().Play("swing.wav", 0.15)
 }
 
 func (s *PlayScene) trySwingTorch(ctx GameContext, w *world.World) {
@@ -408,26 +291,11 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 	isSprintHeld := in.IsDown(services.ActionSprint)
 
 	w.Player.SprintHeld = isSprintHeld
-
-	if !isSprintHeld {
-		w.Player.SprintExhausted = false
-	}
+	w.Player.IsMoving = isMoving
 
 	spd := w.Player.EffectiveBaseSpeed()
-
-	isSprinting := isSprintHeld && isMoving && !w.Player.SprintExhausted && w.Player.Stamina > 0
-
-	if isSprinting {
+	if w.Player.IsSprinting {
 		spd = w.Player.EffectiveSprintSpeed()
-		w.Player.Stamina--
-		if w.Player.Stamina <= 0 {
-			w.Player.Stamina = 0
-			w.Player.SprintExhausted = true
-		}
-	} else if w.Player.Stamina < w.MaxStamina() {
-		if w.Tick%w.Player.EffectiveStaminaRegenInterval() == 0 {
-			w.Player.Stamina++
-		}
 	}
 
 	dx := float64(ax) * spd
@@ -503,8 +371,33 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				}
 				ctx.Audio().Play("hit.wav", 0.2)
 			}
+		case systems.ExplosionEvent:
+			ctx.Audio().Play("hit.wav", 0.3)
+			cam.AddShake(12, 4.5)
+			for k := 0; k < 16; k++ {
+				s.particles = append(s.particles, NewDebrisParticle(e.X, e.Y, color.RGBA{100, 100, 100, 255}))
+				angle := rand.Float64() * 2 * math.Pi
+				speed := rand.Float64()*2.0 + 1.0
+				s.particles = append(s.particles, &Particle{
+					X:      e.X,
+					Y:      e.Y,
+					VX:     math.Cos(angle) * speed,
+					VY:     math.Sin(angle) * speed,
+					Color:  color.RGBA{255, uint8(100 + rand.Intn(150)), 0, 255},
+					Type:   ParticleEmber,
+					Size:   rand.Float32()*3.0 + 1.5,
+					Life:   1.0,
+					Decay:  rand.Float64()*0.05 + 0.03,
+					Wobble: rand.Float64() * 10,
+				})
+			}
 		case systems.PickupEvent:
-			ctx.Session().MarkPersistentPickupCollected(w.MapID, e.PersistentSaveKey)
+			if e.PersistentSaveKey != "" {
+				ctx.Session().MarkPersistentPickupCollected(w.MapID, e.PersistentSaveKey)
+				s.toastItem = e.Kind
+				s.toastTimer = 150
+				s.toastMessage = e.Kind.ToastMessage()
+			}
 			ctx.Audio().Play("pickup.wav", 0.25)
 			var px, py float64
 			for _, p := range w.Pickups {
@@ -561,7 +454,7 @@ func (s *PlayScene) Draw(ctx GameContext) {
 		// Draw active bombs
 		cam := r.Camera()
 		ox, oy := cam.X, cam.Y
-		for _, b := range s.bombs {
+		for _, b := range sess.World.ActiveBombs {
 			sx := float32(b.X - ox)
 			sy := float32(b.Y - oy)
 

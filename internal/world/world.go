@@ -64,9 +64,10 @@ type Pickup struct {
 	Transform
 	Hitbox
 
-	Kind   *PickupKind
-	Gone   bool // set true when consumed; kept in the slice for stable indices
-	Opened bool // set true when chest is opened
+	Kind           *PickupKind
+	Gone           bool // set true when consumed; kept in the slice for stable indices
+	Opened         bool // set true when chest is opened
+	PendingCollect bool // set true when chest is opened by player intent until PickupSystem processes it
 
 	// PersistentSaveKey is non-empty when this pickup was authored with
 	// persistent=true in Tiled; format from PersistentPickupSaveKey. Consumed
@@ -143,6 +144,8 @@ type Player struct {
 	Stamina                    int // drained by sprint; refilled when not sprinting
 	SprintHeld                 bool
 	SprintExhausted            bool
+	IsMoving                   bool
+	IsSprinting                bool
 	SwingDuration              int
 	MaxSwingCD                 int
 	SwingActiveStart           int
@@ -217,6 +220,9 @@ type World struct {
 
 	// Flames is the list of currently active fires burning tiles (e.g. trees)
 	Flames []ActiveFlame
+
+	// ActiveBombs is the list of placed bombs counting down fuse timers
+	ActiveBombs []ActiveBomb
 
 	// DoorCooldown counts down while >0 (systems.TimersSystem); while non-
 	// zero, scenes should skip door warp checks so the player does not
@@ -697,6 +703,10 @@ type ActiveFlame struct {
 	Timer  int
 }
 
+// DefaultTreeBurnDuration is the frame count for a tree to burn before breaking into ashes/stump.
+// TODO(phase-2): move to balance.GameBalance.Hazards
+const DefaultTreeBurnDuration = 90
+
 // TryIgniteTree ignites a tree tile at tx, ty. Returns true if the tree was successfully ignited.
 func (w *World) TryIgniteTree(tx, ty int) bool {
 	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
@@ -723,7 +733,7 @@ func (w *World) TryIgniteTree(tx, ty int) bool {
 		Y:     by,
 		TX:    tx,
 		TY:    ty,
-		Timer: 90, // 1.5 seconds at 60fps
+		Timer: DefaultTreeBurnDuration,
 	})
 	return true
 }

@@ -197,11 +197,11 @@ func TestCombatSystem_TorchBurnsFaceTile(t *testing.T) {
 		t.Fatalf("expected 1 active flame at (%d, %d), got %+v", tx, ty, w.Flames)
 	}
 
-	// Tick TimersSystem for 90 frames to finish burning
-	timers := systems.TimersSystem{}
+	// Tick HazardSystem for 90 frames to finish burning
+	hazard := systems.HazardSystem{}
 	for i := 0; i < 90; i++ {
-		if err := timers.Update(w, &bus, 1.0/60); err != nil {
-			t.Fatalf("TimersSystem failed on tick %d: %v", i, err)
+		if err := hazard.Update(w, &bus, 1.0/60); err != nil {
+			t.Fatalf("HazardSystem failed on tick %d: %v", i, err)
 		}
 	}
 
@@ -347,28 +347,20 @@ func TestPipeline_DefaultOrderMatchesLegacy(t *testing.T) {
 	}
 }
 
-func TestTimersSystem_FlamePlayerContactDamage(t *testing.T) {
+func TestHazardSystem_FlamePlayerContactDamage(t *testing.T) {
 	w := newTestWorld()
-	// Set player position to overlap with tile (1, 1)
 	w.Player.X = 16
 	w.Player.Y = 16
-	// Add an active flame at (1, 1)
 	w.Flames = []world.ActiveFlame{
-		{
-			X:     24,
-			Y:     24,
-			TX:    1,
-			TY:    1,
-			Timer: 50,
-		},
+		{X: 24, Y: 24, TX: 1, TY: 1, Timer: 60},
 	}
 	w.HP = 5
 	w.Player.Invuln = 0
 
 	var bus systems.EventBus
-	timers := systems.TimersSystem{}
-	if err := timers.Update(w, &bus, 1.0/60); err != nil {
-		t.Fatalf("TimersSystem failed: %v", err)
+	hazard := systems.HazardSystem{}
+	if err := hazard.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("HazardSystem failed: %v", err)
 	}
 
 	if w.HP != 4 {
@@ -408,5 +400,104 @@ func TestPickupSystem_ChestsAreIgnored(t *testing.T) {
 	}
 	if bus.Len() != 0 {
 		t.Errorf("expected 0 events, got %d", bus.Len())
+	}
+}
+
+func TestBombSystem_BossKill(t *testing.T) {
+	w := newTestWorld()
+	w.Bombs = 1
+	boss := world.NewEnemy(world.NoEntity, 16, 16, 2, true)
+	w.Enemies = []world.Enemy{boss}
+
+	w.ActiveBombs = []world.ActiveBomb{
+		{X: 16, Y: 16, TX: 1, TY: 1, Timer: 1},
+	}
+
+	p := systems.Default()
+	events, err := p.Tick(w, 1.0/60)
+	if err != nil {
+		t.Fatalf("pipeline tick error: %v", err)
+	}
+
+	var sawBossKill bool
+	var sawExplosion bool
+	for _, ev := range events {
+		if h, ok := ev.(systems.HitEvent); ok {
+			if h.Killed && h.IsBoss {
+				sawBossKill = true
+			}
+		}
+		if _, ok := ev.(systems.ExplosionEvent); ok {
+			sawExplosion = true
+		}
+	}
+
+	if !sawBossKill {
+		t.Errorf("expected HitEvent with Killed=true, IsBoss=true")
+	}
+	if !sawExplosion {
+		t.Errorf("expected ExplosionEvent")
+	}
+}
+
+func TestBombSystem_CrackedWallDestruction(t *testing.T) {
+	w := newTestWorld()
+	idx := 1*w.MapW + 1
+	w.Tiles[idx] = world.GIDCracked
+
+	w.ActiveBombs = []world.ActiveBomb{
+		{X: 24, Y: 24, TX: 1, TY: 1, Timer: 1},
+	}
+
+	p := systems.Default()
+	events, err := p.Tick(w, 1.0/60)
+	if err != nil {
+		t.Fatalf("pipeline tick error: %v", err)
+	}
+
+	if !w.DestroyedTiles[idx] {
+		t.Errorf("expected cracked tile at (1,1) to be marked destroyed")
+	}
+
+	var sawTileDestroyed bool
+	for _, ev := range events {
+		if _, ok := ev.(systems.TileDestroyedEvent); ok {
+			sawTileDestroyed = true
+		}
+	}
+	if !sawTileDestroyed {
+		t.Errorf("expected TileDestroyedEvent")
+	}
+}
+
+func TestStaminaSystem_DrainAndRegen(t *testing.T) {
+	w := newTestWorld()
+	w.Player.Stamina = 100
+
+	p := systems.Default()
+
+	w.Player.SprintHeld = true
+	w.Player.IsMoving = true
+
+	_, err := p.Tick(w, 1.0/60)
+	if err != nil {
+		t.Fatalf("pipeline tick error: %v", err)
+	}
+
+	if w.Player.Stamina >= 100 {
+		t.Errorf("expected stamina to drain while sprinting, got %d", w.Player.Stamina)
+	}
+
+	w.Player.SprintHeld = false
+	w.Player.IsMoving = false
+
+	drainedStamina := w.Player.Stamina
+	regenInterval := w.Player.EffectiveStaminaRegenInterval()
+	for i := 0; i < regenInterval*2; i++ {
+		_, _ = p.Tick(w, 1.0/60)
+	}
+
+	if w.Player.Stamina <= drainedStamina {
+		t.Errorf("expected stamina to regen when not sprinting, got %d (was %d)", w.Player.Stamina, drainedStamina)
 	}
 }

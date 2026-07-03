@@ -47,12 +47,20 @@ type HitEvent struct {
 func (HitEvent) isEvent() {}
 
 // TileDestroyedEvent is emitted when a tile is destroyed by sim logic
-// (e.g. torch fire) so the scene can persist MapTilePersistKey in Session.
+// (e.g. torch fire or bomb) so the scene can persist MapTilePersistKey in Session.
 type TileDestroyedEvent struct {
 	SaveKey string
 }
 
 func (TileDestroyedEvent) isEvent() {}
+
+// ExplosionEvent is emitted when a bomb fuse reaches zero and explodes.
+type ExplosionEvent struct {
+	X, Y   float64
+	TX, TY int
+}
+
+func (ExplosionEvent) isEvent() {}
 
 // PickupEvent is emitted when the player overlaps and consumes a pickup.
 // Kind distinguishes coin/heart/bomb/key so the scene can play differ SFX

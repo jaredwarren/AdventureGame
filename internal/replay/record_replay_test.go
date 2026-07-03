@@ -259,3 +259,54 @@ func cloneEvents(src []systems.Event) []systems.Event {
 	copy(dst, src)
 	return dst
 }
+
+// TestReplayBombPlacementAndExplosion verifies that dropping a bomb and waiting for explosion
+// runs deterministically across multiple playback runs.
+func TestReplayBombPlacementAndExplosion(t *testing.T) {
+	script := make([][]services.Action, 70)
+	script[0] = []services.Action{services.ActionBomb}
+	for i := 1; i < 70; i++ {
+		script[i] = []services.Action{}
+	}
+
+	stream := replay.NewStream(70)
+	src := newFakeInput(script)
+	rec := replay.NewRecorder(src, stream)
+	for range script {
+		src.advance()
+		rec.BeginTick()
+	}
+
+	runOnce := func() ([][]systems.Event, *world.World) {
+		w := newReplayWorld()
+		w.Bombs = 2
+		w.SelectedItem = world.ItemSlotBomb
+		pipe := systems.Default()
+		pb := replay.NewPlayback(stream)
+		var trace [][]systems.Event
+		for pb.Step() {
+			if pb.JustPressed(services.ActionBomb) && w.SelectedItem == world.ItemSlotBomb {
+				w.TryPlaceBomb()
+			}
+			evs, err := playTick(pb, w, pipe)
+			if err != nil {
+				t.Fatalf("run: %v", err)
+			}
+			trace = append(trace, cloneEvents(evs))
+		}
+		return trace, w
+	}
+
+	traceA, worldA := runOnce()
+	traceB, worldB := runOnce()
+
+	if !reflect.DeepEqual(traceA, traceB) {
+		t.Error("bomb replays produced different event traces (non-determinism)")
+	}
+	if len(worldA.ActiveBombs) != 0 || len(worldB.ActiveBombs) != 0 {
+		t.Errorf("expected active bombs to be empty after explosion, got A=%d B=%d", len(worldA.ActiveBombs), len(worldB.ActiveBombs))
+	}
+	if worldA.Bombs != 1 || worldB.Bombs != 1 {
+		t.Errorf("expected bomb inventory count 1, got A=%d B=%d", worldA.Bombs, worldB.Bombs)
+	}
+}

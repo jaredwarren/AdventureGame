@@ -26,7 +26,16 @@ func (PickupSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 	pr := w.Player.Rect()
 	for i := range w.Pickups {
 		p := &w.Pickups[i]
-		if p.Gone || p.Opened || p.PersistentSaveKey != "" {
+		if p.Gone {
+			continue
+		}
+		if p.PendingCollect {
+			p.PendingCollect = false
+			w.ApplyPickupReward(p.Kind)
+			tryPush(bus, PickupEvent{PickupID: p.ID, Kind: p.Kind, PersistentSaveKey: p.PersistentSaveKey})
+			continue
+		}
+		if p.Opened || p.PersistentSaveKey != "" {
 			continue
 		}
 		if !pr.Overlaps(p.Rect()) {
