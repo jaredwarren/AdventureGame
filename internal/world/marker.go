@@ -7,6 +7,7 @@ import (
 
 	"github.com/jaredwarren/game-test/internal/geom"
 	"github.com/jaredwarren/game-test/internal/tiled"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // MarkerSpawnContext carries per-map state while loading Tiled marker objects.
@@ -196,11 +197,11 @@ func (doorMarker) ObjectHitRect(o tiled.Object) geom.Rect {
 func (doorMarker) InitMarkerObject(o *tiled.Object, wx, wy float64, ctx MarkerEditorContext) {
 	tw := ctx.TileWidth
 	if tw <= 0 {
-		tw = TileSize
+		tw = tile.Size
 	}
 	th := ctx.TileHeight
 	if th <= 0 {
-		th = TileSize
+		th = tile.Size
 	}
 	o.X = float64(int(wx/tw) * int(tw))
 	o.Y = float64(int(wy/th) * int(th))

@@ -239,23 +239,39 @@ func (w *World) tileIndex(tx, ty int) int {
 func (w *World) solidTile(tx, ty int) bool {
 	g := w.gidAt(tx, ty)
 	idx := w.tileIndex(tx, ty)
-	return tile.SolidAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
+	return tile.FullySolidAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
 }
 
-// RectHitTiles returns true if rect overlaps any solid tile (sample corners + center).
+// RectHitsSolid returns true if rect overlaps any solid tile or sub-tile solid region.
 func (w *World) RectHitsSolid(r geom.Rect) bool {
-	points := [][2]float64{
-		{r.X, r.Y},
-		{r.X + r.W, r.Y},
-		{r.X, r.Y + r.H},
-		{r.X + r.W, r.Y + r.H},
-		{r.X + r.W*0.5, r.Y + r.H*0.5},
-	}
-	for _, p := range points {
-		tx := int(p[0] / tile.Size)
-		ty := int(p[1] / tile.Size)
-		if w.solidTile(tx, ty) {
-			return true
+	minTX := int(math.Floor(r.X / tile.Size))
+	maxTX := int(math.Floor((r.X + r.W - 0.000001) / tile.Size))
+	minTY := int(math.Floor(r.Y / tile.Size))
+	maxTY := int(math.Floor((r.Y + r.H - 0.000001) / tile.Size))
+
+	for ty := minTY; ty <= maxTY; ty++ {
+		for tx := minTX; tx <= maxTX; tx++ {
+			if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
+				tileRect := geom.Rect{X: float64(tx * tile.Size), Y: float64(ty * tile.Size), W: tile.Size, H: tile.Size}
+				if r.Overlaps(tileRect) {
+					return true
+				}
+				continue
+			}
+			g := w.gidAt(tx, ty)
+			idx := w.tileIndex(tx, ty)
+			solidRects := tile.SolidRectsAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
+			for _, sr := range solidRects {
+				worldSR := geom.Rect{
+					X: float64(tx*tile.Size) + sr.X,
+					Y: float64(ty*tile.Size) + sr.Y,
+					W: sr.W,
+					H: sr.H,
+				}
+				if r.Overlaps(worldSR) {
+					return true
+				}
+			}
 		}
 	}
 	return false
@@ -568,8 +584,8 @@ func (w *World) TrySwingTorch() bool {
 //
 // NOTE: Uses player center for the "from" tile math, then steps one
 // tile in Dir—works for current hitbox sizes.
-func (w *World) TryDamageFaceTile(kind DamageKind) (ok bool, saveKey string) {
-	if kind == DamageBomb && w.Bombs <= 0 {
+func (w *World) TryDamageFaceTile(kind tile.DamageKind) (ok bool, saveKey string) {
+	if kind == tile.DamageBomb && w.Bombs <= 0 {
 		return false, ""
 	}
 	pc := w.PlayerRect()
@@ -664,7 +680,7 @@ func (w *World) LightMultiplier() float64 {
 }
 
 // BreakTileAt breaks the tile at tx, ty with the given damage kind.
-func (w *World) BreakTileAt(tx, ty int, kind DamageKind) (ok bool, saveKey string) {
+func (w *World) BreakTileAt(tx, ty int, kind tile.DamageKind) (ok bool, saveKey string) {
 	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
 		return false, ""
 	}

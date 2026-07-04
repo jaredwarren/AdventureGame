@@ -16,7 +16,10 @@
 // slight knockback away from the player (wall-slid).
 package systems
 
-import "github.com/jaredwarren/game-test/internal/world"
+import (
+	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
+)
 
 // CombatSystem resolves sword and torch impacts.
 type CombatSystem struct{}
@@ -49,8 +52,8 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		pc := w.PlayerRect()
 		cx := pc.X + pc.W*0.5
 		cy := pc.Y + pc.H*0.5
-		tx := int(cx / world.TileSize)
-		ty := int(cy / world.TileSize)
+		tx := int(cx / tile.Size)
+		ty := int(cy / tile.Size)
 		switch w.Player.Dir {
 		case world.DirDown:
 			ty++

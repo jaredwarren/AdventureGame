@@ -14,6 +14,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/systems"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // newTestWorld returns a tiny 4x4 all-grass world with the player at (16,16).
@@ -23,12 +24,12 @@ func newTestWorld() *world.World {
 	const w, h = 4, 4
 	tiles := make([]int, w*h)
 	for i := range tiles {
-		tiles[i] = world.GIDGrass
+		tiles[i] = tile.GIDGrass
 	}
 	return &world.World{
 		MapID:          "test",
-		TileW:          world.TileSize,
-		TileH:          world.TileSize,
+		TileW:          tile.Size,
+		TileH:          tile.Size,
 		MapW:           w,
 		MapH:           h,
 		Tiles:          tiles,
@@ -181,10 +182,10 @@ func TestCombatSystem_TorchBurnsFaceTile(t *testing.T) {
 	w.Player.TorchSwing = 7
 	cx := w.Player.X + w.Player.W*0.5
 	cy := w.Player.Y + w.Player.H*0.5
-	tx := int(cx/world.TileSize) + 1
-	ty := int(cy / world.TileSize)
+	tx := int(cx/tile.Size) + 1
+	ty := int(cy / tile.Size)
 	idx := ty*w.MapW + tx
-	w.Tiles[idx] = world.GIDTree
+	w.Tiles[idx] = tile.GIDTree
 
 	var bus systems.EventBus
 	if err := (systems.CombatSystem{}).Update(w, &bus, 0); err != nil {
@@ -269,15 +270,15 @@ func TestLockSystem_ConvertsTileAndConsumesKey(t *testing.T) {
 	w.Player.Y = 16
 	w.Player.W = 18 // straddle tile (1,1) and (2,1)
 	w.Player.H = 12
-	w.Tiles[1*w.MapW+1] = world.GIDLock
-	w.Tiles[1*w.MapW+2] = world.GIDLock
+	w.Tiles[1*w.MapW+1] = tile.GIDLock
+	w.Tiles[1*w.MapW+2] = tile.GIDLock
 	w.SmallKey = 1
 
 	var bus systems.EventBus
 	if err := (systems.LockSystem{}).Update(w, &bus, 0); err != nil {
 		t.Fatalf("LockSystem returned %v", err)
 	}
-	if w.GIDAt(1, 1) != world.GIDGrass || w.GIDAt(2, 1) != world.GIDGrass {
+	if w.GIDAt(1, 1) != tile.GIDGrass || w.GIDAt(2, 1) != tile.GIDGrass {
 		t.Errorf("lock tiles not converted: %d %d", w.GIDAt(1, 1), w.GIDAt(2, 1))
 	}
 	if w.SmallKey != 0 {
@@ -445,7 +446,7 @@ func TestBombSystem_BossKill(t *testing.T) {
 func TestBombSystem_CrackedWallDestruction(t *testing.T) {
 	w := newTestWorld()
 	idx := 1*w.MapW + 1
-	w.Tiles[idx] = world.GIDCracked
+	w.Tiles[idx] = tile.GIDCracked
 
 	w.ActiveBombs = []world.ActiveBomb{
 		{X: 24, Y: 24, TX: 1, TY: 1, Timer: 1},

@@ -9,6 +9,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/systems"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func (s *PlayScene) tickAmbientParticles(w *world.World) {
@@ -97,8 +98,8 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 		case systems.TileDestroyedEvent:
 			ctx.Session().MarkDestroyedTile(w.MapID, e.SaveKey)
 			if _, tx, ty, ok := world.ParseMapTilePersistKey(e.SaveKey); ok {
-				bx := float64(tx*world.TileSize) + world.TileSize*0.5
-				by := float64(ty*world.TileSize) + world.TileSize*0.5
+				bx := float64(tx*tile.Size) + tile.Size*0.5
+				by := float64(ty*tile.Size) + tile.Size*0.5
 				for k := 0; k < 12; k++ {
 					s.particles = append(s.particles, NewDebrisParticle(bx, by, color.RGBA{60, 60, 60, 255}))
 					s.particles = append(s.particles, NewEmberParticle(bx, by))
@@ -156,8 +157,8 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 		case systems.LockOpenEvent:
 			ctx.Session().MarkOpenedLockTile(w.MapID, world.MapTilePersistKey(w.MapID, e.Tile[0], e.Tile[1]))
 			lockOpened = true
-			lx := float64(e.Tile[0]*world.TileSize) + world.TileSize*0.5
-			ly := float64(e.Tile[1]*world.TileSize) + world.TileSize*0.5
+			lx := float64(e.Tile[0]*tile.Size) + tile.Size*0.5
+			ly := float64(e.Tile[1]*tile.Size) + tile.Size*0.5
 			for k := 0; k < 10; k++ {
 				s.particles = append(s.particles, NewSparkleParticle(lx, ly))
 			}

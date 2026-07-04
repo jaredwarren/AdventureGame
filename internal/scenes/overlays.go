@@ -16,6 +16,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/run"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // DebugOverlayExtras pulls scene-local state into the overlay without
@@ -116,8 +117,8 @@ func DrawDebugOverlay(r services.Renderer, sess *run.Session, sceneID SceneID, e
 
 	pcX := w.Player.X + w.Player.W*0.5
 	pcY := w.Player.Y + w.Player.H*0.5
-	tx := int(pcX / world.TileSize)
-	ty := int(pcY / world.TileSize)
+	tx := int(pcX / tile.Size)
+	ty := int(pcY / tile.Size)
 	gid := w.GIDAt(tx, ty)
 
 	line("map %s %dx%d", w.MapID, w.MapW, w.MapH)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func (s *EditorScene) Draw(ctx GameContext) {
@@ -64,12 +65,12 @@ func (s *EditorScene) drawTileGrid(ctx GameContext) {
 	r := ctx.Renderer()
 	gc := color.RGBA{0xff, 0xff, 0xff, 0x18}
 	for tx := 0; tx <= w.MapW; tx++ {
-		x := float32(tx * world.TileSize)
-		r.StrokeLine(x, 0, x, float32(w.MapH*world.TileSize), 1, gc)
+		x := float32(tx * tile.Size)
+		r.StrokeLine(x, 0, x, float32(w.MapH*tile.Size), 1, gc)
 	}
 	for ty := 0; ty <= w.MapH; ty++ {
-		y := float32(ty * world.TileSize)
-		r.StrokeLine(0, y, float32(w.MapW*world.TileSize), y, 1, gc)
+		y := float32(ty * tile.Size)
+		r.StrokeLine(0, y, float32(w.MapW*tile.Size), y, 1, gc)
 	}
 }
 

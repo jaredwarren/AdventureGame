@@ -14,6 +14,7 @@ import (
 
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/tiled"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // BuildFromTiled clones tile GIDs into memory and instantiates entities from the markers layer.
@@ -43,8 +44,8 @@ func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collect
 		w.HasAmbientLightOverride = true
 		w.AmbientLightOverride = val
 	}
-	if w.TileW != TileSize || w.TileH != TileSize {
-		return nil, fmt.Errorf("expected %dx%d tiles", TileSize, TileSize)
+	if w.TileW != tile.Size || w.TileH != tile.Size {
+		return nil, fmt.Errorf("expected %dx%d tiles", tile.Size, tile.Size)
 	}
 	w.Player = DefaultPlayerTuning()
 	w.Player.ID = w.allocID()
@@ -79,13 +80,13 @@ func autoTileWater(w *World) {
 			return true // out of bounds is treated as land/grass
 		}
 		gid := originalTiles[ty*w.MapW+tx]
-		return gid != GIDWater && (gid < GIDWaterShoreTop || gid > GIDWaterShoreSEInner)
+		return tile.DefOf(gid).IsLand()
 	}
 
 	for ty := 0; ty < w.MapH; ty++ {
 		for tx := 0; tx < w.MapW; tx++ {
 			idx := ty*w.MapW + tx
-			if originalTiles[idx] != GIDWater {
+			if originalTiles[idx] != tile.GIDWater {
 				continue
 			}
 
@@ -101,31 +102,31 @@ func autoTileWater(w *World) {
 
 			// 1. Convex (outer) corners: Grass on two adjacent sides
 			if top && left {
-				w.Tiles[idx] = GIDWaterShoreNW
+				w.Tiles[idx] = tile.GIDWaterShoreNW
 			} else if top && right {
-				w.Tiles[idx] = GIDWaterShoreNE
+				w.Tiles[idx] = tile.GIDWaterShoreNE
 			} else if bottom && left {
-				w.Tiles[idx] = GIDWaterShoreSW
+				w.Tiles[idx] = tile.GIDWaterShoreSW
 			} else if bottom && right {
-				w.Tiles[idx] = GIDWaterShoreSE
+				w.Tiles[idx] = tile.GIDWaterShoreSE
 				// 2. Straight shores: Grass on one side
 			} else if top {
-				w.Tiles[idx] = GIDWaterShoreTop
+				w.Tiles[idx] = tile.GIDWaterShoreTop
 			} else if bottom {
-				w.Tiles[idx] = GIDWaterShoreBottom
+				w.Tiles[idx] = tile.GIDWaterShoreBottom
 			} else if left {
-				w.Tiles[idx] = GIDWaterShoreLeft
+				w.Tiles[idx] = tile.GIDWaterShoreLeft
 			} else if right {
-				w.Tiles[idx] = GIDWaterShoreRight
+				w.Tiles[idx] = tile.GIDWaterShoreRight
 				// 3. Concave (inner) corners: Grass diagonally only
 			} else if tl {
-				w.Tiles[idx] = GIDWaterShoreNWInner
+				w.Tiles[idx] = tile.GIDWaterShoreNWInner
 			} else if tr {
-				w.Tiles[idx] = GIDWaterShoreNEInner
+				w.Tiles[idx] = tile.GIDWaterShoreNEInner
 			} else if bl {
-				w.Tiles[idx] = GIDWaterShoreSWInner
+				w.Tiles[idx] = tile.GIDWaterShoreSWInner
 			} else if br {
-				w.Tiles[idx] = GIDWaterShoreSEInner
+				w.Tiles[idx] = tile.GIDWaterShoreSEInner
 			}
 		}
 	}

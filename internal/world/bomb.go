@@ -1,5 +1,9 @@
 package world
 
+import (
+	"github.com/jaredwarren/game-test/internal/world/tile"
+)
+
 // ActiveBomb represents a placed bomb with a frame-counted fuse timer.
 type ActiveBomb struct {
 	X, Y   float64
@@ -16,8 +20,8 @@ func (w *World) TryPlaceBomb() bool {
 	pc := w.PlayerRect()
 	cx := pc.X + pc.W*0.5
 	cy := pc.Y + pc.H*0.5
-	tx := int(cx / TileSize)
-	ty := int(cy / TileSize)
+	tx := int(cx / tile.Size)
+	ty := int(cy / tile.Size)
 	switch w.Player.Dir {
 	case DirDown:
 		ty++
@@ -28,8 +32,8 @@ func (w *World) TryPlaceBomb() bool {
 	case DirRight:
 		tx++
 	}
-	bx := float64(tx*TileSize) + TileSize*0.5
-	by := float64(ty*TileSize) + TileSize*0.5
+	bx := float64(tx*tile.Size) + tile.Size*0.5
+	by := float64(ty*tile.Size) + tile.Size*0.5
 	for _, b := range w.ActiveBombs {
 		if b.TX == tx && b.TY == ty {
 			return false

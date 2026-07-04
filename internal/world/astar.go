@@ -2,6 +2,8 @@ package world
 
 import (
 	"container/heap"
+
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // EnemyChaseTarget returns pixel coordinates the enemy should move toward this
@@ -9,10 +11,10 @@ import (
 // player center (pcx, pcy) when the player tile is blocked, there is no path,
 // or the enemy already shares the player's tile.
 func (w *World) EnemyChaseTarget(ecx, ecy, pcx, pcy float64) (tgx, tgy float64) {
-	stx := clampInt(int(ecx/TileSize), 0, w.MapW-1)
-	sty := clampInt(int(ecy/TileSize), 0, w.MapH-1)
-	gtx := clampInt(int(pcx/TileSize), 0, w.MapW-1)
-	gty := clampInt(int(pcy/TileSize), 0, w.MapH-1)
+	stx := clampInt(int(ecx/tile.Size), 0, w.MapW-1)
+	sty := clampInt(int(ecy/tile.Size), 0, w.MapH-1)
+	gtx := clampInt(int(pcx/tile.Size), 0, w.MapW-1)
+	gty := clampInt(int(pcy/tile.Size), 0, w.MapH-1)
 	if !w.enemyTileWalkable(gtx, gty) {
 		return pcx, pcy
 	}
@@ -21,7 +23,7 @@ func (w *World) EnemyChaseTarget(ecx, ecy, pcx, pcy float64) (tgx, tgy float64) 
 		return pcx, pcy
 	}
 	nx, ny := path[1].tx, path[1].ty
-	return float64(nx)*TileSize + TileSize*0.5, float64(ny)*TileSize + TileSize*0.5
+	return float64(nx)*tile.Size + tile.Size*0.5, float64(ny)*tile.Size + tile.Size*0.5
 }
 
 func clampInt(v, lo, hi int) int {

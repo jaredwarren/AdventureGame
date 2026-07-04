@@ -14,6 +14,7 @@ import (
 	"math"
 
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // LockSystem converts walk-on lock tiles when the player carries a key.
@@ -24,10 +25,10 @@ func (LockSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		return nil
 	}
 	pr := w.PlayerRect()
-	minTX := int(math.Floor(pr.X / world.TileSize))
-	minTY := int(math.Floor(pr.Y / world.TileSize))
-	maxTX := int(math.Floor((pr.X + pr.W - 1e-6) / world.TileSize))
-	maxTY := int(math.Floor((pr.Y + pr.H - 1e-6) / world.TileSize))
+	minTX := int(math.Floor(pr.X / tile.Size))
+	minTY := int(math.Floor(pr.Y / tile.Size))
+	maxTX := int(math.Floor((pr.X + pr.W - 1e-6) / tile.Size))
+	maxTY := int(math.Floor((pr.Y + pr.H - 1e-6) / tile.Size))
 
 	opened := false
 	for ty := minTY; ty <= maxTY; ty++ {

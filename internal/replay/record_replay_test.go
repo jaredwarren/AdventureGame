@@ -11,6 +11,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/systems"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // fakeInput is a stub services.Input driven by a scripted timeline. One
@@ -86,12 +87,12 @@ func newReplayWorld() *world.World {
 	const w, h = 4, 4
 	tiles := make([]int, w*h)
 	for i := range tiles {
-		tiles[i] = world.GIDGrass
+		tiles[i] = tile.GIDGrass
 	}
 	return &world.World{
 		MapID:          "test",
-		TileW:          world.TileSize,
-		TileH:          world.TileSize,
+		TileW:          tile.Size,
+		TileH:          tile.Size,
 		MapW:           w,
 		MapH:           h,
 		Tiles:          tiles,

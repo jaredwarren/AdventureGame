@@ -77,6 +77,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/input",
 		"internal/tiled",
 		"internal/dungeon",
+		"internal/world/tile",
 	},
 	"internal/services": {
 		"internal/world",
@@ -110,6 +111,7 @@ var allowedInternalImports = map[string][]string{
 		"internal/world",
 		"internal/geom",
 		"internal/balance",
+		"internal/world/tile",
 	},
 	"internal/run": {
 		"internal/world",
@@ -136,12 +138,14 @@ var allowedInternalImports = map[string][]string{
 		"internal/tiled",
 		"internal/dungeon",
 		"internal/run",
+		"internal/world/tile",
 	},
 	"internal/platform/ebiten": {
 		"internal/services",
 		"internal/world",
 		"internal/render",
 		"internal/input",
+		"internal/world/tile",
 	},
 	"internal/game": {
 		"internal/platform/ebiten",

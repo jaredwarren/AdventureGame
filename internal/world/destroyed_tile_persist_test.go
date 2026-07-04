@@ -1,6 +1,10 @@
 package world
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jaredwarren/game-test/internal/world/tile"
+)
 
 func TestApplyDestroyedTiles_Cracked(t *testing.T) {
 	t.Parallel()
@@ -12,9 +16,9 @@ func TestApplyDestroyedTiles_Cracked(t *testing.T) {
 		DestroyedTiles: make(map[int]bool),
 	}
 	for i := range w.Tiles {
-		w.Tiles[i] = GIDGrass
+		w.Tiles[i] = tile.GIDGrass
 	}
-	w.Tiles[w.tileIndex(2, 2)] = GIDCracked
+	w.Tiles[w.tileIndex(2, 2)] = tile.GIDCracked
 
 	keys := map[string]struct{}{
 		MapTilePersistKey("m", 2, 2):     {},
@@ -40,9 +44,9 @@ func TestApplyDestroyedTiles_Tree(t *testing.T) {
 		DestroyedTiles: make(map[int]bool),
 	}
 	for i := range w.Tiles {
-		w.Tiles[i] = GIDGrass
+		w.Tiles[i] = tile.GIDGrass
 	}
-	w.Tiles[w.tileIndex(1, 2)] = GIDTree
+	w.Tiles[w.tileIndex(1, 2)] = tile.GIDTree
 	keys := map[string]struct{}{MapTilePersistKey("m", 1, 2): {}}
 	ApplyDestroyedTiles(w, keys)
 	if !w.DestroyedTiles[w.tileIndex(1, 2)] {
@@ -60,7 +64,7 @@ func TestApplyDestroyedTiles_IgnoresNonDestroyable(t *testing.T) {
 		DestroyedTiles: make(map[int]bool),
 	}
 	for i := range w.Tiles {
-		w.Tiles[i] = GIDGrass
+		w.Tiles[i] = tile.GIDGrass
 	}
 	keys := map[string]struct{}{MapTilePersistKey("m", 1, 1): {}}
 	ApplyDestroyedTiles(w, keys)
@@ -76,25 +80,25 @@ func TestBreakTileAt(t *testing.T) {
 		MapW:  3,
 		MapH:  3,
 		Tiles: []int{
-			GIDGrass, GIDGrass, GIDGrass,
-			GIDGrass, GIDCracked, GIDGrass,
-			GIDGrass, GIDGrass, GIDGrass,
+			tile.GIDGrass, tile.GIDGrass, tile.GIDGrass,
+			tile.GIDGrass, tile.GIDCracked, tile.GIDGrass,
+			tile.GIDGrass, tile.GIDGrass, tile.GIDGrass,
 		},
 		DestroyedTiles: make(map[int]bool),
 	}
 
 	// 1. Break out of bounds
-	if ok, _ := w.BreakTileAt(-1, 0, DamageBomb); ok {
+	if ok, _ := w.BreakTileAt(-1, 0, tile.DamageBomb); ok {
 		t.Fatal("expected out of bounds break to fail")
 	}
 
 	// 2. Break non-destroyable tile (Grass)
-	if ok, _ := w.BreakTileAt(0, 0, DamageBomb); ok {
+	if ok, _ := w.BreakTileAt(0, 0, tile.DamageBomb); ok {
 		t.Fatal("expected breaking grass to fail")
 	}
 
 	// 3. Break destroyable tile (Cracked)
-	ok, key := w.BreakTileAt(1, 1, DamageBomb)
+	ok, key := w.BreakTileAt(1, 1, tile.DamageBomb)
 	if !ok {
 		t.Fatal("expected breaking cracked tile to succeed")
 	}
@@ -107,7 +111,7 @@ func TestBreakTileAt(t *testing.T) {
 	}
 
 	// 4. Break already destroyed tile
-	if ok, _ := w.BreakTileAt(1, 1, DamageBomb); ok {
+	if ok, _ := w.BreakTileAt(1, 1, tile.DamageBomb); ok {
 		t.Fatal("expected breaking already destroyed tile to fail")
 	}
 }

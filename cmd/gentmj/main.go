@@ -21,7 +21,7 @@ import (
 	"github.com/jaredwarren/game-test/assets"
 	"github.com/jaredwarren/game-test/internal/dungeon"
 	"github.com/jaredwarren/game-test/internal/tiled"
-	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func main() {
@@ -101,32 +101,32 @@ func main() {
 	cfg.ExtraPassageProbability = *extra
 
 	m := dungeon.GenerateGrowingTree(*cellsW, *cellsH, *seed, cfg)
-	mw, mh, tileData := dungeon.StampOrthogonalMaze(m, world.GIDGrass, world.GIDWall)
+	mw, mh, tileData := dungeon.StampOrthogonalMaze(m, tile.GIDGrass, tile.GIDWall)
 
-	spawnTX, spawnTY := firstGrassTile(mw, mh, tileData, world.GIDGrass)
+	spawnTX, spawnTY := firstGrassTile(mw, mh, tileData, tile.GIDGrass)
 	paintRNG := rand.New(rand.NewSource(*seed ^ 0x9e3779b9))
 	dungeon.PaintNaturalFloors(mw, mh, tileData, dungeon.FloorPaintParams{
 		Floors: []dungeon.FloorTileWeight{
-			{GID: world.GIDGrass, Weight: *floorGrass, Passable: true},
-			{GID: world.GIDWater, Weight: *floorWater, Passable: false},
-			{GID: world.GIDFloor2, Weight: *floorFloor2, Passable: true},
+			{GID: tile.GIDGrass, Weight: *floorGrass, Passable: true},
+			{GID: tile.GIDWater, Weight: *floorWater, Passable: false},
+			{GID: tile.GIDFloor2, Weight: *floorFloor2, Passable: true},
 		},
-		TreeGID:         world.GIDTree,
-		WallGID:         world.GIDWall,
+		TreeGID:         tile.GIDTree,
+		WallGID:         tile.GIDWall,
 		SpawnX:          spawnTX,
 		SpawnY:          spawnTY,
 		TreeDeadEndProb: *treeDeadEnd,
 	}, paintRNG)
-	sx := float64(spawnTX*world.TileSize + world.TileSize/2)
-	sy := float64(spawnTY*world.TileSize + world.TileSize - 2)
+	sx := float64(spawnTX*tile.Size + tile.Size/2)
+	sy := float64(spawnTY*tile.Size + tile.Size - 2)
 
 	tmj := map[string]any{
 		"compressionlevel": -1,
 		"width":            mw,
 		"height":           mh,
 		"infinite":         false,
-		"tilewidth":        world.TileSize,
-		"tileheight":       world.TileSize,
+		"tilewidth":        tile.Size,
+		"tileheight":       tile.Size,
 		"type":             "map",
 		"version":          "1.10",
 		"tiledversion":     "1.10.2",

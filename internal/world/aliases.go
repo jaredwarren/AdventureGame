@@ -8,42 +8,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
-const TileSize = tile.Size
 
-const (
-	GIDEmpty   = tile.GIDEmpty
-	GIDGrass   = tile.GIDGrass
-	GIDWall    = tile.GIDWall
-	GIDCracked = tile.GIDCracked
-	GIDDoor    = tile.GIDDoor
-	GIDWater   = tile.GIDWater
-	GIDLock    = tile.GIDLock
-	GIDFloor2  = tile.GIDFloor2
-	GIDTree    = tile.GIDTree
-
-	GIDWaterShoreTop    = tile.GIDWaterShoreTop
-	GIDWaterShoreBottom = tile.GIDWaterShoreBottom
-	GIDWaterShoreLeft   = tile.GIDWaterShoreLeft
-	GIDWaterShoreRight  = tile.GIDWaterShoreRight
-	GIDWaterShoreNE     = tile.GIDWaterShoreNE
-	GIDWaterShoreNW     = tile.GIDWaterShoreNW
-	GIDWaterShoreSW     = tile.GIDWaterShoreSW
-	GIDWaterShoreSE     = tile.GIDWaterShoreSE
-
-	GIDWaterShoreNEInner = tile.GIDWaterShoreNEInner
-	GIDWaterShoreNWInner = tile.GIDWaterShoreNWInner
-	GIDWaterShoreSWInner = tile.GIDWaterShoreSWInner
-	GIDWaterShoreSEInner = tile.GIDWaterShoreSEInner
-
-	GIDDirtPath = tile.GIDDirtPath
-)
-
-type DamageKind = tile.DamageKind
-
-const (
-	DamageBomb = tile.DamageBomb
-	DamageFire = tile.DamageFire
-)
 
 type TileDef = tile.Def
 

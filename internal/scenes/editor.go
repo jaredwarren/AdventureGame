@@ -9,13 +9,12 @@ import (
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/tiled"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // EditorScene loads a .tmj from disk, edits ground + markers, previews via
 // BuildFromTiled + Renderer.DrawWorld.
 type EditorScene struct {
-	// mapID is the logical map being edited; resolved to a .tmj path in
-	// Enter. Provided by the CLI flag via Manager params.
 	mapID string
 
 	path   string
@@ -51,11 +50,11 @@ func newEditorScene() Scene { return &EditorScene{} }
 
 var (
 	editorBrushPalette = []int{
-		world.GIDGrass, world.GIDWall, world.GIDCracked, world.GIDDoor,
-		world.GIDWater, world.GIDLock, world.GIDFloor2, world.GIDTree, world.GIDEmpty,
-		world.GIDWaterShoreTop, world.GIDWaterShoreBottom, world.GIDWaterShoreLeft, world.GIDWaterShoreRight,
-		world.GIDWaterShoreNE, world.GIDWaterShoreNW, world.GIDWaterShoreSW, world.GIDWaterShoreSE,
-		world.GIDWaterShoreNEInner, world.GIDWaterShoreNWInner, world.GIDWaterShoreSWInner, world.GIDWaterShoreSEInner,
+		tile.GIDGrass, tile.GIDWall, tile.GIDCracked, tile.GIDDoor,
+		tile.GIDWater, tile.GIDLock, tile.GIDFloor2, tile.GIDTree, tile.GIDEmpty,
+		tile.GIDWaterShoreTop, tile.GIDWaterShoreBottom, tile.GIDWaterShoreLeft, tile.GIDWaterShoreRight,
+		tile.GIDWaterShoreNE, tile.GIDWaterShoreNW, tile.GIDWaterShoreSW, tile.GIDWaterShoreSE,
+		tile.GIDWaterShoreNEInner, tile.GIDWaterShoreNWInner, tile.GIDWaterShoreSWInner, tile.GIDWaterShoreSEInner,
 	}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].
 	editorBrushActions = []services.Action{
@@ -75,7 +74,7 @@ func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
 		}
 	}
 	s.selObj = -1
-	s.brushGID = world.GIDGrass
+	s.brushGID = tile.GIDGrass
 	s.showTileMenu = false
 	s.tileMenuSelect = 0
 	s.tileMenuScroll = 0

@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // BombSystem ticks fuses on placed bombs, breaking tiles, damaging enemies,
@@ -15,7 +16,7 @@ func (BombSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 	for _, b := range w.ActiveBombs {
 		b.Timer--
 		if b.Timer <= 0 {
-			if broke, saveKey := w.BreakTileAt(b.TX, b.TY, world.DamageBomb); broke {
+			if broke, saveKey := w.BreakTileAt(b.TX, b.TY, tile.DamageBomb); broke {
 				tryPush(bus, TileDestroyedEvent{SaveKey: saveKey})
 			}
 

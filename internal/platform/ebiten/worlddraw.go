@@ -8,6 +8,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 type drawItem struct {
@@ -25,7 +26,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 	vp := screen.Bounds()
 
 	// 1. Viewport-clamped ground tile loop
-	const tileSize = float64(world.TileSize)
+	const tileSize = float64(tile.Size)
 	tx0 := int(math.Floor(ox / tileSize))
 	ty0 := int(math.Floor(oy / tileSize))
 	tx1 := int(math.Ceil((ox + float64(vp.Dx())) / tileSize))
@@ -53,12 +54,12 @@ func (r *Renderer) DrawWorld(w *world.World) {
 					gid = def.ResolvedDestroyedGID()
 				}
 			}
-			x := float32(float64(tx*world.TileSize) - ox)
-			y := float32(float64(ty*world.TileSize) - oy)
+			x := float32(float64(tx*tile.Size) - ox)
+			y := float32(float64(ty*tile.Size) - oy)
 			if useTileSprites {
 				r.drawTile(gid, x, y)
 			} else {
-				r.drawVectorTile(screen, gid, x, y, world.TileSize, world.TileSize)
+				r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size)
 			}
 		}
 	}

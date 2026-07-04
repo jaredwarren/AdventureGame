@@ -17,6 +17,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/render"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 const useTileSprites = false
@@ -112,7 +113,7 @@ func (r *Renderer) DrawTileScreen(gid int, x, y, dw, dh float32) {
 	if r.screen == nil || dw < 1 || dh < 1 {
 		return
 	}
-	if !useTileSprites || gid == world.GIDEmpty {
+	if !useTileSprites || gid == tile.GIDEmpty {
 		r.drawVectorTile(r.screen, gid, x, y, dw, dh)
 		return
 	}
@@ -149,7 +150,7 @@ func (r *Renderer) DrawTileScreen(gid int, x, y, dw, dh float32) {
 }
 
 func (r *Renderer) drawTile(gid int, wx, wy float32) {
-	if gid == world.GIDEmpty {
+	if gid == tile.GIDEmpty {
 		return
 	}
 	atlas, err := r.assets.Atlas(services.AtlasTile)
@@ -179,14 +180,14 @@ func (r *Renderer) drawTile(gid int, wx, wy float32) {
 	}
 	op := &ebiten.DrawImageOptions{}
 	op.Filter = ebiten.FilterNearest
-	op.GeoM.Scale(float64(world.TileSize)/sw, float64(world.TileSize)/sh)
+	op.GeoM.Scale(float64(tile.Size)/sw, float64(tile.Size)/sh)
 	op.GeoM.Translate(float64(wx), float64(wy))
 	r.screen.DrawImage(src, op)
 }
 
 func (r *Renderer) fallbackTile(gid int, wx, wy float32) {
 	c := r.TileSwatchColor(gid)
-	vector.FillRect(r.screen, wx, wy, world.TileSize, world.TileSize, c, false)
+	vector.FillRect(r.screen, wx, wy, tile.Size, tile.Size, c, false)
 }
 
 func (r *Renderer) DrawPickupScreen(kind *world.PickupKind, px, py, w, h float32) {
@@ -201,9 +202,6 @@ func (r *Renderer) DrawPickupScreen(kind *world.PickupKind, px, py, w, h float32
 }
 
 func (r *Renderer) drawVectorTile(dst *ebiten.Image, gid int, x, y, w, h float32) {
-	if fn, ok := tileDrawers[gid]; ok {
-		fn(dst, x, y, w, h)
-		return
-	}
-	vector.FillRect(dst, x, y, w, h, r.TileSwatchColor(gid), false)
+	c := &ebitenCanvas{dst: dst}
+	tile.DefOf(gid).DrawVector(c, x, y, w, h)
 }

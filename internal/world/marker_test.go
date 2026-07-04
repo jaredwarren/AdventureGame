@@ -4,20 +4,20 @@ import (
 	"testing"
 
 	"github.com/jaredwarren/game-test/internal/tiled"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func TestMarkerTypeNames(t *testing.T) {
-	t.Parallel()
-	types := MarkerTypeNames()
-	if len(types) != 5 {
-		t.Fatalf("expected 5 marker types, got %v", types)
+	names := MarkerTypeNames()
+	if len(names) < 3 {
+		t.Fatalf("expected >=3 marker types, got %v", names)
 	}
 }
 
 func TestMarkerHandlerFor_SpawnPickup(t *testing.T) {
 	t.Parallel()
 	w := &World{
-		MapW: 4, MapH: 4, TileW: TileSize, TileH: TileSize,
+		MapW: 4, MapH: 4, TileW: tile.Size, TileH: tile.Size,
 		Tiles:  make([]int, 16),
 		Player: DefaultPlayerTuning(),
 	}

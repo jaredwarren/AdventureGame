@@ -4,6 +4,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/tiled"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func (s *EditorScene) Update(ctx GameContext) error {
@@ -216,7 +217,7 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 	}
 	if in.JustPressed(services.ActionEditorBrushClear) {
-		s.brushGID = world.GIDEmpty
+		s.brushGID = tile.GIDEmpty
 	}
 
 	if in.JustPressed(services.ActionEditorPrevType) {
@@ -234,8 +235,8 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		if in.MouseJustPressed(services.MouseRight) {
 			ground := s.tm.TileLayer("ground")
 			if ground != nil && s.tm.Width > 0 {
-				tx := int(wx) / world.TileSize
-				ty := int(wy) / world.TileSize
+				tx := int(wx) / tile.Size
+				ty := int(wy) / tile.Size
 				if tx >= 0 && ty >= 0 && tx < s.tm.Width && ty < s.tm.Height {
 					idx := ty*s.tm.Width + tx
 					if idx >= 0 && idx < len(ground.Data) {
@@ -244,8 +245,8 @@ func (s *EditorScene) Update(ctx GameContext) error {
 				}
 			}
 		}
-		tx := int(wx) / world.TileSize
-		ty := int(wy) / world.TileSize
+		tx := int(wx) / tile.Size
+		ty := int(wy) / tile.Size
 		if in.MousePressed(services.MouseLeft) {
 			if !s.painting || tx != s.lastPaintTX || ty != s.lastPaintTY {
 				s.paintTile(tx, ty)

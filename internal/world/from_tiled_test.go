@@ -6,6 +6,7 @@ import (
 
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/tiled"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func tinyMapJSON(markerObjects string) string {
@@ -138,26 +139,26 @@ func TestAutoTileWater(t *testing.T) {
 
 	// Verify coordinates:
 	// Row 1, Col 1 (index 5): Water tile surrounded by grass on top (1,0) and left (0,1).
-	// NW Corner -> GIDWaterShoreNW (14)
-	if w.Tiles[5] != GIDWaterShoreNW {
-		t.Errorf("w.Tiles[5] = %d, want GIDWaterShoreNW (%d)", w.Tiles[5], GIDWaterShoreNW)
+	// NW Corner -> tile.GIDWaterShoreNW (14)
+	if w.Tiles[5] != tile.GIDWaterShoreNW {
+		t.Errorf("w.Tiles[5] = %d, want tile.GIDWaterShoreNW (%d)", w.Tiles[5], tile.GIDWaterShoreNW)
 	}
 
 	// Row 1, Col 2 (index 6): Water tile surrounded by grass on top (2,0) and right (3,1).
-	// NE Corner -> GIDWaterShoreNE (13)
-	if w.Tiles[6] != GIDWaterShoreNE {
-		t.Errorf("w.Tiles[6] = %d, want GIDWaterShoreNE (%d)", w.Tiles[6], GIDWaterShoreNE)
+	// NE Corner -> tile.GIDWaterShoreNE (13)
+	if w.Tiles[6] != tile.GIDWaterShoreNE {
+		t.Errorf("w.Tiles[6] = %d, want tile.GIDWaterShoreNE (%d)", w.Tiles[6], tile.GIDWaterShoreNE)
 	}
 
 	// Row 2, Col 1 (index 9): Water tile surrounded by grass on bottom (1,3) and left (0,2).
-	// SW Corner -> GIDWaterShoreSW (15)
-	if w.Tiles[9] != GIDWaterShoreSW {
-		t.Errorf("w.Tiles[9] = %d, want GIDWaterShoreSW (%d)", w.Tiles[9], GIDWaterShoreSW)
+	// SW Corner -> tile.GIDWaterShoreSW (15)
+	if w.Tiles[9] != tile.GIDWaterShoreSW {
+		t.Errorf("w.Tiles[9] = %d, want tile.GIDWaterShoreSW (%d)", w.Tiles[9], tile.GIDWaterShoreSW)
 	}
 
 	// Row 2, Col 2 (index 10): Water tile surrounded by grass on bottom (2,3) and right (3,2).
-	// SE Corner -> GIDWaterShoreSE (16)
-	if w.Tiles[10] != GIDWaterShoreSE {
-		t.Errorf("w.Tiles[10] = %d, want GIDWaterShoreSE (%d)", w.Tiles[10], GIDWaterShoreSE)
+	// SE Corner -> tile.GIDWaterShoreSE (16)
+	if w.Tiles[10] != tile.GIDWaterShoreSE {
+		t.Errorf("w.Tiles[10] = %d, want tile.GIDWaterShoreSE (%d)", w.Tiles[10], tile.GIDWaterShoreSE)
 	}
 }
