@@ -3,6 +3,7 @@ package tile
 
 import (
 	"image/color"
+	"slices"
 
 	"github.com/jaredwarren/game-test/internal/geom"
 )
@@ -26,6 +27,7 @@ type TileTag string
 
 const (
 	TagSolid        TileTag = "solid"
+	TagWall         TileTag = "wall"
 	TagWater        TileTag = "water"
 	TagWaterShore   TileTag = "water_shore"
 	TagDoor         TileTag = "door"
@@ -68,6 +70,7 @@ func (d Tile) HasTag(tag TileTag) bool {
 
 // Compatibility helper methods
 func (d Tile) Solid() bool      { return d.HasTag(TagSolid) }
+func (d Tile) Wall() bool       { return d.HasTag(TagWall) }
 func (d Tile) Water() bool      { return d.HasTag(TagWater) }
 func (d Tile) WaterShore() bool { return d.HasTag(TagWaterShore) }
 func (d Tile) IsFloor() bool    { return !d.Solid() }
@@ -107,17 +110,69 @@ var waterSurface = SurfaceDef{
 	Friction:        0.8,
 }
 
+var wallColor = color.RGBA{0x40, 0x40, 0x50, 0xff}
+
 var defs = map[int]Tile{
 	GIDEmpty:    {GID: GIDEmpty, Name: "empty", SwatchColor: color.RGBA{0x00, 0x00, 0x00, 0xff}, VectorDraw: drawEmpty},
 	GIDGrass:    {GID: GIDGrass, Name: "grass", FloorWeight: 0.58, SwatchColor: color.RGBA{0x55, 0x88, 0x55, 0xff}, VectorDraw: drawGrass},
-	GIDWall:     {GID: GIDWall, Name: "wall", Tags: []TileTag{TagSolid}, SwatchColor: color.RGBA{0x40, 0x40, 0x50, 0xff}, VectorDraw: drawWall},
-	GIDCracked:  {GID: GIDCracked, Name: "cracked", Tags: []TileTag{TagDestructible}, DamageKinds: []DamageKind{DamageBomb}, SwatchColor: color.RGBA{0x6b, 0x4a, 0x2a, 0xff}, VectorDraw: drawCracked},
+	GIDWall:     {GID: GIDWall, Name: "wall", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor, VectorDraw: drawWall},
+	GIDCracked:  {GID: GIDCracked, Name: "cracked", Tags: []TileTag{TagDestructible, TagWall}, DamageKinds: []DamageKind{DamageBomb}, SwatchColor: color.RGBA{0x6b, 0x4a, 0x2a, 0xff}, VectorDraw: drawCracked},
 	GIDDoor:     {GID: GIDDoor, Name: "door", Tags: []TileTag{TagDoor}, SwatchColor: color.RGBA{0x3a, 0x5a, 0x3a, 0xff}, VectorDraw: drawDoor},
 	GIDWater:    {GID: GIDWater, Name: "water", Tags: []TileTag{TagSolid, TagWater}, Surface: waterSurface, FloorWeight: 0, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff}, VectorDraw: drawWater},
 	GIDLock:     {GID: GIDLock, Name: "lock", Tags: []TileTag{TagLock}, OpenableByKey: true, SwatchColor: color.RGBA{0x6a, 0x2a, 0x7a, 0xff}, VectorDraw: drawLock},
 	GIDFloor2:   {GID: GIDFloor2, Name: "floor2", FloorWeight: 0.42, SwatchColor: color.RGBA{0x50, 0x50, 0x5c, 0xff}, VectorDraw: drawFloor2},
 	GIDDirtPath: {GID: GIDDirtPath, Name: "dirt_path", FloorWeight: 0.3, SwatchColor: color.RGBA{0x8b, 0x6a, 0x3a, 0xff}, VectorDraw: drawDirtPath},
 	GIDTree:     {GID: GIDTree, Name: "tree", Tags: []TileTag{TagIgnitable}, DamageKinds: []DamageKind{DamageFire}, SwatchColor: color.RGBA{0x2d, 0x5a, 0x2a, 0xff}, VectorDraw: drawTree},
+
+	GIDWallTop: {
+		GID: GIDWallTop, Name: "wall_top", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 8, W: 16, H: 8}}, VectorDraw: drawWallTop,
+	},
+	GIDWallBottom: {
+		GID: GIDWallBottom, Name: "wall_bottom", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 16, H: 8}}, VectorDraw: drawWallBottom,
+	},
+	GIDWallLeft: {
+		GID: GIDWallLeft, Name: "wall_left", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 16}}, VectorDraw: drawWallLeft,
+	},
+	GIDWallRight: {
+		GID: GIDWallRight, Name: "wall_right", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}}, VectorDraw: drawWallRight,
+	},
+	GIDWallNE: {
+		GID: GIDWallNE, Name: "wall_ne", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 8, W: 8, H: 8}}, VectorDraw: drawWallNE,
+	},
+	GIDWallNW: {
+		GID: GIDWallNW, Name: "wall_nw", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 8, W: 8, H: 8}}, VectorDraw: drawWallNW,
+	},
+	GIDWallSW: {
+		GID: GIDWallSW, Name: "wall_sw", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 8}}, VectorDraw: drawWallSW,
+	},
+	GIDWallSE: {
+		GID: GIDWallSE, Name: "wall_se", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 8}}, VectorDraw: drawWallSE,
+	},
+
+	GIDWallNEInner: {
+		GID: GIDWallNEInner, Name: "wall_ne_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}, {X: 8, Y: 8, W: 8, H: 8}}, VectorDraw: drawWallNEInner,
+	},
+	GIDWallNWInner: {
+		GID: GIDWallNWInner, Name: "wall_nw_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 16}, {X: 0, Y: 8, W: 8, H: 8}}, VectorDraw: drawWallNWInner,
+	},
+	GIDWallSWInner: {
+		GID: GIDWallSWInner, Name: "wall_sw_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 16}, {X: 0, Y: 0, W: 8, H: 8}}, VectorDraw: drawWallSWInner,
+	},
+	GIDWallSEInner: {
+		GID: GIDWallSEInner, Name: "wall_se_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}, {X: 8, Y: 0, W: 8, H: 8}}, VectorDraw: drawWallSEInner,
+	},
 
 	GIDWaterShoreTop: {
 		GID: GIDWaterShoreTop, Name: "water_shore_top", Tags: []TileTag{TagSolid, TagWater, TagWaterShore}, Surface: waterSurface, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff},
@@ -178,11 +233,12 @@ func DefOf(gid int) Tile {
 	return Tile{GID: gid, Name: "unknown", Tags: []TileTag{TagSolid}, SwatchColor: color.RGBA{0x30, 0x30, 0x38, 0xff}}
 }
 
-// RegisteredGIDs returns a slice of all registered tile GIDs.
+// RegisteredGIDs returns a slice of all registered tile GIDs in sorted order.
 func RegisteredGIDs() []int {
 	gids := make([]int, 0, len(defs))
 	for g := range defs {
 		gids = append(gids, g)
 	}
+	slices.Sort(gids)
 	return gids
 }

@@ -159,6 +159,58 @@
       "sw": 128,
       "sh": 128,
       "comment": "GIDWaterShoreSEInner — water with concave shore in South-East corner"
+    },
+    {
+      "skip": true,
+      "comment": "GIDDirtPath — dirt path ground"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallTop — wall top edge transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallBottom — wall bottom edge transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallLeft — wall left edge transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallRight — wall right edge transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallNE — wall North-East corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallNW — wall North-West corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallSW — wall South-West corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallSE — wall South-East corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallNEInner — wall North-East inner corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallNWInner — wall North-West inner corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallSWInner — wall South-West inner corner transition"
+    },
+    {
+      "skip": true,
+      "comment": "GIDWallSEInner — wall South-East inner corner transition"
     }
   ]
 }

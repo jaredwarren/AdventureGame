@@ -129,3 +129,22 @@ func TestDef_IsWaterAndLand(t *testing.T) {
 	var _ Waterer = seInner
 }
 
+func TestWallTiles(t *testing.T) {
+	t.Parallel()
+
+	wallGIDs := []int{
+		GIDWall, GIDWallTop, GIDWallBottom, GIDWallLeft, GIDWallRight,
+		GIDWallNE, GIDWallNW, GIDWallSW, GIDWallSE,
+		GIDWallNEInner, GIDWallNWInner, GIDWallSWInner, GIDWallSEInner,
+	}
+
+	for _, gid := range wallGIDs {
+		d := DefOf(gid)
+		if !d.Wall() || !d.IsWall() || !d.Solid() || d.IsFloor() {
+			t.Errorf("gid %d (%s): expected to be wall & solid, got Wall=%v IsWall=%v Solid=%v IsFloor=%v",
+				gid, d.Name, d.Wall(), d.IsWall(), d.Solid(), d.IsFloor())
+		}
+		var _ Waller = d
+	}
+}
+

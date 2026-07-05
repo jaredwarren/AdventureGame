@@ -40,6 +40,12 @@ Per frame:
 | 6   | `GIDLock`    | Opens with small key |
 | 7   | `GIDFloor2`  | |
 | 8   | `GIDTree`    | Destroyable by **fire** (`world.DamageFire`); bombs do not affect it |
+| 9–16| `GIDWaterShore*` | Straight and outer corner water shore transition tiles |
+| 17–20| `GIDWaterShore*Inner` | Inner corner water shore transition tiles |
+| 21  | `GIDDirtPath` | Dirt path tile |
+| 22–25| `GIDWallTop` / `Bottom` / `Left` / `Right` | Straight wall edge transition tiles |
+| 26–29| `GIDWallNE` / `NW` / `SW` / `SE` | Outer corner wall transition tiles |
+| 30–33| `GIDWall*Inner` | Inner corner wall transition tiles |
 
 Per-tile behavior (solid, destroyable-by-what, openable-by-key, fallback swatch color, becomes-what-when-destroyed) is declared in one place: the `tileDefs` registry in `internal/world/tiledef.go`. Adding a new ground tile type is:
 

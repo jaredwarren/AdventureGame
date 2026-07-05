@@ -55,6 +55,9 @@ var (
 		tile.GIDWaterShoreTop, tile.GIDWaterShoreBottom, tile.GIDWaterShoreLeft, tile.GIDWaterShoreRight,
 		tile.GIDWaterShoreNE, tile.GIDWaterShoreNW, tile.GIDWaterShoreSW, tile.GIDWaterShoreSE,
 		tile.GIDWaterShoreNEInner, tile.GIDWaterShoreNWInner, tile.GIDWaterShoreSWInner, tile.GIDWaterShoreSEInner,
+		tile.GIDWallTop, tile.GIDWallBottom, tile.GIDWallLeft, tile.GIDWallRight,
+		tile.GIDWallNE, tile.GIDWallNW, tile.GIDWallSW, tile.GIDWallSE,
+		tile.GIDWallNEInner, tile.GIDWallNWInner, tile.GIDWallSWInner, tile.GIDWallSEInner,
 	}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].
 	editorBrushActions = []services.Action{

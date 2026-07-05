@@ -36,8 +36,8 @@ func TestTileAtlasRectsWithinOverworldPNG(t *testing.T) {
 	if doc.SpriteSheet != TileSpriteSheetFile {
 		t.Fatalf("atlas sprite_sheet %q must match %q", doc.SpriteSheet, TileSpriteSheetFile)
 	}
-	if len(doc.Frames) != 21 {
-		t.Fatalf("expected 21 frames (GID 0..20), got %d", len(doc.Frames))
+	if len(doc.Frames) != 34 {
+		t.Fatalf("expected 34 frames (GID 0..33), got %d", len(doc.Frames))
 	}
 	for i, fr := range doc.Frames {
 		if fr.Skip {

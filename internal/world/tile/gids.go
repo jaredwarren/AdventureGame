@@ -32,4 +32,20 @@ const (
 	GIDWaterShoreSEInner = 20
 
 	GIDDirtPath = 21
+
+	// Wall edge transition tiles
+	GIDWallTop    = 22
+	GIDWallBottom = 23
+	GIDWallLeft   = 24
+	GIDWallRight  = 25
+	GIDWallNE     = 26
+	GIDWallNW     = 27
+	GIDWallSW     = 28
+	GIDWallSE     = 29
+
+	// Inner (concave) wall transition tiles
+	GIDWallNEInner = 30
+	GIDWallNWInner = 31
+	GIDWallSWInner = 32
+	GIDWallSEInner = 33
 )

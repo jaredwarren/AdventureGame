@@ -104,6 +104,7 @@ type TileTag string
 
 const (
 	TagSolid        TileTag = "solid"
+	TagWall         TileTag = "wall"
 	TagWater        TileTag = "water"
 	TagWaterShore   TileTag = "water_shore"
 	TagDoor         TileTag = "door"

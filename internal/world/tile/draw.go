@@ -6,6 +6,8 @@ var (
 	tileGrassColor     = color.RGBA{0x55, 0x88, 0x55, 0xff}
 	tileWaterColor     = color.RGBA{0x2a, 0x4a, 0x8a, 0xff}
 	tileShoreLineColor = color.RGBA{0xe0, 0xd0, 0xa0, 0xff}
+	tileWallColor      = color.RGBA{0x40, 0x40, 0x50, 0xff}
+	tileWallEdgeColor  = color.RGBA{0x20, 0x20, 0x28, 0xff}
 )
 
 func drawEmpty(c Canvas, x, y, w, h float32) {
@@ -21,12 +23,97 @@ func drawGrass(c Canvas, x, y, w, h float32) {
 }
 
 func drawWall(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, color.RGBA{0x40, 0x40, 0x50, 0xff})
+	c.FillRect(x, y, w, h, tileWallColor)
 	c.StrokeRect(x+0.5, y+0.5, w-1, h-1, 1, color.RGBA{0x20, 0x20, 0x28, 0xff})
 	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
 	c.StrokeLine(x+w*0.25, y+h*0.5, x+w*0.25, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
 	c.StrokeLine(x+w*0.75, y+h*0.5, x+w*0.75, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+}
+
+func drawWallTop(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h*0.5, tileGrassColor)
+	c.FillRect(x, y+h*0.5, w, h*0.5, tileWallColor)
+	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.25, y+h*0.5, x+w*0.25, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+	c.StrokeLine(x+w*0.75, y+h*0.5, x+w*0.75, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+}
+
+func drawWallBottom(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h*0.5, tileWallColor)
+	c.FillRect(x, y+h*0.5, w, h*0.5, tileGrassColor)
+	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+}
+
+func drawWallLeft(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w*0.5, h, tileGrassColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+}
+
+func drawWallRight(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w*0.5, h, tileWallColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileGrassColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileWallEdgeColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+}
+
+func drawWallNW(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileGrassColor)
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWallColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
+}
+
+func drawWallNE(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileGrassColor)
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWallColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
+}
+
+func drawWallSW(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileGrassColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWallColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
+}
+
+func drawWallSE(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileGrassColor)
+	c.FillRect(x, y, w*0.5, h*0.5, tileWallColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+}
+
+func drawWallNWInner(c Canvas, x, y, w, h float32) {
+	drawWall(c, x, y, w, h)
+	c.FillRect(x, y, w*0.5, h*0.5, tileGrassColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+}
+
+func drawWallNEInner(c Canvas, x, y, w, h float32) {
+	drawWall(c, x, y, w, h)
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileGrassColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+}
+
+func drawWallSWInner(c Canvas, x, y, w, h float32) {
+	drawWall(c, x, y, w, h)
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileGrassColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
+}
+
+func drawWallSEInner(c Canvas, x, y, w, h float32) {
+	drawWall(c, x, y, w, h)
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileGrassColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
 }
 
 func drawCracked(c Canvas, x, y, w, h float32) {

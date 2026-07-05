@@ -99,20 +99,6 @@ func TestBuildFromTiled_NonPersistentPickupIgnoresCollectedSet(t *testing.T) {
 }
 
 func TestAutoTileWater(t *testing.T) {
-	// Create a custom 4x4 map with some grass (1) and water (5)
-	// Grid structure:
-	// Grass Grass Grass Grass
-	// Grass Water Water Grass
-	// Grass Grass Grass Grass
-	// Grass Grass Grass Grass
-	//
-	// The water tile at (1, 1) has grass on the top, left, bottom, but wait:
-	// Let's design a custom grid:
-	// Grass, Grass, Grass, Grass
-	// Grass, Water, Water, Water
-	// Grass, Water, Water, Water
-	// Grass, Grass, Grass, Grass
-
 	m := &tiled.Map{
 		Width:      4,
 		Height:     4,
@@ -137,28 +123,52 @@ func TestAutoTileWater(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Verify coordinates:
-	// Row 1, Col 1 (index 5): Water tile surrounded by grass on top (1,0) and left (0,1).
-	// NW Corner -> tile.GIDWaterShoreNW (14)
 	if w.Tiles[5] != tile.GIDWaterShoreNW {
 		t.Errorf("w.Tiles[5] = %d, want tile.GIDWaterShoreNW (%d)", w.Tiles[5], tile.GIDWaterShoreNW)
 	}
-
-	// Row 1, Col 2 (index 6): Water tile surrounded by grass on top (2,0) and right (3,1).
-	// NE Corner -> tile.GIDWaterShoreNE (13)
 	if w.Tiles[6] != tile.GIDWaterShoreNE {
 		t.Errorf("w.Tiles[6] = %d, want tile.GIDWaterShoreNE (%d)", w.Tiles[6], tile.GIDWaterShoreNE)
 	}
-
-	// Row 2, Col 1 (index 9): Water tile surrounded by grass on bottom (1,3) and left (0,2).
-	// SW Corner -> tile.GIDWaterShoreSW (15)
 	if w.Tiles[9] != tile.GIDWaterShoreSW {
 		t.Errorf("w.Tiles[9] = %d, want tile.GIDWaterShoreSW (%d)", w.Tiles[9], tile.GIDWaterShoreSW)
 	}
-
-	// Row 2, Col 2 (index 10): Water tile surrounded by grass on bottom (2,3) and right (3,2).
-	// SE Corner -> tile.GIDWaterShoreSE (16)
 	if w.Tiles[10] != tile.GIDWaterShoreSE {
 		t.Errorf("w.Tiles[10] = %d, want tile.GIDWaterShoreSE (%d)", w.Tiles[10], tile.GIDWaterShoreSE)
+	}
+}
+
+func TestAutoTileWall(t *testing.T) {
+	m := &tiled.Map{
+		Width:      4,
+		Height:     4,
+		TileWidth:  16,
+		TileHeight: 16,
+		Layers: []tiled.Layer{
+			{
+				Name: "ground",
+				Type: "tilelayer",
+				Data: []int{
+					2, 2, 2, 2, // Row 0
+					2, 1, 1, 2, // Row 1
+					2, 1, 1, 2, // Row 2
+					2, 2, 2, 2, // Row 3
+				},
+			},
+		},
+	}
+
+	w, err := BuildFromTiled(m, "testwallmap", progression.DefaultStats(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if w.Tiles[1] != tile.GIDWallBottom {
+		t.Errorf("w.Tiles[1] = %d, want tile.GIDWallBottom (%d)", w.Tiles[1], tile.GIDWallBottom)
+	}
+	if w.Tiles[4] != tile.GIDWallRight {
+		t.Errorf("w.Tiles[4] = %d, want tile.GIDWallRight (%d)", w.Tiles[4], tile.GIDWallRight)
+	}
+	if w.Tiles[0] != tile.GIDWallSEInner {
+		t.Errorf("w.Tiles[0] = %d, want tile.GIDWallSEInner (%d)", w.Tiles[0], tile.GIDWallSEInner)
 	}
 }
