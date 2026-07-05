@@ -43,6 +43,8 @@ const (
 
 	// Editor-specific.
 	ActionEditorToggleMode
+	ActionEditorToggleLayer
+	ActionEditorToggleVisibility
 	ActionEditorAdd
 	ActionEditorDelete
 	ActionEditorNextType

@@ -8,7 +8,7 @@ import (
 
 func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	r := ctx.Renderer()
-	gids := world.RegisteredTileGIDs()
+	gids := s.filteredTileGIDs()
 
 	const panelX, panelY float32 = 70, 30
 	const panelW, panelH float32 = 180, 180

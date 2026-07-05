@@ -32,7 +32,6 @@ func drawWall(c Canvas, x, y, w, h float32) {
 }
 
 func drawWallTop(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h*0.5, tileGrassColor)
 	c.FillRect(x, y+h*0.5, w, h*0.5, tileWallColor)
 	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.25, y+h*0.5, x+w*0.25, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
@@ -41,13 +40,11 @@ func drawWallTop(c Canvas, x, y, w, h float32) {
 
 func drawWallBottom(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h*0.5, tileWallColor)
-	c.FillRect(x, y+h*0.5, w, h*0.5, tileGrassColor)
 	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
 }
 
 func drawWallLeft(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileGrassColor)
 	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
@@ -55,63 +52,58 @@ func drawWallLeft(c Canvas, x, y, w, h float32) {
 
 func drawWallRight(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w*0.5, h, tileWallColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileGrassColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileWallEdgeColor)
 	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
 }
 
 func drawWallNW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileGrassColor)
 	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
 }
 
 func drawWallNE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileGrassColor)
 	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
 }
 
 func drawWallSW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileGrassColor)
 	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
 }
 
 func drawWallSE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileGrassColor)
 	c.FillRect(x, y, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 }
 
 func drawWallNWInner(c Canvas, x, y, w, h float32) {
-	drawWall(c, x, y, w, h)
-	c.FillRect(x, y, w*0.5, h*0.5, tileGrassColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 }
 
 func drawWallNEInner(c Canvas, x, y, w, h float32) {
-	drawWall(c, x, y, w, h)
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileGrassColor)
+	c.FillRect(x, y, w*0.5, h, tileWallColor)
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 }
 
 func drawWallSWInner(c Canvas, x, y, w, h float32) {
-	drawWall(c, x, y, w, h)
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileGrassColor)
+	c.FillRect(x, y, w*0.5, h*0.5, tileWallColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
 	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
 }
 
 func drawWallSEInner(c Canvas, x, y, w, h float32) {
-	drawWall(c, x, y, w, h)
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileGrassColor)
+	c.FillRect(x, y, w*0.5, h, tileWallColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWallColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
 }
@@ -168,39 +160,27 @@ func drawTree(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreTop(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h*0.5, tileGrassColor)
 	c.FillRect(x, y+h*0.5, w, h*0.5, tileWaterColor)
 	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileShoreLineColor)
 }
 
 func drawShoreBottom(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h*0.5, tileWaterColor)
-	c.FillRect(x, y+h*0.5, w, h*0.5, tileGrassColor)
 	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileShoreLineColor)
 }
 
 func drawShoreLeft(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileGrassColor)
 	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileShoreLineColor)
 }
 
 func drawShoreRight(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w*0.5, h, tileWaterColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileGrassColor)
 	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileShoreLineColor)
 }
 
 func drawShoreNW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x, y)
-	p.LineTo(x+w, y)
-	p.LineTo(x+w, y+h*0.5)
-	p.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
-	p.LineTo(x, y+h)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w, y+h*0.5)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
@@ -208,15 +188,7 @@ func drawShoreNW(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreNE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x, y)
-	p.LineTo(x+w, y)
-	p.LineTo(x+w, y+h)
-	p.LineTo(x+w*0.5, y+h)
-	p.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w*0.5, y+h)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
@@ -224,15 +196,7 @@ func drawShoreNE(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreSW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x, y)
-	p.LineTo(x+w*0.5, y)
-	p.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
-	p.LineTo(x+w, y+h)
-	p.LineTo(x, y+h)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w*0.5, y)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
@@ -240,16 +204,7 @@ func drawShoreSW(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreSE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x+w*0.5, y)
-	p.LineTo(x+w, y)
-	p.LineTo(x+w, y+h)
-	p.LineTo(x, y+h)
-	p.LineTo(x, y+h*0.5)
-	p.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x, y, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x, y+h*0.5)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
@@ -257,13 +212,8 @@ func drawShoreSE(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreNWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x, y)
-	p.LineTo(x+w*0.5, y)
-	p.QuadTo(x, y, x, y+h*0.5)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w*0.5, y)
 	lp.QuadTo(x, y, x, y+h*0.5)
@@ -271,13 +221,8 @@ func drawShoreNWInner(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreNEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x+w, y)
-	p.LineTo(x+w, y+h*0.5)
-	p.QuadTo(x+w, y, x+w*0.5, y)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x, y, w*0.5, h, tileWaterColor)
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w, y+h*0.5)
 	lp.QuadTo(x+w, y, x+w*0.5, y)
@@ -285,13 +230,8 @@ func drawShoreNEInner(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreSWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x, y+h)
-	p.LineTo(x+w*0.5, y+h)
-	p.QuadTo(x, y+h, x, y+h*0.5)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x, y, w*0.5, h*0.5, tileWaterColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w*0.5, y+h)
 	lp.QuadTo(x, y+h, x, y+h*0.5)
@@ -299,13 +239,8 @@ func drawShoreSWInner(c Canvas, x, y, w, h float32) {
 }
 
 func drawShoreSEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileWaterColor)
-	var p Path
-	p.MoveTo(x+w, y+h)
-	p.LineTo(x+w, y+h*0.5)
-	p.QuadTo(x+w, y+h, x+w*0.5, y+h)
-	p.Close()
-	c.DrawPath(p, tileGrassColor, true, 0)
+	c.FillRect(x, y, w*0.5, h, tileWaterColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w, y+h*0.5)
 	lp.QuadTo(x+w, y+h, x+w*0.5, y+h)

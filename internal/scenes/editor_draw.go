@@ -22,6 +22,11 @@ func (s *EditorScene) Draw(ctx GameContext) {
 	}
 
 	if sess.World != nil {
+		if s.modeTile && s.showOnlyActiveLayer {
+			sess.World.ActiveLayerFilter = s.activeLayerIndex
+		} else {
+			sess.World.ActiveLayerFilter = -1
+		}
 		r.DrawWorld(sess.World)
 	}
 
@@ -39,14 +44,22 @@ func (s *EditorScene) Draw(ctx GameContext) {
 
 	mode := "MARKER"
 	if s.modeTile {
-		mode = fmt.Sprintf("TILE (brush: %s)", world.TileDefOf(s.brushGID).Name)
+		layerName := "Layer 0"
+		if cur := s.currentTileLayer(); cur != nil && cur.Name != "" {
+			layerName = cur.Name
+		}
+		viewState := "ONLY"
+		if !s.showOnlyActiveLayer {
+			viewState = "ALL"
+		}
+		mode = fmt.Sprintf("TILE L%d[%s] (%s) (brush: %s)", s.activeLayerIndex, layerName, viewState, world.TileDefOf(s.brushGID).Name)
 	}
 	line := fmt.Sprintf("%s map=%s", mode, s.mapID)
 	if s.errMsg != "" {
 		line += " ERR:" + s.errMsg
 	}
 	r.DrawText(4, 4, line)
-	r.DrawText(4, 16, "E mode  Tab menu  A add  Del")
+	r.DrawText(4, 16, "E mode  L layer  V view  Tab menu  A add  Del")
 	if !s.modeTile {
 		types := world.MarkerTypeNames()
 		r.DrawText(4, 28, fmt.Sprintf("new: %s  [ ] type  Ctrl+S save", types[s.markerTypeIndex%len(types)]))

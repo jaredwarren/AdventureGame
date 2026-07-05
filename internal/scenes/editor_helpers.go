@@ -8,6 +8,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/progression"
 	"github.com/jaredwarren/game-test/internal/tiled"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func (s *EditorScene) ensureLoaded(ctx GameContext) {
@@ -21,7 +22,46 @@ func (s *EditorScene) ensureLoaded(ctx GameContext) {
 		return
 	}
 	s.tm = tm
+	s.ensureTileLayers()
 	s.rebuild(ctx)
+}
+
+func (s *EditorScene) ensureTileLayers() {
+	if s.tm == nil {
+		return
+	}
+	var tileLayers []*tiled.Layer
+	for i := range s.tm.Layers {
+		if s.tm.Layers[i].Type == "tilelayer" {
+			tileLayers = append(tileLayers, &s.tm.Layers[i])
+		}
+	}
+	if len(tileLayers) < 2 {
+		baseData := make([]int, s.tm.Width*s.tm.Height)
+		for i := range baseData {
+			baseData[i] = tile.GIDGrass
+		}
+		id := s.tm.NextLayerID
+		if id == 0 {
+			id = len(s.tm.Layers) + 1
+		}
+		s.tm.NextLayerID = id + 1
+
+		baseLayer := tiled.Layer{
+			ID:      id,
+			Type:    "tilelayer",
+			Name:    "base",
+			Visible: true,
+			Opacity: 1,
+			Data:    baseData,
+			Width:   s.tm.Width,
+			Height:  s.tm.Height,
+			X:       0,
+			Y:       0,
+		}
+		s.tm.Layers = append([]tiled.Layer{baseLayer}, s.tm.Layers...)
+		s.activeLayerIndex = 1
+	}
 }
 
 func (s *EditorScene) markersLayer() *tiled.Layer {
@@ -110,19 +150,66 @@ func (s *EditorScene) newMarkerObject(wx, wy float64) tiled.Object {
 	return o
 }
 
+func (s *EditorScene) filteredTileGIDs() []int {
+	allGIDs := world.RegisteredTileGIDs()
+	if !s.showOnlyActiveLayer {
+		return allGIDs
+	}
+	var filtered []int
+	for _, gid := range allGIDs {
+		def := world.TileDefOf(gid)
+		if s.activeLayerIndex == 0 {
+			if def.IsFloor() || gid == tile.GIDEmpty {
+				filtered = append(filtered, gid)
+			}
+		} else {
+			if !def.IsFloor() || gid == tile.GIDEmpty {
+				filtered = append(filtered, gid)
+			}
+		}
+	}
+	if len(filtered) == 0 {
+		return allGIDs
+	}
+	return filtered
+}
+
+func (s *EditorScene) currentTileLayer() *tiled.Layer {
+	if s.tm == nil {
+		return nil
+	}
+	var tileLayers []*tiled.Layer
+	for i := range s.tm.Layers {
+		if s.tm.Layers[i].Type == "tilelayer" {
+			tileLayers = append(tileLayers, &s.tm.Layers[i])
+		}
+	}
+	if len(tileLayers) == 0 {
+		return s.tm.TileLayer("ground")
+	}
+	idx := s.activeLayerIndex
+	if idx < 0 {
+		idx = 0
+	}
+	if idx >= len(tileLayers) {
+		idx = len(tileLayers) - 1
+	}
+	return tileLayers[idx]
+}
+
 func (s *EditorScene) paintTile(tx, ty int) {
-	ground := s.tm.TileLayer("ground")
-	if ground == nil || s.tm.Width <= 0 || s.tm.Height <= 0 {
+	layer := s.currentTileLayer()
+	if layer == nil || s.tm.Width <= 0 || s.tm.Height <= 0 {
 		return
 	}
 	if tx < 0 || ty < 0 || tx >= s.tm.Width || ty >= s.tm.Height {
 		return
 	}
 	idx := ty*s.tm.Width + tx
-	if idx < 0 || idx >= len(ground.Data) {
+	if idx < 0 || idx >= len(layer.Data) {
 		return
 	}
-	ground.Data[idx] = s.brushGID
+	layer.Data[idx] = s.brushGID
 }
 
 func (s *EditorScene) selectItem(ctx GameContext, name string) {

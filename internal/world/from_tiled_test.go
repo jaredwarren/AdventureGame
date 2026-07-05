@@ -172,3 +172,50 @@ func TestAutoTileWall(t *testing.T) {
 		t.Errorf("w.Tiles[0] = %d, want tile.GIDWallSEInner (%d)", w.Tiles[0], tile.GIDWallSEInner)
 	}
 }
+
+func TestMultiLayerMap(t *testing.T) {
+	m := &tiled.Map{
+		Width:      2,
+		Height:     2,
+		TileWidth:  16,
+		TileHeight: 16,
+		Layers: []tiled.Layer{
+			{
+				Name: "base",
+				Type: "tilelayer",
+				Data: []int{
+					tile.GIDDirtPath, tile.GIDGrass,
+					tile.GIDGrass, tile.GIDDirtPath,
+				},
+			},
+			{
+				Name: "top",
+				Type: "tilelayer",
+				Data: []int{
+					tile.GIDLock, tile.GIDEmpty,
+					tile.GIDCracked, tile.GIDWall,
+				},
+			},
+		},
+	}
+
+	w, err := BuildFromTiled(m, "multilayermap", progression.DefaultStats(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(w.Layers) != 2 {
+		t.Fatalf("expected 2 layers, got %d", len(w.Layers))
+	}
+
+	// Lock door at (0,0) over DirtPath: before destruction, gidAt returns GIDLock
+	if gid := w.gidAt(0, 0); gid != tile.GIDLock {
+		t.Errorf("gidAt(0,0) = %d, want GIDLock (%d)", gid, tile.GIDLock)
+	}
+
+	// Destroy lock door at (0,0): after destruction, gidAt returns lower layer GID (GIDDirtPath)
+	w.DestroyedTiles[0] = true
+	if gid := w.gidAt(0, 0); gid != tile.GIDDirtPath {
+		t.Errorf("after destruction gidAt(0,0) = %d, want GIDDirtPath (%d)", gid, tile.GIDDirtPath)
+	}
+}

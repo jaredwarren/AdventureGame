@@ -33,7 +33,7 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 	}
 
-	gids := world.RegisteredTileGIDs()
+	gids := s.filteredTileGIDs()
 
 	// Tile selection menu input handling
 	if s.showTileMenu {
@@ -211,6 +211,25 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		s.showItemMenu = false
 	}
 
+	if in.JustPressed(services.ActionEditorToggleLayer) {
+		s.ensureTileLayers()
+		var tileLayers []*tiled.Layer
+		if s.tm != nil {
+			for i := range s.tm.Layers {
+				if s.tm.Layers[i].Type == "tilelayer" {
+					tileLayers = append(tileLayers, &s.tm.Layers[i])
+				}
+			}
+		}
+		if len(tileLayers) > 0 {
+			s.activeLayerIndex = (s.activeLayerIndex + 1) % len(tileLayers)
+		}
+	}
+
+	if in.JustPressed(services.ActionEditorToggleVisibility) {
+		s.showOnlyActiveLayer = !s.showOnlyActiveLayer
+	}
+
 	for i, gid := range editorBrushPalette {
 		if i < len(editorBrushActions) && in.JustPressed(editorBrushActions[i]) {
 			s.brushGID = gid
@@ -233,14 +252,14 @@ func (s *EditorScene) Update(ctx GameContext) error {
 
 	if s.modeTile {
 		if in.MouseJustPressed(services.MouseRight) {
-			ground := s.tm.TileLayer("ground")
-			if ground != nil && s.tm.Width > 0 {
+			layer := s.currentTileLayer()
+			if layer != nil && s.tm.Width > 0 {
 				tx := int(wx) / tile.Size
 				ty := int(wy) / tile.Size
 				if tx >= 0 && ty >= 0 && tx < s.tm.Width && ty < s.tm.Height {
 					idx := ty*s.tm.Width + tx
-					if idx >= 0 && idx < len(ground.Data) {
-						s.brushGID = ground.Data[idx]
+					if idx >= 0 && idx < len(layer.Data) {
+						s.brushGID = layer.Data[idx]
 					}
 				}
 			}

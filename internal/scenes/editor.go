@@ -23,6 +23,9 @@ type EditorScene struct {
 
 	modeTile bool // false = marker mode
 
+	activeLayerIndex    int
+	showOnlyActiveLayer bool
+
 	brushGID        int
 	markerTypeIndex int
 	selObj          int // index in markers layer; -1 = none

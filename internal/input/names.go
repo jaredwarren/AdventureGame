@@ -43,8 +43,10 @@ var actionNames = map[services.Action]string{
 	services.ActionDebugToggle:       "DebugToggle",
 	services.ActionToggleReduceShake: "ToggleReduceShake",
 
-	services.ActionEditorToggleMode: "EditorToggleMode",
-	services.ActionEditorAdd:        "EditorAdd",
+	services.ActionEditorToggleMode:       "EditorToggleMode",
+	services.ActionEditorToggleLayer:      "EditorToggleLayer",
+	services.ActionEditorToggleVisibility: "EditorToggleVisibility",
+	services.ActionEditorAdd:         "EditorAdd",
 	services.ActionEditorDelete:     "EditorDelete",
 	services.ActionEditorNextType:   "EditorNextType",
 	services.ActionEditorPrevType:   "EditorPrevType",

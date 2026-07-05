@@ -157,11 +157,18 @@ type World struct {
 	TileH int
 	MapW  int
 	MapH  int
-	Tiles []int
+
+	// Layers holds dynamic 2D tile layers [layerIndex][tileIndex] (bottom-to-top order).
+	// Tiles is kept as a convenience reference to the top active layer.
+	Layers [][]int
+	Tiles  []int
+
+	// ActiveLayerFilter when >= 0 restricts rendering to only that layer index. -1 shows all layers.
+	ActiveLayerFilter int
 
 	// DestroyedTiles records tiles that have been broken/opened by damage
 	// (bombs, fire, ...) keyed by tile index. Rendering and collision
-	// treat these tiles as their TileDef.DestroyedGID.
+	// treat these tiles as removed, revealing the layer below.
 	DestroyedTiles map[int]bool
 	Doors          []Door
 	Shrines        []Shrine
@@ -227,7 +234,24 @@ func (w *World) gidAt(tx, ty int) int {
 	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
 		return tile.GIDWall
 	}
-	return w.Tiles[ty*w.MapW+tx]
+	idx := ty*w.MapW + tx
+	if len(w.Layers) > 0 {
+		for k := len(w.Layers) - 1; k >= 0; k-- {
+			if idx < len(w.Layers[k]) {
+				gid := w.Layers[k][idx]
+				if gid != tile.GIDEmpty && !w.DestroyedTiles[idx] {
+					return gid
+				}
+				if gid != tile.GIDEmpty && k == 0 {
+					return gid
+				}
+			}
+		}
+	}
+	if idx < len(w.Tiles) {
+		return w.Tiles[idx]
+	}
+	return tile.GIDEmpty
 }
 
 // GIDAt returns the tile GID at tile coordinates (for debug / tools).
@@ -242,6 +266,25 @@ func (w *World) SurfaceAtFeet(px, py float64) tile.SurfaceDef {
 	}
 	tx := int(px / float64(w.TileW))
 	ty := int(py / float64(w.TileH))
+	if tx < 0 || ty < 0 || tx >= w.MapW || ty >= w.MapH {
+		return tile.DefaultSurface
+	}
+	idx := ty*w.MapW + tx
+	if len(w.Layers) > 0 {
+		for k := len(w.Layers) - 1; k >= 0; k-- {
+			if idx < len(w.Layers[k]) {
+				gid := w.Layers[k][idx]
+				if gid != tile.GIDEmpty {
+					if w.DestroyedTiles[idx] {
+						if def := tile.DefOf(gid); def.Destroyable() || def.OpenableByKey {
+							continue
+						}
+					}
+					return tile.SurfaceForGID(gid)
+				}
+			}
+		}
+	}
 	gid := w.gidAt(tx, ty)
 	return tile.SurfaceForGID(gid)
 }
@@ -256,7 +299,7 @@ func (w *World) solidTile(tx, ty int) bool {
 	return tile.FullySolidAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
 }
 
-// RectHitsSolid returns true if rect overlaps any solid tile or sub-tile solid region.
+// RectHitsSolid returns true if rect overlaps any solid tile or sub-tile solid region across all layers.
 func (w *World) RectHitsSolid(r geom.Rect) bool {
 	minTX := int(math.Floor(r.X / tile.Size))
 	maxTX := int(math.Floor((r.X + r.W - 0.000001) / tile.Size))
@@ -272,18 +315,41 @@ func (w *World) RectHitsSolid(r geom.Rect) bool {
 				}
 				continue
 			}
-			g := w.gidAt(tx, ty)
 			idx := w.tileIndex(tx, ty)
-			solidRects := tile.SolidRectsAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
-			for _, sr := range solidRects {
-				worldSR := geom.Rect{
-					X: float64(tx*tile.Size) + sr.X,
-					Y: float64(ty*tile.Size) + sr.Y,
-					W: sr.W,
-					H: sr.H,
+			if len(w.Layers) > 0 {
+				for k := 0; k < len(w.Layers); k++ {
+					if idx < len(w.Layers[k]) {
+						gid := w.Layers[k][idx]
+						if gid == tile.GIDEmpty {
+							continue
+						}
+						solidRects := tile.SolidRectsAt(gid, idx, w.DestroyedTiles, w.SmallKey > 0)
+						for _, sr := range solidRects {
+							worldSR := geom.Rect{
+								X: float64(tx*tile.Size) + sr.X,
+								Y: float64(ty*tile.Size) + sr.Y,
+								W: sr.W,
+								H: sr.H,
+							}
+							if r.Overlaps(worldSR) {
+								return true
+							}
+						}
+					}
 				}
-				if r.Overlaps(worldSR) {
-					return true
+			} else {
+				g := w.gidAt(tx, ty)
+				solidRects := tile.SolidRectsAt(g, idx, w.DestroyedTiles, w.SmallKey > 0)
+				for _, sr := range solidRects {
+					worldSR := geom.Rect{
+						X: float64(tx*tile.Size) + sr.X,
+						Y: float64(ty*tile.Size) + sr.Y,
+						W: sr.W,
+						H: sr.H,
+					}
+					if r.Overlaps(worldSR) {
+						return true
+					}
 				}
 			}
 		}

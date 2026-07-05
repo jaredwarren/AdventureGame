@@ -48,18 +48,44 @@ func (r *Renderer) DrawWorld(w *world.World) {
 	for ty := ty0; ty < ty1; ty++ {
 		for tx := tx0; tx < tx1; tx++ {
 			idx := ty*w.MapW + tx
-			gid := w.Tiles[idx]
-			if w.DestroyedTiles[idx] {
-				if def := world.TileDefOf(gid); def.Destroyable() {
-					gid = def.ResolvedDestroyedGID()
-				}
-			}
 			x := float32(float64(tx*tile.Size) - ox)
 			y := float32(float64(ty*tile.Size) - oy)
-			if useTileSprites {
-				r.drawTile(gid, x, y)
+
+			if len(w.Layers) > 0 {
+				for k := 0; k < len(w.Layers); k++ {
+					if w.ActiveLayerFilter >= 0 && k != w.ActiveLayerFilter {
+						continue
+					}
+					if idx >= len(w.Layers[k]) {
+						continue
+					}
+					gid := w.Layers[k][idx]
+					if gid == tile.GIDEmpty {
+						continue
+					}
+					if w.DestroyedTiles[idx] {
+						if def := world.TileDefOf(gid); def.Destroyable() || def.OpenableByKey {
+							continue
+						}
+					}
+					if useTileSprites {
+						r.drawTile(gid, x, y)
+					} else {
+						r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size)
+					}
+				}
 			} else {
-				r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size)
+				gid := w.Tiles[idx]
+				if w.DestroyedTiles[idx] {
+					if def := world.TileDefOf(gid); def.Destroyable() {
+						gid = def.ResolvedDestroyedGID()
+					}
+				}
+				if useTileSprites {
+					r.drawTile(gid, x, y)
+				} else {
+					r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size)
+				}
 			}
 		}
 	}

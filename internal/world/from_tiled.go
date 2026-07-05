@@ -21,20 +21,41 @@ import (
 // collectedPersistent lists PersistentPickupSaveKey values already taken this run (from save);
 // when non-nil, pickups with matching keys are not spawned. Pass nil if nothing was collected yet.
 func BuildFromTiled(m *tiled.Map, mapID string, stats progression.Stats, collectedPersistent map[string]struct{}) (*World, error) {
-	tl := m.TileLayer("ground")
-	if tl == nil || len(tl.Data) != m.Width*m.Height {
-		return nil, fmt.Errorf("map %s: missing ground layer or bad data len", mapID)
+	var layers [][]int
+	for i := range m.Layers {
+		if m.Layers[i].Type == "tilelayer" && len(m.Layers[i].Data) == m.Width*m.Height {
+			layers = append(layers, append([]int(nil), m.Layers[i].Data...))
+		}
 	}
+	if len(layers) == 0 {
+		tl := m.TileLayer("ground")
+		if tl == nil || len(tl.Data) != m.Width*m.Height {
+			return nil, fmt.Errorf("map %s: missing ground layer or bad data len", mapID)
+		}
+		layers = append(layers, append([]int(nil), tl.Data...))
+	}
+	if len(layers) == 1 {
+		baseLayer := make([]int, m.Width*m.Height)
+		for i := range baseLayer {
+			baseLayer[i] = tile.GIDGrass
+		}
+		layers = [][]int{baseLayer, layers[0]}
+	}
+
+	topLayer := layers[len(layers)-1]
+
 	w := &World{
-		MapID:          mapID,
-		TileW:          m.TileWidth,
-		TileH:          m.TileHeight,
-		MapW:           m.Width,
-		MapH:           m.Height,
-		Tiles:          append([]int(nil), tl.Data...),
-		DestroyedTiles: make(map[int]bool),
-		Stats:          stats,
-		HP:             stats.MaxHP(),
+		MapID:             mapID,
+		TileW:             m.TileWidth,
+		TileH:             m.TileHeight,
+		MapW:              m.Width,
+		MapH:              m.Height,
+		Layers:            layers,
+		Tiles:             topLayer,
+		ActiveLayerFilter: -1,
+		DestroyedTiles:    make(map[int]bool),
+		Stats:             stats,
+		HP:                stats.MaxHP(),
 	}
 	autoTileWater(w)
 	autoTileWall(w)
