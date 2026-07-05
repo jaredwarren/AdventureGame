@@ -11,6 +11,14 @@ type RewardTarget interface {
 	PickupAddBomb()
 	PickupAddSmallKey()
 	PickupGrantTorch()
+	PickupGrantPegasusBoots()
+	PickupGrantItem(itemID string)
+}
+
+func ApplyItemReward(itemID string) func(RewardTarget) {
+	return func(rt RewardTarget) {
+		rt.PickupGrantItem(itemID)
+	}
 }
 
 func applyCoin(rt RewardTarget) {
@@ -34,5 +42,9 @@ func applySmallKey(rt RewardTarget) {
 }
 
 func applyTorch(rt RewardTarget) {
-	rt.PickupGrantTorch()
+	rt.PickupGrantItem("torch")
+}
+
+func applyPegasusBoots(rt RewardTarget) {
+	rt.PickupGrantItem("pegasus_boots")
 }

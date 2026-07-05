@@ -20,7 +20,8 @@ var pickupDrawers = map[*world.PickupKind]pickupDrawer{
 	world.PickupHeart:    drawPickupHeart,
 	world.PickupBomb:     drawPickupBomb,
 	world.PickupSmallKey: drawPickupSmallKey,
-	world.PickupTorch:    drawPickupTorch,
+	world.PickupTorch:        drawPickupTorch,
+	world.PickupPegasusBoots: drawPickupPegasusBoots,
 }
 
 func drawPickupCoin(dst *ebiten.Image, px, py, w, h float32) {
@@ -77,4 +78,18 @@ func drawPickupTorch(dst *ebiten.Image, px, py, w, h float32) {
 	innerFlame.QuadTo(px+w*0.7, py+h*0.3, px+w*0.5, py+h*0.15)
 	innerFlame.Close()
 	drawPath(dst, innerFlame, color.RGBA{0xff, 0xa5, 0x00, 0xff}, true, 0)
+}
+
+func drawPickupPegasusBoots(dst *ebiten.Image, px, py, w, h float32) {
+	// Boot body (red/brown speed boot)
+	vector.FillRect(dst, px+w*0.25, py+h*0.3, w*0.3, h*0.5, color.RGBA{0xb0, 0x25, 0x25, 0xff}, false)
+	vector.FillRect(dst, px+w*0.25, py+h*0.65, w*0.55, h*0.25, color.RGBA{0xb0, 0x25, 0x25, 0xff}, false)
+	// Gold trim & wing accent
+	vector.FillRect(dst, px+w*0.25, py+h*0.3, w*0.3, h*0.1, color.RGBA{0xff, 0xd7, 0x00, 0xff}, false)
+	wing := &vector.Path{}
+	wing.MoveTo(px+w*0.15, py+h*0.35)
+	wing.LineTo(px+w*0.35, py+h*0.45)
+	wing.LineTo(px+w*0.2, py+h*0.55)
+	wing.Close()
+	drawPath(dst, wing, color.RGBA{0xff, 0xf0, 0xaa, 0xff}, true, 0)
 }

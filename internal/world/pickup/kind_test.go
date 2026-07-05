@@ -13,6 +13,8 @@ func (s *rewardStub) PickupMaxHP() int        { return 10 }
 func (s *rewardStub) PickupAddBomb()          {}
 func (s *rewardStub) PickupAddSmallKey()      {}
 func (s *rewardStub) PickupGrantTorch()       {}
+func (s *rewardStub) PickupGrantPegasusBoots() {}
+func (s *rewardStub) PickupGrantItem(string)   {}
 
 func TestFromTiled(t *testing.T) {
 	t.Parallel()
@@ -36,8 +38,8 @@ func TestToastMessage(t *testing.T) {
 
 func TestAll_Count(t *testing.T) {
 	t.Parallel()
-	if len(All) != 5 {
-		t.Fatalf("expected 5 pickups, got %d", len(All))
+	if len(All) != 6 {
+		t.Fatalf("expected 6 pickups, got %d", len(All))
 	}
 }
 

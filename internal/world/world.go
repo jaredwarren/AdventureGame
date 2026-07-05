@@ -175,10 +175,13 @@ type World struct {
 	Currency int
 	// Bombs is how many bomb items the player holds; pickups increment (capped at
 	// Player.MaxBombs via MaxBombsCarry), placing a bomb decrements (see TryDamageFaceTile(DamageBomb)).
-	Bombs        int
-	HasTorch     bool
-	SmallKey     int
-	SelectedItem ItemSlot
+	Bombs           int
+	HasTorch        bool
+	HasPegasusBoots bool
+	OwnedItems      map[string]bool
+	ActiveBuffs     []Buff
+	SmallKey        int
+	SelectedItem    ItemSlot
 
 	// Tick is the sim-frame counter; incremented by systems.TimersSystem so
 	// other systems can key periodic effects off a world-owned clock.
@@ -230,6 +233,17 @@ func (w *World) gidAt(tx, ty int) int {
 // GIDAt returns the tile GID at tile coordinates (for debug / tools).
 func (w *World) GIDAt(tx, ty int) int {
 	return w.gidAt(tx, ty)
+}
+
+// SurfaceAtFeet returns the SurfaceDef for the tile at world position (px, py).
+func (w *World) SurfaceAtFeet(px, py float64) tile.SurfaceDef {
+	if w == nil || w.TileW <= 0 || w.TileH <= 0 {
+		return tile.DefaultSurface
+	}
+	tx := int(px / float64(w.TileW))
+	ty := int(py / float64(w.TileH))
+	gid := w.gidAt(tx, ty)
+	return tile.SurfaceForGID(gid)
 }
 
 func (w *World) tileIndex(tx, ty int) int {
@@ -560,7 +574,7 @@ func (w *World) TrySwingSword() bool {
 // TrySwingTorch starts a torch swing if the player has a torch and no
 // sword or torch animation is already running.
 func (w *World) TrySwingTorch() bool {
-	if !w.HasTorch {
+	if !w.HasItem("torch") {
 		return false
 	}
 	if w.Player.TorchSwing > 0 || w.Player.TorchSwingCD > 0 {

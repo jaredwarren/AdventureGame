@@ -55,6 +55,17 @@
       "ox": 0,
       "oy": 0,
       "comment": "PickupTorch"
+    },
+    {
+      "sx": 750,
+      "sy": 450,
+      "sw": 150,
+      "sh": 480,
+      "dw": 12,
+      "dh": 12,
+      "ox": 0,
+      "oy": 0,
+      "comment": "PickupPegasusBoots"
     }
   ]
 }

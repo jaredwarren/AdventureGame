@@ -51,5 +51,25 @@ func (TimersSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			w.Enemies[i].HurtCD--
 		}
 	}
+	if len(w.ActiveBuffs) > 0 {
+		active := w.ActiveBuffs[:0]
+		for i := range w.ActiveBuffs {
+			b := &w.ActiveBuffs[i]
+			if b.OnTick != nil {
+				b.OnTick(w, b)
+			}
+			if b.Duration > 0 {
+				b.Duration--
+			}
+			if b.Duration == 0 {
+				if b.OnExpire != nil {
+					b.OnExpire(w, b)
+				}
+			} else {
+				active = append(active, *b)
+			}
+		}
+		w.ActiveBuffs = active
+	}
 	return nil
 }

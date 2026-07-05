@@ -75,8 +75,8 @@ func (r *Renderer) drawNightOverlay(w *world.World) {
 	py := float32(pr.Y - oy + pr.H*0.5)
 
 	lightR := float32(0.0)
-	if w.HasTorch {
-		lightR = float32(w.Player.EffectiveTorchLightRadius())
+	if w.HasCapability(world.CapLightSource) {
+		lightR = float32(w.EffectiveStat(world.StatTorchLightRadius, w.Player.EffectiveTorchLightRadius()))
 	}
 
 	op := &ebiten.DrawRectShaderOptions{}

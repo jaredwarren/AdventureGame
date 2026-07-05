@@ -56,7 +56,7 @@ func (s *PlayScene) tickAmbientParticles(w *world.World) {
 		s.particles = append(s.particles, NewDustParticle(rx, ry))
 	}
 
-	if w.HasTorch && w.SelectedItem == world.ItemSlotTorch && rand.Float64() < 0.25 {
+	if w.HasItem("torch") && w.SelectedItem == world.ItemSlotTorch && rand.Float64() < 0.25 {
 		pr := w.PlayerRect()
 		px := pr.X + pr.W*0.5
 		py := pr.Y + pr.H*0.5

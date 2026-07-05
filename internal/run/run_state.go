@@ -10,7 +10,9 @@ import (
 // RunState is the portable per-run player payload: stats, inventory, tuning, and world clock.
 type RunState struct {
 	HP, Currency, Bombs, SmallKey, TimeOfDay int
-	HasTorch, SprintHeld, SprintExhausted    bool
+	HasTorch, HasPegasusBoots                bool
+	OwnedItems                               map[string]bool
+	SprintHeld, SprintExhausted              bool
 	Stats                                    progression.Stats
 	SelectedItem                             world.ItemSlot
 	PlayerTuning                             balance.PlayerTuning
@@ -21,9 +23,23 @@ func RunStateFromWorld(w *world.World) RunState {
 	if w == nil {
 		return RunState{Stats: progression.DefaultStats(), PlayerTuning: balance.DefaultPlayerTuning()}
 	}
+	owned := make(map[string]bool)
+	if w.OwnedItems != nil {
+		for id, flag := range w.OwnedItems {
+			if flag {
+				owned[id] = true
+			}
+		}
+	}
+	if w.HasTorch {
+		owned["torch"] = true
+	}
+	if w.HasPegasusBoots {
+		owned["pegasus_boots"] = true
+	}
 	return RunState{
-		HP: w.HP, Currency: w.Currency, Bombs: w.Bombs, HasTorch: w.HasTorch, SmallKey: w.SmallKey,
-		Stats: w.Stats, TimeOfDay: w.TimeOfDay, SelectedItem: w.SelectedItem,
+		HP: w.HP, Currency: w.Currency, Bombs: w.Bombs, HasTorch: w.HasTorch || owned["torch"], HasPegasusBoots: w.HasPegasusBoots || owned["pegasus_boots"],
+		OwnedItems: owned, SmallKey: w.SmallKey, Stats: w.Stats, TimeOfDay: w.TimeOfDay, SelectedItem: w.SelectedItem,
 		SprintHeld: w.Player.SprintHeld, SprintExhausted: w.Player.SprintExhausted,
 		PlayerTuning: w.Player.PlayerTuning,
 	}
@@ -34,10 +50,20 @@ func RunStateFromSave(s *save.GameSave) RunState {
 	if s == nil {
 		return RunState{Stats: progression.DefaultStats(), PlayerTuning: balance.DefaultPlayerTuning()}
 	}
+	owned := make(map[string]bool)
+	for _, id := range s.OwnedItems {
+		owned[id] = true
+	}
+	if s.HasTorch {
+		owned["torch"] = true
+	}
+	if s.HasPegasusBoots {
+		owned["pegasus_boots"] = true
+	}
 	return RunState{
-		HP: s.HP, Currency: s.Currency, Bombs: s.Bombs, HasTorch: s.HasTorch, SmallKey: max(0, s.SmallKey),
-		Stats: StatsFromSave(s), TimeOfDay: s.TimeOfDay, SelectedItem: world.ItemSlot(s.SelectedItem),
-		PlayerTuning: s.Tuning,
+		HP: s.HP, Currency: s.Currency, Bombs: s.Bombs, HasTorch: s.HasTorch || owned["torch"], HasPegasusBoots: s.HasPegasusBoots || owned["pegasus_boots"],
+		OwnedItems: owned, SmallKey: max(0, s.SmallKey), Stats: StatsFromSave(s), TimeOfDay: s.TimeOfDay,
+		SelectedItem: world.ItemSlot(s.SelectedItem), PlayerTuning: s.Tuning,
 	}
 }
 
@@ -46,9 +72,23 @@ func (rs RunState) ApplyTo(w *world.World) {
 	if w == nil {
 		return
 	}
-	w.HP, w.Currency, w.Bombs, w.HasTorch, w.SmallKey = rs.HP, rs.Currency, w.ClampBombsCarry(rs.Bombs), rs.HasTorch, max(0, rs.SmallKey)
+	w.HP, w.Currency, w.Bombs, w.HasTorch, w.HasPegasusBoots, w.SmallKey = rs.HP, rs.Currency, w.ClampBombsCarry(rs.Bombs), rs.HasTorch, rs.HasPegasusBoots, max(0, rs.SmallKey)
 	w.Stats, w.TimeOfDay, w.SelectedItem = rs.Stats, rs.TimeOfDay, rs.SelectedItem
 	w.Player.SprintHeld, w.Player.SprintExhausted, w.Player.PlayerTuning = rs.SprintHeld, rs.SprintExhausted, rs.PlayerTuning
+	if w.OwnedItems == nil {
+		w.OwnedItems = make(map[string]bool)
+	}
+	for id, flag := range rs.OwnedItems {
+		if flag {
+			w.GrantItem(id)
+		}
+	}
+	if w.HasTorch {
+		w.GrantItem("torch")
+	}
+	if w.HasPegasusBoots {
+		w.GrantItem("pegasus_boots")
+	}
 	if w.HP > w.MaxHP() {
 		w.HP = w.MaxHP()
 	}
@@ -56,9 +96,16 @@ func (rs RunState) ApplyTo(w *world.World) {
 
 // ToGameSave serializes run state into a save payload for mapID at (px, py).
 func (rs RunState) ToGameSave(mapID string, px, py float64) *save.GameSave {
+	var ownedList []string
+	for id, flag := range rs.OwnedItems {
+		if flag {
+			ownedList = append(ownedList, id)
+		}
+	}
 	return &save.GameSave{
 		MapID: mapID, PlayerX: px, PlayerY: py, HP: rs.HP, Currency: rs.Currency, Bombs: rs.Bombs,
-		HasTorch: rs.HasTorch, SmallKey: rs.SmallKey, Vitality: rs.Stats.Vitality, Resolve: rs.Stats.Resolve,
+		HasTorch: rs.HasTorch || rs.OwnedItems["torch"], HasPegasusBoots: rs.HasPegasusBoots || rs.OwnedItems["pegasus_boots"],
+		OwnedItems: ownedList, SmallKey: rs.SmallKey, Vitality: rs.Stats.Vitality, Resolve: rs.Stats.Resolve,
 		Might: rs.Stats.Might, Wits: rs.Stats.Wits, Fortune: rs.Stats.Fortune, TimeOfDay: rs.TimeOfDay,
 		SelectedItem: int(rs.SelectedItem), Tuning: rs.PlayerTuning,
 	}

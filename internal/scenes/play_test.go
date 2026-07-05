@@ -52,6 +52,20 @@ func TestSprintStaminaLogic(t *testing.T) {
 		_ = staminaSys.Update(w, &bus, 1.0/60)
 	}
 
+	// 0. Without Pegasus Boots, holding Sprint should NOT trigger SprintHeld.
+	mi.sprintDown = true
+	mi.axisX = 1
+	stepTick()
+	if w.Player.SprintHeld {
+		t.Error("expected SprintHeld to be false when player does not have Pegasus Boots")
+	}
+	if w.Player.Stamina != w.MaxStamina() {
+		t.Errorf("expected stamina not to drain without Pegasus Boots, got %d", w.Player.Stamina)
+	}
+
+	// Grant Pegasus Boots for sprint logic testing
+	w.HasPegasusBoots = true
+
 	// 1. Stand still, hold Sprint. Stamina should NOT drain, speed should be base.
 	mi.sprintDown = true
 	mi.axisX = 0

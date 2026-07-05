@@ -372,6 +372,25 @@
           ]
         },
         {
+          "id": 10,
+          "name": "pegasus_boots_chest",
+          "type": "pickup",
+          "x": 120,
+          "y": 100,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "pegasus_boots"
+            },
+            {
+              "name": "persistent",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
           "id": 5,
           "name": "to_field2",
           "type": "door",

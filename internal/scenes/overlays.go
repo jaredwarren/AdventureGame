@@ -69,16 +69,29 @@ func DrawHUD(r services.Renderer, w *world.World, sess *run.Session) {
 		px += pillW + pillGap
 	}
 	drawSlot(world.PickupBomb, w.SelectedItem == world.ItemSlotBomb, fmt.Sprintf("%d", w.Bombs))
-	if w.HasTorch {
-		drawSlot(world.PickupTorch, w.SelectedItem == world.ItemSlotTorch, "")
+	for _, item := range world.RegisteredItems() {
+		if item.Category == world.CategorySelectable && item.ID != "bomb" {
+			if w.HasItem(item.ID) && item.PickupKind != nil {
+				drawSlot(item.PickupKind, w.SelectedItem == world.ItemSlotTorch, "")
+			}
+		}
+	}
+	for _, item := range world.RegisteredItems() {
+		if item.Category == world.CategoryPassive {
+			if w.HasItem(item.ID) && item.PickupKind != nil {
+				drawSlot(item.PickupKind, false, "")
+			}
+		}
 	}
 
-	barW := 60
-	st := w.Player.Stamina
-	maxS := w.MaxStamina()
-	fw := float32(st) / float32(maxS) * float32(barW)
-	r.FillRect(4, float32(y+12), float32(barW), 4, color.RGBA{0x30, 0x30, 0x40, 0xff})
-	r.FillRect(4, float32(y+12), fw, 4, color.RGBA{0x50, 0xa0, 0xff, 0xff})
+	if w.HasCapability(world.CapSprint) {
+		barW := 60
+		st := w.Player.Stamina
+		maxS := w.MaxStamina()
+		fw := float32(st) / float32(maxS) * float32(barW)
+		r.FillRect(4, float32(y+12), float32(barW), 4, color.RGBA{0x30, 0x30, 0x40, 0xff})
+		r.FillRect(4, float32(y+12), fw, 4, color.RGBA{0x50, 0xa0, 0xff, 0xff})
+	}
 
 	r.DrawText(4, 208, fmt.Sprintf("map %s", w.MapID))
 	r.DrawText(4, 220, fmt.Sprintf("weekly %d", sess.WeeklySeed))
@@ -126,7 +139,7 @@ func DrawDebugOverlay(r services.Renderer, sess *run.Session, sceneID SceneID, e
 	line("gid@feet %d  dir %s", gid, world.DirLabel(w.Player.Dir))
 	line("hp %d/%d stam %d/%d", w.HP, w.MaxHP(), w.Player.Stamina, w.MaxStamina())
 	line("swing %d cd %d torch %d tcd %d i-%d dodge %d", w.Player.Swing, w.Player.SwingCD, w.Player.TorchSwing, w.Player.TorchSwingCD, w.Player.Invuln, w.Player.DodgeTimer)
-	line("coin %d key %d bomb %d/%d torch %v", w.Currency, w.SmallKey, w.Bombs, w.MaxBombsCarry(), w.HasTorch)
+	line("coin %d key %d bomb %d/%d torch %v", w.Currency, w.SmallKey, w.Bombs, w.MaxBombsCarry(), w.HasItem("torch"))
 	wst := w.Stats
 	line("stats V%d R%d M%d W%d F%d", wst.Vitality, wst.Resolve, wst.Might, wst.Wits, wst.Fortune)
 
@@ -162,7 +175,7 @@ func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
 	tx := int(panelX) + 8
 	r.DrawTextOpt(tx+56, int(panelY)+6, "ITEMS", services.TextOptions{Color: color.RGBA{0xff, 0xd7, 0x00, 0xff}})
 
-	// Build slot list.
+	// Build slot list dynamically.
 	type slot struct {
 		label string
 		kind  world.ItemSlot
@@ -170,7 +183,7 @@ func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
 	slots := []slot{
 		{fmt.Sprintf("BOMB  x%d/%d", w.Bombs, w.MaxBombsCarry()), world.ItemSlotBomb},
 	}
-	if w.HasTorch {
+	if w.HasItem("torch") {
 		slots = append(slots, slot{"TORCH", world.ItemSlotTorch})
 	}
 

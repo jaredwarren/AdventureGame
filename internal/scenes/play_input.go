@@ -48,7 +48,7 @@ func (s *PlayScene) tryDropBomb(ctx GameContext, w *world.World) {
 }
 
 func (s *PlayScene) trySwingTorch(ctx GameContext, w *world.World) {
-	if !w.HasTorch {
+	if !w.HasItem("torch") {
 		return
 	}
 	if w.TrySwingTorch() {
@@ -67,7 +67,7 @@ func (s *PlayScene) handleItemMenu(ctx GameContext, w *world.World) {
 
 	// Build ordered slot list based on what player owns.
 	slots := []world.ItemSlot{world.ItemSlotBomb}
-	if w.HasTorch {
+	if w.HasItem("torch") {
 		slots = append(slots, world.ItemSlotTorch)
 	}
 
@@ -99,15 +99,17 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 	in := ctx.Input()
 	ax, ay := in.Axis2D()
 	isMoving := ax != 0 || ay != 0
-	isSprintHeld := in.IsDown(services.ActionSprint)
+	isSprintHeld := w.HasCapability(world.CapSprint) && in.IsDown(services.ActionSprint)
 
 	w.Player.SprintHeld = isSprintHeld
 	w.Player.IsMoving = isMoving
 
-	spd := w.Player.EffectiveBaseSpeed()
+	spd := w.EffectiveStat(world.StatBaseSpeed, w.Player.EffectiveBaseSpeed())
 	if w.Player.IsSprinting {
-		spd = w.Player.EffectiveSprintSpeed()
+		spd = w.EffectiveStat(world.StatSprintSpeed, w.Player.EffectiveSprintSpeed())
 	}
+	surface := w.SurfaceAtFeet(w.Player.X, w.Player.Y)
+	spd *= surface.SpeedMultiplier
 
 	dx := float64(ax) * spd
 	dy := float64(ay) * spd

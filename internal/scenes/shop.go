@@ -101,11 +101,11 @@ func (s *ShopScene) getItems(w *world.World) []ShopItem {
 			Cost:        econ.ShopTorchCost,
 			Description: "See in the dark night",
 			Buy: func(w *world.World) bool {
-				w.HasTorch = true
+				w.GrantItem("torch")
 				return true
 			},
 			IsEnabled: func(w *world.World) bool {
-				return !w.HasTorch
+				return !w.HasItem("torch")
 			},
 		},
 	}

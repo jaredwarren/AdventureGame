@@ -30,8 +30,8 @@ func TestPickupAtlasRectsWithinPickupPNG(t *testing.T) {
 	if doc.SpriteSheet != PickupSpriteSheetFile {
 		t.Fatalf("atlas sprite_sheet %q must match embedded pickup PNG %q", doc.SpriteSheet, PickupSpriteSheetFile)
 	}
-	if len(doc.Frames) != 5 {
-		t.Fatalf("expected 5 frames (PickupKind order: coin, heart, bomb, small_key, torch), got %d", len(doc.Frames))
+	if len(doc.Frames) != 6 {
+		t.Fatalf("expected 6 frames (PickupKind order: coin, heart, bomb, small_key, torch, pegasus_boots), got %d", len(doc.Frames))
 	}
 	for i, fr := range doc.Frames {
 		if fr.SW < 1 || fr.SH < 1 {

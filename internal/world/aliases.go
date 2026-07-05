@@ -29,8 +29,9 @@ var (
 	PickupHeart    = pickup.Heart
 	PickupBomb     = pickup.Bomb
 	PickupSmallKey = pickup.SmallKey
-	PickupTorch    = pickup.Torch
-	AllPickups     = pickup.All
+	PickupTorch        = pickup.Torch
+	PickupPegasusBoots = pickup.PegasusBoots
+	AllPickups         = pickup.All
 )
 
 func PickupKindFromTiled(name string) *PickupKind { return pickup.FromTiled(name) }
