@@ -6,13 +6,12 @@
 package ebitenplat
 
 import (
-	"bytes"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
-	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/basicfont"
 
 	"github.com/jaredwarren/game-test/internal/render"
 	"github.com/jaredwarren/game-test/internal/services"
@@ -24,20 +23,11 @@ const useTileSprites = false
 const pickupFallbackPx = 12
 
 var (
-	gameTextFaceSource *text.GoTextFaceSource
-	gameTextFace       *text.GoTextFace
+	gameTextFace *text.GoXFace
 )
 
 func init() {
-	var err error
-	gameTextFaceSource, err = text.NewGoTextFaceSource(bytes.NewReader(goregular.TTF))
-	if err != nil {
-		panic("failed to parse font: " + err.Error())
-	}
-	gameTextFace = &text.GoTextFace{
-		Source: gameTextFaceSource,
-		Size:   12,
-	}
+	gameTextFace = text.NewGoXFace(basicfont.Face7x13)
 }
 
 // Renderer is the Ebiten-backed services.Renderer. Construct via
@@ -78,12 +68,24 @@ func (r *Renderer) EndFrame() { r.screen = nil }
 // Camera returns the active render camera.
 func (r *Renderer) Camera() *render.Camera { return r.camera }
 
-// DrawText renders text at (x, y) screen pixels using text/v2.
+// DrawText renders text at (x, y) screen pixels using default options.
 func (r *Renderer) DrawText(x, y int, str string) {
+	r.DrawTextOpt(x, y, str, services.TextOptions{})
+}
+
+// DrawTextOpt renders text at (x, y) screen pixels with custom scale and color.
+func (r *Renderer) DrawTextOpt(x, y int, str string, opts services.TextOptions) {
 	if r.screen == nil {
 		return
 	}
 	op := &text.DrawOptions{}
+	if opts.Color != nil {
+		op.ColorScale.ScaleWithColor(opts.Color)
+	}
+	scale := opts.Scale
+	if scale > 0 && scale != 1.0 {
+		op.GeoM.Scale(scale, scale)
+	}
 	op.GeoM.Translate(float64(x), float64(y))
 	text.Draw(r.screen, str, gameTextFace, op)
 }

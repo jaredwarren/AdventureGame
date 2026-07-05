@@ -30,8 +30,8 @@ const (
 	DamageFire
 )
 
-// Def declares the behavior and fallback rendering of a ground tile.
-type Def struct {
+// Tile declares the behavior and fallback rendering of a ground tile.
+type Tile struct {
 	GID  int
 	Name string
 
@@ -47,12 +47,12 @@ type Def struct {
 	VectorDraw    func(c Canvas, x, y, w, h float32)
 }
 
-func (d Def) IsFloor() bool { return !d.Solid }
-func (d Def) IsWall() bool  { return d.Solid }
-func (d Def) IsWater() bool { return d.Water }
-func (d Def) IsLand() bool  { return !d.Water }
+func (d Tile) IsFloor() bool { return !d.Solid }
+func (d Tile) IsWall() bool  { return d.Solid }
+func (d Tile) IsWater() bool { return d.Water }
+func (d Tile) IsLand() bool  { return !d.Water }
 
-func (d Def) DrawVector(c Canvas, x, y, w, h float32) {
+func (d Tile) DrawVector(c Canvas, x, y, w, h float32) {
 	if d.VectorDraw != nil {
 		d.VectorDraw(c, x, y, w, h)
 		return
@@ -60,7 +60,7 @@ func (d Def) DrawVector(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h, d.SwatchColor)
 }
 
-func (d Def) AcceptsDamage(k DamageKind) bool {
+func (d Tile) AcceptsDamage(k DamageKind) bool {
 	for _, dk := range d.DamageKinds {
 		if dk == k {
 			return true
@@ -69,16 +69,16 @@ func (d Def) AcceptsDamage(k DamageKind) bool {
 	return false
 }
 
-func (d Def) Destroyable() bool { return len(d.DamageKinds) > 0 }
+func (d Tile) Destroyable() bool { return len(d.DamageKinds) > 0 }
 
-func (d Def) ResolvedDestroyedGID() int {
+func (d Tile) ResolvedDestroyedGID() int {
 	if d.DestroyedGID == 0 {
 		return GIDGrass
 	}
 	return d.DestroyedGID
 }
 
-var defs = map[int]Def{
+var defs = map[int]Tile{
 	GIDEmpty:    {GID: GIDEmpty, Name: "empty", Solid: false, SwatchColor: color.RGBA{0x00, 0x00, 0x00, 0xff}, VectorDraw: drawEmpty},
 	GIDGrass:    {GID: GIDGrass, Name: "grass", Solid: false, FloorWeight: 0.58, SwatchColor: color.RGBA{0x55, 0x88, 0x55, 0xff}, VectorDraw: drawGrass},
 	GIDWall:     {GID: GIDWall, Name: "wall", Solid: true, SwatchColor: color.RGBA{0x40, 0x40, 0x50, 0xff}, VectorDraw: drawWall},
@@ -142,14 +142,14 @@ var defs = map[int]Def{
 }
 
 // DefOf returns the registered definition for a GID.
-func DefOf(gid int) Def {
+func DefOf(gid int) Tile {
 	if d, ok := defs[gid]; ok {
 		return d
 	}
-	return Def{GID: gid, Name: "unknown", Solid: true, SwatchColor: color.RGBA{0x30, 0x30, 0x38, 0xff}}
+	return Tile{GID: gid, Name: "unknown", Solid: true, SwatchColor: color.RGBA{0x30, 0x30, 0x38, 0xff}}
 }
 
-// RegisteredGIDs returns all GIDs with a Def, sorted ascending.
+// RegisteredGIDs returns all GIDs with a Tile, sorted ascending.
 func RegisteredGIDs() []int {
 	out := make([]int, 0, len(defs))
 	for gid := range defs {

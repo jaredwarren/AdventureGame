@@ -46,11 +46,13 @@ func (s *EditorScene) Draw(ctx GameContext) {
 		line += " ERR:" + s.errMsg
 	}
 	r.DrawText(4, 4, line)
-	r.DrawText(4, 16, "E mode  Tab menu  [ ] type  A add  Del  Ctrl+S save  Esc title")
+	r.DrawText(4, 16, "E mode  Tab menu  A add  Del")
 	if !s.modeTile {
 		types := world.MarkerTypeNames()
-		r.DrawText(4, 28, fmt.Sprintf("new: %s", types[s.markerTypeIndex%len(types)]))
+		r.DrawText(4, 28, fmt.Sprintf("new: %s  [ ] type  Ctrl+S save", types[s.markerTypeIndex%len(types)]))
 		s.drawSelectedEnemyProps(r)
+	} else {
+		r.DrawText(4, 28, "Ctrl+S save  Esc title")
 	}
 	if s.savedFlash > 0 {
 		r.DrawText(280, 4, "saved")

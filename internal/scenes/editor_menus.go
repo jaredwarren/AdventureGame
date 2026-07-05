@@ -72,7 +72,7 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	r.StrokeLine(panelX+4, panelY+panelH-footerH, panelX+panelW-4, panelY+panelH-footerH, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
 
 	// Footer hints
-	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn scroll  Enter confirm")
+	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn scroll   Enter")
 }
 
 func (s *EditorScene) drawItemMenu(ctx GameContext) {
@@ -115,5 +115,5 @@ func (s *EditorScene) drawItemMenu(ctx GameContext) {
 	r.StrokeLine(panelX+4, panelY+panelH-footerH, panelX+panelW-4, panelY+panelH-footerH, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
 
 	// Footer hints
-	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn select  Enter confirm")
+	r.DrawText(int(panelX)+10, int(panelY+panelH)-14, "Up/Dn select   Enter")
 }

@@ -29,6 +29,12 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
+// TextOptions configures scale and color for text rendering.
+type TextOptions struct {
+	Scale float64     // 0 defaults to 1.0 (normal size)
+	Color color.Color // nil defaults to default white text
+}
+
 // Renderer is the scene-facing draw API.
 //
 // Implementations must be safe to call with a nil world/screen in DrawWorld
@@ -58,6 +64,9 @@ type Renderer interface {
 	// (x, y) is the top-left in internal resolution pixels. Font, size, and
 	// color are renderer-defined (small pixel font today).
 	DrawText(x, y int, text string)
+
+	// DrawTextOpt renders text in screen space with custom scale and color.
+	DrawTextOpt(x, y int, text string, opts TextOptions)
 
 	// FillRect fills a screen-space rectangle.
 	FillRect(x, y, w, h float32, c color.RGBA)

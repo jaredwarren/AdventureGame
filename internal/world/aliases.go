@@ -8,9 +8,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
-
-
-type TileDef = tile.Def
+type TileDef = tile.Tile
 
 func TileDefOf(gid int) TileDef { return tile.DefOf(gid) }
 func RegisteredTileGIDs() []int { return tile.RegisteredGIDs() }

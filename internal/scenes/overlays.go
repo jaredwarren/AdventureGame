@@ -154,13 +154,13 @@ func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
 		return
 	}
 
-	const panelX, panelY float32 = 72, 52
-	const panelW, panelH float32 = 176, 120
+	const panelX, panelY float32 = 60, 52
+	const panelW, panelH float32 = 200, 120
 	r.FillRect(panelX, panelY, panelW, panelH, color.RGBA{0x08, 0x0a, 0x14, 0xe0})
 	r.StrokeRect(panelX, panelY, panelW, panelH, 1, color.RGBA{0x80, 0x80, 0xa0, 0xff})
 
 	tx := int(panelX) + 8
-	r.DrawText(tx+44, int(panelY)+6, "ITEMS")
+	r.DrawTextOpt(tx+56, int(panelY)+6, "ITEMS", services.TextOptions{Color: color.RGBA{0xff, 0xd7, 0x00, 0xff}})
 
 	// Build slot list.
 	type slot struct {
@@ -199,7 +199,7 @@ func DrawItemMenu(r services.Renderer, w *world.World, cursor int) {
 	r.DrawText(tx, infoY, fmt.Sprintf("V%d R%d M%d W%d F%d", st.Vitality, st.Resolve, st.Might, st.Wits, st.Fortune))
 
 	// Footer hint.
-	r.DrawText(tx, int(panelY)+int(panelH)-14, "up/dn select  Enter confirm  Esc close")
+	r.DrawText(tx, int(panelY)+int(panelH)-14, "Up/Dn select   Enter   Esc")
 }
 
 // DrawOverlayDim darkens the framebuffer under a pause/shop overlay.
