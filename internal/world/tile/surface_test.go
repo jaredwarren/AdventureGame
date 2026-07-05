@@ -8,13 +8,23 @@ func TestSurfaceProperties(t *testing.T) {
 		t.Errorf("expected default normal surface for GID 0, got %+v", def)
 	}
 
-	mud := MudSurface
-	if mud.SpeedMultiplier != 0.5 {
-		t.Errorf("mud speed multiplier = %f, want 0.5", mud.SpeedMultiplier)
+	waterDef := SurfaceForGID(GIDWater)
+	if waterDef.Type != SurfaceWater || waterDef.SpeedMultiplier != 0.5 {
+		t.Errorf("expected water surface for GIDWater, got %+v", waterDef)
 	}
 
-	ice := IceSurface
-	if ice.Friction != 0.1 {
-		t.Errorf("ice friction = %f, want 0.1", ice.Friction)
+	tileWater := DefOf(GIDWater)
+	if !tileWater.HasTag(TagWater) || !tileWater.HasTag(TagSolid) {
+		t.Errorf("expected GIDWater to have TagWater and TagSolid, got tags %v", tileWater.Tags)
+	}
+
+	tileWall := DefOf(GIDWall)
+	if !tileWall.IsWall() || tileWall.IsFloor() {
+		t.Error("expected GIDWall to be wall and not floor")
+	}
+
+	tileGrass := DefOf(GIDGrass)
+	if !tileGrass.IsFloor() || tileGrass.IsWall() {
+		t.Error("expected GIDGrass to be floor and not wall")
 	}
 }

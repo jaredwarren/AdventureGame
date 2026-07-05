@@ -93,37 +93,63 @@ type Buff struct {
 
 ---
 
-## 3. Surface & Tile Material Attributes
+## 3. Advanced Data-Driven Tile Pattern (TileTags & Embedded Surfaces)
 
 ### Concept
-Attaches physical attributes (friction, movement speed cost, hazard damage, environmental tags) to tile definitions, decoupling player movement and hazard systems from specific tile GIDs.
+Tile definitions directly embed physical surface attributes (`SurfaceDef`) and categorical capability tags (`TileTag`), making tile registration completely self-contained in `def.go`.
 
 ### Core Structure
 ```go
-type SurfaceType string
+type TileTag string
 
 const (
-	SurfaceNormal SurfaceType = "normal"
-	SurfaceIce    SurfaceType = "ice"
-	SurfaceMud    SurfaceType = "mud"
-	SurfaceLava   SurfaceType = "lava"
-	SurfaceWater  SurfaceType = "water"
+	TagSolid        TileTag = "solid"
+	TagWater        TileTag = "water"
+	TagWaterShore   TileTag = "water_shore"
+	TagDoor         TileTag = "door"
+	TagLock         TileTag = "lock"
+	TagIgnitable    TileTag = "ignitable"
+	TagDestructible TileTag = "destructible"
 )
 
 type SurfaceDef struct {
-	Type            SurfaceType
-	SpeedMultiplier float64 // e.g. 0.5 for Mud/Water, 1.0 for Normal
-	Friction        float64 // e.g. 0.1 for Ice (sliding), 1.0 for Normal
-	HazardDamage    int     // Damage per tick (e.g. 1 for Lava)
-	HazardInterval  int     // Damage tick interval in frames
+	Type            SurfaceType // SurfaceNormal, SurfaceIce, SurfaceMud, SurfaceLava, SurfaceWater
+	SpeedMultiplier float64     // e.g., 0.5 for Mud/Water slowdown, 1.0 for Normal
+	Friction        float64     // e.g., 0.1 for Ice (slippery), 1.0 for Normal
+	HazardDamage    int         // Damage per tick (e.g., 1 for Lava)
+	HazardInterval  int         // Damage tick interval in frames
 	Tags            []string
+}
+
+type Tile struct {
+	GID          int
+	Name         string
+	Tags         []TileTag
+	Surface      SurfaceDef
+	SolidRects   []geom.Rect
+	DamageKinds  []DamageKind
+	DestroyedGID int
+	SwatchColor  color.RGBA
+	VectorDraw   func(c Canvas, x, y, w, h float32)
 }
 ```
 
-### Integration Guidelines
-- Locomotion logic calculates effective speed as:
-  `finalSpeed = w.EffectiveStat(StatBaseSpeed, base) * currentTileSurface.SpeedMultiplier`
-- Ice sliding logic reads `currentTileSurface.Friction` to control deceleration.
+### Self-Contained Tile Example (`def.go`)
+```go
+// Adding a new environmental hazard tile (e.g. Lava or Mud):
+GIDLava: {
+	GID: GIDLava, Name: "lava",
+	Tags: []TileTag{TagSolid},
+	Surface: SurfaceDef{
+		Type: SurfaceLava, SpeedMultiplier: 0.7, HazardDamage: 1, HazardInterval: 30,
+	},
+	VectorDraw: drawLava,
+}
+
+// System consumption:
+surface := w.SurfaceAtFeet(px, py)
+effectiveSpeed *= surface.SpeedMultiplier
+```
 
 ---
 
@@ -138,7 +164,6 @@ type FXRule struct {
 	Sound       string  // Sound file name (e.g. "chest_open.wav")
 	Volume      float32 // Playback volume (0.0 - 1.0)
 	ShakeFrames int     // Camera screen-shake duration
-	Particle    string  // Particle effect preset
 }
 
 var FXRegistry = map[EventType]FXRule{
@@ -150,7 +175,7 @@ var FXRegistry = map[EventType]FXRule{
 
 ### Integration Guidelines
 - Scene or system event handler receives `Event` from `EventBus`.
-- Looks up `FXRule` in `FXRegistry` and triggers audio/visual feedback automatically.
+- Looks up `FXRule` in `FXRegistry` via `GetFXRule(evt)` and triggers audio/visual feedback automatically.
 
 ---
 

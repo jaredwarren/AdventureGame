@@ -109,20 +109,20 @@ func TestDef_IsWaterAndLand(t *testing.T) {
 
 	// GIDGrass should be land, not water
 	grass := DefOf(GIDGrass)
-	if !grass.IsLand() || grass.IsWater() || grass.Water || grass.WaterShore {
+	if !grass.IsLand() || grass.IsWater() || grass.Water() || grass.WaterShore() {
 		t.Errorf("expected grass to be land, got IsLand=%v IsWater=%v", grass.IsLand(), grass.IsWater())
 	}
 
 	// GIDWater should be water, but not shore
 	water := DefOf(GIDWater)
-	if water.IsLand() || !water.IsWater() || !water.Water || water.WaterShore {
-		t.Errorf("expected GIDWater to be water (non-shore), got IsLand=%v IsWater=%v WaterShore=%v", water.IsLand(), water.IsWater(), water.WaterShore)
+	if water.IsLand() || !water.IsWater() || !water.Water() || water.WaterShore() {
+		t.Errorf("expected GIDWater to be water (non-shore), got IsLand=%v IsWater=%v WaterShore=%v", water.IsLand(), water.IsWater(), water.WaterShore())
 	}
 
 	// GIDWaterShoreSEInner should be water and shore
 	seInner := DefOf(GIDWaterShoreSEInner)
-	if seInner.IsLand() || !seInner.IsWater() || !seInner.Water || !seInner.WaterShore {
-		t.Errorf("expected GIDWaterShoreSEInner to be water shore, got IsLand=%v IsWater=%v WaterShore=%v", seInner.IsLand(), seInner.IsWater(), seInner.WaterShore)
+	if seInner.IsLand() || !seInner.IsWater() || !seInner.Water() || !seInner.WaterShore() {
+		t.Errorf("expected GIDWaterShoreSEInner to be water shore, got IsLand=%v IsWater=%v WaterShore=%v", seInner.IsLand(), seInner.IsWater(), seInner.WaterShore())
 	}
 
 	// Satisfies Waterer interface

@@ -53,20 +53,11 @@ var (
 	}
 )
 
-// SurfaceForGID returns the SurfaceDef for a given tile GID.
+// SurfaceForGID returns the embedded SurfaceDef for a given tile GID.
 func SurfaceForGID(gid int) SurfaceDef {
 	def := DefOf(gid)
-	if def.Water {
-		return MudSurface
+	if def.Surface.Type != "" {
+		return def.Surface
 	}
-	switch def.Name {
-	case "mud":
-		return MudSurface
-	case "ice":
-		return IceSurface
-	case "lava":
-		return LavaSurface
-	default:
-		return DefaultSurface
-	}
+	return DefaultSurface
 }
