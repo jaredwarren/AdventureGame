@@ -33,7 +33,7 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 	}
 
-	gids := s.filteredTileGIDs()
+	items := s.currentMenuItems()
 
 	// Tile selection menu input handling
 	if s.showTileMenu {
@@ -45,7 +45,7 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		if in.JustPressed(services.ActionMoveUp) {
 			s.tileMenuSelect--
 			if s.tileMenuSelect < 0 {
-				s.tileMenuSelect = len(gids) - 1
+				s.tileMenuSelect = len(items) - 1
 			}
 			if s.tileMenuSelect < s.tileMenuScroll {
 				s.tileMenuScroll = s.tileMenuSelect
@@ -55,7 +55,7 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 		if in.JustPressed(services.ActionMoveDown) {
 			s.tileMenuSelect++
-			if s.tileMenuSelect >= len(gids) {
+			if s.tileMenuSelect >= len(items) {
 				s.tileMenuSelect = 0
 			}
 			if s.tileMenuSelect < s.tileMenuScroll {
@@ -66,8 +66,19 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 
 		if in.JustPressed(services.ActionConfirm) {
-			s.brushGID = gids[s.tileMenuSelect]
-			s.showTileMenu = false
+			item := items[s.tileMenuSelect]
+			if item.isCategory {
+				s.tileMenuCategory = item.category
+				s.tileMenuSelect = 0
+				s.tileMenuScroll = 0
+			} else if item.isBack {
+				s.tileMenuCategory = ""
+				s.tileMenuSelect = 0
+				s.tileMenuScroll = 0
+			} else {
+				s.brushGID = item.gid
+				s.showTileMenu = false
+			}
 			return nil
 		}
 
@@ -83,10 +94,21 @@ func (s *EditorScene) Update(ctx GameContext) error {
 				if my >= listY && my < listY+140 {
 					clickedRow := (my - listY) / itemH
 					clickedIndex := s.tileMenuScroll + clickedRow
-					if clickedIndex >= 0 && clickedIndex < len(gids) {
+					if clickedIndex >= 0 && clickedIndex < len(items) {
 						s.tileMenuSelect = clickedIndex
-						s.brushGID = gids[s.tileMenuSelect]
-						s.showTileMenu = false
+						item := items[s.tileMenuSelect]
+						if item.isCategory {
+							s.tileMenuCategory = item.category
+							s.tileMenuSelect = 0
+							s.tileMenuScroll = 0
+						} else if item.isBack {
+							s.tileMenuCategory = ""
+							s.tileMenuSelect = 0
+							s.tileMenuScroll = 0
+						} else {
+							s.brushGID = item.gid
+							s.showTileMenu = false
+						}
 					}
 				}
 			} else {
@@ -164,16 +186,32 @@ func (s *EditorScene) Update(ctx GameContext) error {
 	if s.modeTile && in.JustPressed(services.ActionEditorTileMenu) {
 		s.showTileMenu = true
 		s.tileMenuSelect = 0
-		for idx, gid := range gids {
-			if gid == s.brushGID {
+
+		// Determine category based on current brush GID
+		isWaterGID := s.brushGID == tile.GIDWater || (s.brushGID >= tile.GIDWaterShoreTop && s.brushGID <= tile.GIDWaterShoreSEInner)
+		isWallGID := s.brushGID == tile.GIDWall || (s.brushGID >= tile.GIDWallTop && s.brushGID <= tile.GIDWallSEInner)
+		isRockGID := s.brushGID == tile.GIDRock || (s.brushGID >= tile.GIDRockTop && s.brushGID <= tile.GIDRockSEInner)
+		if isWaterGID {
+			s.tileMenuCategory = "water"
+		} else if isWallGID {
+			s.tileMenuCategory = "wall"
+		} else if isRockGID {
+			s.tileMenuCategory = "rock"
+		} else {
+			s.tileMenuCategory = ""
+		}
+
+		items := s.currentMenuItems()
+		for idx, item := range items {
+			if !item.isCategory && !item.isBack && item.gid == s.brushGID {
 				s.tileMenuSelect = idx
 				break
 			}
 		}
 		if s.tileMenuSelect < s.tileMenuScroll || s.tileMenuSelect >= s.tileMenuScroll+7 {
 			s.tileMenuScroll = s.tileMenuSelect
-			if s.tileMenuScroll > len(gids)-7 {
-				s.tileMenuScroll = len(gids) - 7
+			if s.tileMenuScroll > len(items)-7 {
+				s.tileMenuScroll = len(items) - 7
 			}
 			if s.tileMenuScroll < 0 {
 				s.tileMenuScroll = 0
@@ -266,11 +304,14 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 		tx := int(wx) / tile.Size
 		ty := int(wy) / tile.Size
-		if in.MousePressed(services.MouseLeft) {
-			if !s.painting || tx != s.lastPaintTX || ty != s.lastPaintTY {
+		if in.MouseJustPressed(services.MouseLeft) {
+			s.painting = true
+			s.lastPaintTX, s.lastPaintTY = -1, -1
+		}
+		if in.MousePressed(services.MouseLeft) && s.painting {
+			if tx != s.lastPaintTX || ty != s.lastPaintTY {
 				s.paintTile(tx, ty)
 				s.lastPaintTX, s.lastPaintTY = tx, ty
-				s.painting = true
 				s.rebuild(ctx)
 			}
 		} else {

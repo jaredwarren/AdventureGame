@@ -2,13 +2,15 @@ package scenes
 
 import (
 	"image/color"
+	"strings"
 
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	r := ctx.Renderer()
-	gids := s.filteredTileGIDs()
+	items := s.currentMenuItems()
 
 	const panelX, panelY float32 = 70, 30
 	const panelW, panelH float32 = 180, 180
@@ -21,7 +23,11 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	r.StrokeRect(panelX, panelY, panelW, panelH, 1, color.RGBA{0x80, 0x80, 0xa0, 0xff})
 
 	// Header Text
-	r.DrawText(int(panelX)+50, int(panelY)+6, "SELECT TILE")
+	headerText := "SELECT TILE"
+	if s.tileMenuCategory != "" {
+		headerText = strings.ToUpper(s.tileMenuCategory)
+	}
+	r.DrawText(int(panelX)+50, int(panelY)+6, headerText)
 
 	// Divider below header
 	r.StrokeLine(panelX+4, panelY+headerH-2, panelX+panelW-4, panelY+headerH-2, 1, color.RGBA{0x50, 0x50, 0x70, 0xff})
@@ -30,11 +36,10 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 	visibleCount := 7
 	for i := 0; i < visibleCount; i++ {
 		idx := s.tileMenuScroll + i
-		if idx >= len(gids) {
+		if idx >= len(items) {
 			break
 		}
-		gid := gids[idx]
-		def := world.TileDefOf(gid)
+		item := items[idx]
 
 		rowY := panelY + headerH + float32(i)*rowH
 
@@ -44,15 +49,30 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 			r.StrokeRect(panelX+4, rowY+1, panelW-8, rowH-2, 1, color.RGBA{0x50, 0x80, 0xff, 0xff})
 		}
 
-		// Draw tile image fallback/sprite
-		r.DrawTileScreen(gid, panelX+8, rowY+2, 16, 16)
+		// Draw tile image/thumbnail
+		if !item.isBack {
+			thumbnailGID := item.gid
+			if item.isCategory {
+				if item.category == "water" {
+					thumbnailGID = tile.GIDWater
+				} else if item.category == "rock" {
+					thumbnailGID = tile.GIDRock
+				} else {
+					thumbnailGID = tile.GIDWall
+				}
+			}
+			r.DrawTileScreen(thumbnailGID, panelX+8, rowY+2, 16, 16)
+		} else {
+			// Draw simple back arrow or back symbol
+			r.DrawText(int(panelX)+10, int(rowY)+4, "<-")
+		}
 
-		// Draw tile name text
-		r.DrawText(int(panelX)+30, int(rowY)+4, def.Name)
+		// Draw tile/item name text
+		r.DrawText(int(panelX)+30, int(rowY)+4, item.name)
 	}
 
 	// Draw scrollbar
-	if len(gids) > visibleCount {
+	if len(items) > visibleCount {
 		trackX := panelX + panelW - 8
 		trackY := panelY + headerH + 2
 		trackH := float32(140) - 4
@@ -62,8 +82,8 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 		r.FillRect(trackX, trackY, trackW, trackH, color.RGBA{0x20, 0x20, 0x30, 0xff})
 
 		// Thumb
-		thumbH := trackH * float32(visibleCount) / float32(len(gids))
-		thumbY := trackY + trackH*float32(s.tileMenuScroll)/float32(len(gids))
+		thumbH := trackH * float32(visibleCount) / float32(len(items))
+		thumbY := trackY + trackH*float32(s.tileMenuScroll)/float32(len(items))
 
 		r.FillRect(trackX, thumbY, trackW, thumbH, color.RGBA{0x80, 0x80, 0xa0, 0xff})
 	}

@@ -40,9 +40,10 @@ type EditorScene struct {
 
 	savedFlash int
 
-	showTileMenu   bool
-	tileMenuSelect int
-	tileMenuScroll int
+	showTileMenu     bool
+	tileMenuSelect   int
+	tileMenuScroll   int
+	tileMenuCategory string
 
 	showItemMenu     bool
 	itemMenuSelect   int
@@ -61,6 +62,9 @@ var (
 		tile.GIDWallTop, tile.GIDWallBottom, tile.GIDWallLeft, tile.GIDWallRight,
 		tile.GIDWallNE, tile.GIDWallNW, tile.GIDWallSW, tile.GIDWallSE,
 		tile.GIDWallNEInner, tile.GIDWallNWInner, tile.GIDWallSWInner, tile.GIDWallSEInner,
+		tile.GIDRock, tile.GIDRockTop, tile.GIDRockBottom, tile.GIDRockLeft, tile.GIDRockRight,
+		tile.GIDRockNE, tile.GIDRockNW, tile.GIDRockSW, tile.GIDRockSE,
+		tile.GIDRockNEInner, tile.GIDRockNWInner, tile.GIDRockSWInner, tile.GIDRockSEInner,
 	}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].
 	editorBrushActions = []services.Action{
@@ -84,6 +88,7 @@ func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
 	s.showTileMenu = false
 	s.tileMenuSelect = 0
 	s.tileMenuScroll = 0
+	s.tileMenuCategory = ""
 	s.showItemMenu = false
 	s.itemMenuSelect = 0
 	if pickups := world.AllPickups; len(pickups) > 0 {

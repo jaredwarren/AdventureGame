@@ -73,7 +73,7 @@ func (d Tile) Solid() bool      { return d.HasTag(TagSolid) }
 func (d Tile) Wall() bool       { return d.HasTag(TagWall) }
 func (d Tile) Water() bool      { return d.HasTag(TagWater) }
 func (d Tile) WaterShore() bool { return d.HasTag(TagWaterShore) }
-func (d Tile) IsFloor() bool    { return !d.Solid() }
+func (d Tile) IsFloor() bool    { return d.GID == GIDGrass || d.GID == GIDFloor2 || d.GID == GIDDirtPath }
 func (d Tile) IsWall() bool     { return d.Solid() }
 func (d Tile) IsWater() bool    { return d.Water() }
 func (d Tile) IsLand() bool     { return !d.Water() && !d.Solid() }
@@ -111,6 +111,7 @@ var waterSurface = SurfaceDef{
 }
 
 var wallColor = color.RGBA{0x40, 0x40, 0x50, 0xff}
+var rockColor = color.RGBA{0x8b, 0x4d, 0x3a, 0xff}
 
 var defs = map[int]Tile{
 	GIDEmpty:    {GID: GIDEmpty, Name: "empty", SwatchColor: color.RGBA{0x00, 0x00, 0x00, 0xff}, VectorDraw: drawEmpty},
@@ -123,6 +124,7 @@ var defs = map[int]Tile{
 	GIDFloor2:   {GID: GIDFloor2, Name: "floor2", FloorWeight: 0.42, SwatchColor: color.RGBA{0x50, 0x50, 0x5c, 0xff}, VectorDraw: drawFloor2},
 	GIDDirtPath: {GID: GIDDirtPath, Name: "dirt_path", FloorWeight: 0.3, SwatchColor: color.RGBA{0x8b, 0x6a, 0x3a, 0xff}, VectorDraw: drawDirtPath},
 	GIDTree:     {GID: GIDTree, Name: "tree", Tags: []TileTag{TagIgnitable}, DamageKinds: []DamageKind{DamageFire}, SwatchColor: color.RGBA{0x2d, 0x5a, 0x2a, 0xff}, VectorDraw: drawTree},
+	GIDRock:     {GID: GIDRock, Name: "rock", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor, VectorDraw: drawRock},
 
 	GIDWallTop: {
 		GID: GIDWallTop, Name: "wall_top", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: wallColor,
@@ -222,6 +224,55 @@ var defs = map[int]Tile{
 	GIDWaterShoreSEInner: {
 		GID: GIDWaterShoreSEInner, Name: "water_shore_se_inner", Tags: []TileTag{TagSolid, TagWater, TagWaterShore}, Surface: waterSurface, SwatchColor: color.RGBA{0x2a, 0x4a, 0x8a, 0xff},
 		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}, {X: 8, Y: 0, W: 8, H: 8}}, VectorDraw: drawShoreSEInner,
+	},
+
+	GIDRockTop: {
+		GID: GIDRockTop, Name: "rock_top", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 8, W: 16, H: 8}}, VectorDraw: drawRockTop,
+	},
+	GIDRockBottom: {
+		GID: GIDRockBottom, Name: "rock_bottom", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 16, H: 8}}, VectorDraw: drawRockBottom,
+	},
+	GIDRockLeft: {
+		GID: GIDRockLeft, Name: "rock_left", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 16}}, VectorDraw: drawRockLeft,
+	},
+	GIDRockRight: {
+		GID: GIDRockRight, Name: "rock_right", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}}, VectorDraw: drawRockRight,
+	},
+	GIDRockNE: {
+		GID: GIDRockNE, Name: "rock_ne", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 8, W: 8, H: 8}}, VectorDraw: drawRockNE,
+	},
+	GIDRockNW: {
+		GID: GIDRockNW, Name: "rock_nw", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 8, W: 8, H: 8}}, VectorDraw: drawRockNW,
+	},
+	GIDRockSW: {
+		GID: GIDRockSW, Name: "rock_sw", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 8}}, VectorDraw: drawRockSW,
+	},
+	GIDRockSE: {
+		GID: GIDRockSE, Name: "rock_se", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 8}}, VectorDraw: drawRockSE,
+	},
+	GIDRockNEInner: {
+		GID: GIDRockNEInner, Name: "rock_ne_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}, {X: 8, Y: 8, W: 8, H: 8}}, VectorDraw: drawRockNEInner,
+	},
+	GIDRockNWInner: {
+		GID: GIDRockNWInner, Name: "rock_nw_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 16}, {X: 0, Y: 8, W: 8, H: 8}}, VectorDraw: drawRockNWInner,
+	},
+	GIDRockSWInner: {
+		GID: GIDRockSWInner, Name: "rock_sw_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 8, Y: 0, W: 8, H: 16}, {X: 0, Y: 0, W: 8, H: 8}}, VectorDraw: drawRockSWInner,
+	},
+	GIDRockSEInner: {
+		GID: GIDRockSEInner, Name: "rock_se_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
+		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}, {X: 8, Y: 0, W: 8, H: 8}}, VectorDraw: drawRockSEInner,
 	},
 }
 

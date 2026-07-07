@@ -48,4 +48,19 @@ const (
 	GIDWallNWInner = 31
 	GIDWallSWInner = 32
 	GIDWallSEInner = 33
+
+	// Rock tiles
+	GIDRock        = 34
+	GIDRockTop     = 35
+	GIDRockBottom  = 36
+	GIDRockLeft    = 37
+	GIDRockRight   = 38
+	GIDRockNE      = 39
+	GIDRockNW      = 40
+	GIDRockSW      = 41
+	GIDRockSE      = 42
+	GIDRockNEInner = 43
+	GIDRockNWInner = 44
+	GIDRockSWInner = 45
+	GIDRockSEInner = 46
 )

@@ -153,7 +153,6 @@ func drawDirtPath(c Canvas, x, y, w, h float32) {
 }
 
 func drawTree(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileGrassColor)
 	c.FillRect(x+w*0.4, y+h*0.6, w*0.2, h*0.3, color.RGBA{0x6b, 0x4a, 0x2a, 0xff})
 	c.FillCircle(x+w*0.5, y+h*0.4, w*0.3, color.RGBA{0x2d, 0x7a, 0x2a, 0xff})
 	c.StrokeCircle(x+w*0.5, y+h*0.4, w*0.3, 1, color.RGBA{0x1d, 0x5a, 0x1a, 0xff})
@@ -245,4 +244,135 @@ func drawShoreSEInner(c Canvas, x, y, w, h float32) {
 	lp.MoveTo(x+w, y+h*0.5)
 	lp.QuadTo(x+w, y+h, x+w*0.5, y+h)
 	c.DrawPath(lp, tileShoreLineColor, false, 1)
+}
+
+var (
+	tileRockColor     = color.RGBA{0x8b, 0x4d, 0x3a, 0xff}
+	tileRockEdgeColor = color.RGBA{0x5a, 0x2a, 0x1d, 0xff}
+)
+
+func drawRock(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileRockColor)
+	c.StrokeRect(x+0.5, y+0.5, w-1, h-1, 1, tileRockEdgeColor)
+	// Draw craggy/jagged cracks inside
+	c.StrokeLine(x+w*0.2, y+h*0.3, x+w*0.4, y+h*0.4, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.4, y+h*0.4, x+w*0.3, y+h*0.7, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.7, y+h*0.2, x+w*0.6, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.6, y+h*0.5, x+w*0.8, y+h*0.8, 1, tileRockEdgeColor)
+}
+
+func drawRockTop(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y+h*0.5, w, h*0.5, tileRockColor)
+	// Draw jagged boundary
+	c.StrokeLine(x, y+h*0.5, x+w*0.3, y+h*0.45, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.3, y+h*0.45, x+w*0.6, y+h*0.55, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.6, y+h*0.55, x+w, y+h*0.5, 1, tileRockEdgeColor)
+	// Crag lines inside
+	c.StrokeLine(x+w*0.5, y+h*0.6, x+w*0.4, y+h*0.8, 1, tileRockEdgeColor)
+}
+
+func drawRockBottom(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h*0.5, tileRockColor)
+	// Jagged boundary
+	c.StrokeLine(x, y+h*0.5, x+w*0.4, y+h*0.55, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.4, y+h*0.55, x+w*0.7, y+h*0.45, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.7, y+h*0.45, x+w, y+h*0.5, 1, tileRockEdgeColor)
+	// Crag lines
+	c.StrokeLine(x+w*0.5, y+h*0.4, x+w*0.6, y+h*0.2, 1, tileRockEdgeColor)
+}
+
+func drawRockLeft(c Canvas, x, y, w, h float32) {
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileRockColor)
+	// Jagged boundary
+	c.StrokeLine(x+w*0.5, y, x+w*0.45, y+h*0.3, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.45, y+h*0.3, x+w*0.55, y+h*0.7, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.55, y+h*0.7, x+w*0.5, y+h, 1, tileRockEdgeColor)
+	// Crag lines
+	c.StrokeLine(x+w*0.7, y+h*0.5, x+w*0.8, y+h*0.6, 1, tileRockEdgeColor)
+}
+
+func drawRockRight(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w*0.5, h, tileRockColor)
+	// Jagged boundary
+	c.StrokeLine(x+w*0.5, y, x+w*0.55, y+h*0.4, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.55, y+h*0.4, x+w*0.45, y+h*0.8, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.45, y+h*0.8, x+w*0.5, y+h, 1, tileRockEdgeColor)
+	// Crag lines
+	c.StrokeLine(x+w*0.2, y+h*0.5, x+w*0.3, y+h*0.4, 1, tileRockEdgeColor)
+}
+
+func drawRockNW(c Canvas, x, y, w, h float32) {
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileRockColor)
+	// Jagged edges
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.45, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.75, y+h*0.45, x+w, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.45, y+h*0.75, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.45, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
+}
+
+func drawRockNE(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileRockColor)
+	// Jagged edges
+	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.45, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.25, y+h*0.45, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.55, y+h*0.75, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.55, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
+}
+
+func drawRockSW(c Canvas, x, y, w, h float32) {
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileRockColor)
+	// Jagged edges
+	c.StrokeLine(x+w*0.5, y, x+w*0.45, y+h*0.25, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.45, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.55, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.75, y+h*0.55, x+w, y+h*0.5, 1, tileRockEdgeColor)
+}
+
+func drawRockSE(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w*0.5, h*0.5, tileRockColor)
+	// Jagged edges
+	c.StrokeLine(x+w*0.5, y, x+w*0.55, y+h*0.25, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.55, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.55, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.25, y+h*0.55, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+}
+
+func drawRockNEInner(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w*0.5, h, tileRockColor)
+	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileRockColor)
+	// Jagged inner corner boundaries
+	c.StrokeLine(x+w*0.5, y, x+w*0.45, y+h*0.25, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.45, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.55, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.75, y+h*0.55, x+w, y+h*0.5, 1, tileRockEdgeColor)
+}
+
+func drawRockNWInner(c Canvas, x, y, w, h float32) {
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileRockColor)
+	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileRockColor)
+	// Jagged inner corner boundaries
+	c.StrokeLine(x+w*0.5, y, x+w*0.55, y+h*0.25, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.55, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.55, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.25, y+h*0.55, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+}
+
+func drawRockSWInner(c Canvas, x, y, w, h float32) {
+	c.FillRect(x+w*0.5, y, w*0.5, h, tileRockColor)
+	c.FillRect(x, y, w*0.5, h*0.5, tileRockColor)
+	// Jagged inner corner boundaries
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.45, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.75, y+h*0.45, x+w, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.55, y+h*0.75, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.55, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
+}
+
+func drawRockSEInner(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w*0.5, h, tileRockColor)
+	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileRockColor)
+	// Jagged inner corner boundaries
+	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.45, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.25, y+h*0.45, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.45, y+h*0.75, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.45, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
 }
