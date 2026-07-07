@@ -63,4 +63,8 @@ const (
 	GIDRockNWInner = 44
 	GIDRockSWInner = 45
 	GIDRockSEInner = 46
+	GIDQuicksand   = 47
+	GIDMud         = 48
+	GIDIce         = 49
+	GIDLava        = 50
 )

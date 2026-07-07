@@ -46,5 +46,33 @@ func (HazardSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 		}
 	}
 	w.Flames = activeFlames
+
+	// Player tile hazard damage (e.g. Lava)
+	if w.Player.Invuln == 0 && w.Player.DodgeTimer == 0 {
+		surface := w.SurfaceAtFeet(w.Player.X+w.Player.W*0.5, w.Player.Y+w.Player.H*0.5)
+		if surface.HazardDamage > 0 {
+			dmg := surface.HazardDamage
+			w.HP -= dmg
+			if w.HP < 0 {
+				w.HP = 0
+			}
+			interval := surface.HazardInterval
+			if interval <= 0 {
+				interval = 30
+			}
+			w.Player.Invuln = interval
+
+			tx := int(w.Player.X / float64(w.TileW))
+			ty := int(w.Player.Y / float64(w.TileH))
+			tcx := float64(tx*w.TileW) + float64(w.TileW)*0.5
+			tcy := float64(ty*w.TileH) + float64(w.TileH)*0.5
+
+			nx, ny := knockbackSlide(w, w.Player.X, w.Player.Y, w.Player.W, w.Player.H, tcx, tcy, w.Player.EffectivePlayerHazardKnockbackForce(), true)
+			w.Player.X, w.Player.Y = nx, ny
+
+			tryPush(bus, PlayerHurtEvent{Damage: dmg})
+		}
+	}
+
 	return nil
 }

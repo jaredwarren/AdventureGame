@@ -3,11 +3,12 @@ package tile
 type SurfaceType string
 
 const (
-	SurfaceNormal SurfaceType = "normal"
-	SurfaceIce    SurfaceType = "ice"
-	SurfaceMud    SurfaceType = "mud"
-	SurfaceLava   SurfaceType = "lava"
-	SurfaceWater  SurfaceType = "water"
+	SurfaceNormal    SurfaceType = "normal"
+	SurfaceIce       SurfaceType = "ice"
+	SurfaceMud       SurfaceType = "mud"
+	SurfaceLava      SurfaceType = "lava"
+	SurfaceWater     SurfaceType = "water"
+	SurfaceQuicksand SurfaceType = "quicksand"
 )
 
 // SurfaceDef describes physical surface properties of a tile type.
@@ -39,7 +40,7 @@ var (
 	IceSurface = SurfaceDef{
 		Type:            SurfaceIce,
 		SpeedMultiplier: 1.1,
-		Friction:        0.1,
+		Friction:        0.02,
 		Tags:            []string{"slippery"},
 	}
 
@@ -50,6 +51,13 @@ var (
 		HazardDamage:    1,
 		HazardInterval:  30,
 		Tags:            []string{"hazard", "fire"},
+	}
+
+	QuicksandSurface = SurfaceDef{
+		Type:            SurfaceQuicksand,
+		SpeedMultiplier: 0.05,
+		Friction:        0.8,
+		Tags:            []string{"quicksand"},
 	}
 )
 

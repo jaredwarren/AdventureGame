@@ -45,6 +45,8 @@ func (EnemyAISystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			aggroR *= bal.NightBuffs.AggroMultiplier
 			speed *= bal.NightBuffs.SpeedMultiplier
 		}
+		surface := w.SurfaceAtFeet(e.X, e.Y)
+		speed *= surface.SpeedMultiplier
 		dx := pcx - ecx
 		dy := pcy - ecy
 		if dx*dx+dy*dy <= aggroR*aggroR {

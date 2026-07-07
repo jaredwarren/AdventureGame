@@ -1,6 +1,9 @@
 package tile
 
-import "image/color"
+import (
+	"image/color"
+	"math"
+)
 
 var (
 	tileGrassColor     = color.RGBA{0x55, 0x88, 0x55, 0xff}
@@ -124,8 +127,19 @@ func drawDoor(c Canvas, x, y, w, h float32) {
 
 func drawWater(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h, tileWaterColor)
-	c.StrokeLine(x+w*0.2, y+h*0.3, x+w*0.4, y+h*0.3, 1, color.RGBA{0x4a, 0x6a, 0xaa, 0xff})
-	c.StrokeLine(x+w*0.5, y+h*0.7, x+w*0.8, y+h*0.7, 1, color.RGBA{0x4a, 0x6a, 0xaa, 0xff})
+
+	tick := c.Tick()
+	tx, ty := c.GridPos()
+
+	// Subtle wave animation (horizontal sway)
+	angle1 := float64(tick+tx*17+ty*37) * 2 * math.Pi / 180.0
+	offset1 := float32(math.Sin(angle1)) * w * 0.08
+
+	angle2 := float64(tick+tx*53+ty*29) * 2 * math.Pi / 240.0
+	offset2 := float32(math.Sin(angle2)) * w * 0.08
+
+	c.StrokeLine(x+w*0.2+offset1, y+h*0.3, x+w*0.4+offset1, y+h*0.3, 1, color.RGBA{0x4a, 0x6a, 0xaa, 0xff})
+	c.StrokeLine(x+w*0.5+offset2, y+h*0.7, x+w*0.8+offset2, y+h*0.7, 1, color.RGBA{0x4a, 0x6a, 0xaa, 0xff})
 }
 
 func drawLock(c Canvas, x, y, w, h float32) {
@@ -375,4 +389,69 @@ func drawRockSEInner(c Canvas, x, y, w, h float32) {
 	c.StrokeLine(x+w*0.25, y+h*0.45, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
 	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.45, y+h*0.75, 1, tileRockEdgeColor)
 	c.StrokeLine(x+w*0.45, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
+}
+
+func drawQuicksand(c Canvas, x, y, w, h float32) {
+	// Base color of tan/light-brown sand
+	c.FillRect(x, y, w, h, color.RGBA{0xdf, 0xc7, 0x94, 0xff})
+	// Draw subtle wavy lines to simulate shifting quicksand texture
+	c.StrokeLine(x+w*0.1, y+h*0.2, x+w*0.4, y+h*0.2, 1, color.RGBA{0xb8, 0x9e, 0x6a, 0xff})
+	c.StrokeLine(x+w*0.6, y+h*0.4, x+w*0.9, y+h*0.4, 1, color.RGBA{0xb8, 0x9e, 0x6a, 0xff})
+	c.StrokeLine(x+w*0.3, y+h*0.7, x+w*0.7, y+h*0.7, 1, color.RGBA{0xb8, 0x9e, 0x6a, 0xff})
+}
+
+func drawMud(c Canvas, x, y, w, h float32) {
+	// Dark brown mud base
+	c.FillRect(x, y, w, h, color.RGBA{0x6b, 0x4c, 0x35, 0xff})
+	// Draw mud spots
+	c.FillCircle(x+w*0.3, y+h*0.4, w*0.12, color.RGBA{0x4a, 0x32, 0x22, 0xff})
+	c.FillCircle(x+w*0.7, y+h*0.6, w*0.15, color.RGBA{0x4a, 0x32, 0x22, 0xff})
+}
+
+func drawIce(c Canvas, x, y, w, h float32) {
+	// Light blue ice base
+	c.FillRect(x, y, w, h, color.RGBA{0xa0, 0xd8, 0xef, 0xff})
+	// Highlights and cracks
+	c.StrokeLine(x+w*0.2, y+h*0.2, x+w*0.5, y+h*0.5, 1.5, color.RGBA{0xff, 0xff, 0xff, 0xff})
+	c.StrokeLine(x+w*0.6, y+h*0.7, x+w*0.8, y+h*0.9, 1, color.RGBA{0xff, 0xff, 0xff, 0xff})
+}
+
+const (
+	lavaBubble1Cycle       = 360
+	lavaBubble1GrowStart   = 270
+	lavaBubble1PopStart    = 330
+	lavaBubble1PopDuration = 10
+
+	lavaBubble2Cycle       = 480
+	lavaBubble2GrowStart   = 350
+	lavaBubble2PopStart    = 430
+	lavaBubble2PopDuration = 10
+)
+
+func drawLava(c Canvas, x, y, w, h float32) {
+	// Red-orange lava base
+	c.FillRect(x, y, w, h, color.RGBA{0xd3, 0x54, 0x00, 0xff})
+
+	tick := c.Tick()
+	tx, ty := c.GridPos()
+
+	// Bubble 1 (Orange bubble in bottom-left quadrant)
+	phase1 := int(tx*37 + ty*17)
+	t1 := (tick + phase1) % lavaBubble1Cycle
+	if t1 >= lavaBubble1GrowStart && t1 < lavaBubble1PopStart {
+		progress := float32(t1-lavaBubble1GrowStart) / float32(lavaBubble1PopStart-lavaBubble1GrowStart)
+		c.FillCircle(x+w*0.3, y+h*0.6, progress*w*0.15, color.RGBA{0xe6, 0x7e, 0x22, 0xff})
+	} else if t1 >= lavaBubble1PopStart && t1 < lavaBubble1PopStart+lavaBubble1PopDuration {
+		c.StrokeCircle(x+w*0.3, y+h*0.6, w*0.18, 1, color.RGBA{0xe6, 0x7e, 0x22, 0xff})
+	}
+
+	// Bubble 2 (Yellow bubble in top-right quadrant)
+	phase2 := int(tx*53 + ty*29)
+	t2 := (tick + phase2) % lavaBubble2Cycle
+	if t2 >= lavaBubble2GrowStart && t2 < lavaBubble2PopStart {
+		progress := float32(t2-lavaBubble2GrowStart) / float32(lavaBubble2PopStart-lavaBubble2GrowStart)
+		c.FillCircle(x+w*0.7, y+h*0.3, progress*w*0.18, color.RGBA{0xf1, 0xc4, 0x0f, 0xff})
+	} else if t2 >= lavaBubble2PopStart && t2 < lavaBubble2PopStart+lavaBubble2PopDuration {
+		c.StrokeCircle(x+w*0.7, y+h*0.3, w*0.21, 1, color.RGBA{0xf1, 0xc4, 0x0f, 0xff})
+	}
 }

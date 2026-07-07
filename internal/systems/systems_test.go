@@ -533,3 +533,78 @@ func TestEnemyAISystem_CustomNightBuffsMultiplier(t *testing.T) {
 		t.Errorf("expected enemy X to be ~47.0 with 3.0x speed multiplier, got %f", w.Enemies[0].X)
 	}
 }
+
+func TestEnemyAISystem_QuicksandSlowdown(t *testing.T) {
+	w := newTestWorld()
+	w.TimeOfDay = 5000 // Day! Prevent night buff multiplication
+	// Set all tiles to GIDQuicksand
+	for i := range w.Tiles {
+		w.Tiles[i] = tile.GIDQuicksand
+	}
+	w.Layers = [][]int{w.Tiles}
+
+	// Player is at (16, 16).
+	// Place enemy at (30, 16), center (37, 22), distance 14 px from player (within aggro).
+	enemy := world.NewEnemy(world.NoEntity, 30, 16, 10, false)
+	enemy.AI.AggroRadius = 25
+	enemy.AI.Speed = 2.0
+	w.Enemies = []world.Enemy{enemy}
+
+	var bus systems.EventBus
+	ai := systems.EnemyAISystem{}
+	if err := ai.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("EnemyAISystem failed: %v", err)
+	}
+
+	// Quicksand SpeedMultiplier is 0.05.
+	// Path target is tile center (24, 24) from enemy center (37, 22):
+	// dx = -13, dy = 2, dlen = sqrt(173) = 13.1529.
+	// delta X = -13 / 13.1529 * (2.0 * 0.05) = -0.098837.
+	// So enemy X should decrease from 30 to ~29.90116.
+	expectedX := 29.90116
+	if math.Abs(w.Enemies[0].X-expectedX) > 0.001 {
+		t.Errorf("expected enemy X to be %f (0.05x speed multiplier), got %f", expectedX, w.Enemies[0].X)
+	}
+}
+
+func TestHazardSystem_LavaDamageAndKnockback(t *testing.T) {
+	w := newTestWorld()
+	// Place player on a Lava tile (GIDLava)
+	w.Tiles[0] = tile.GIDLava
+	w.Layers = [][]int{w.Tiles}
+	w.Player.X = 8
+	w.Player.Y = 8
+	w.Player.Invuln = 0
+
+	var bus systems.EventBus
+	hazardSys := systems.HazardSystem{}
+
+	// Run hazard system
+	if err := hazardSys.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("HazardSystem failed: %v", err)
+	}
+
+	// Player should have taken 1 damage (HP decreased from MaxHP to MaxHP - 1)
+	expectedHP := w.Stats.MaxHP() - 1
+	if w.HP != expectedHP {
+		t.Errorf("expected player HP to be %d, got %d", expectedHP, w.HP)
+	}
+
+	// Player should have received Invuln frames equal to Lava's HazardInterval (30)
+	if w.Player.Invuln != 30 {
+		t.Errorf("expected player Invuln to be 30, got %d", w.Player.Invuln)
+	}
+
+	// Check that a PlayerHurtEvent was emitted
+	events := bus.Drain()
+	foundHurt := false
+	for _, e := range events {
+		if _, ok := e.(systems.PlayerHurtEvent); ok {
+			foundHurt = true
+			break
+		}
+	}
+	if !foundHurt {
+		t.Error("expected PlayerHurtEvent to be emitted")
+	}
+}

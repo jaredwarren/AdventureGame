@@ -71,7 +71,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 					if useTileSprites {
 						r.drawTile(gid, x, y)
 					} else {
-						r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size)
+						r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size, w.Tick, tx, ty)
 					}
 				}
 			} else {
@@ -84,7 +84,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 				if useTileSprites {
 					r.drawTile(gid, x, y)
 				} else {
-					r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size)
+					r.drawVectorTile(screen, gid, x, y, tile.Size, tile.Size, w.Tick, tx, ty)
 				}
 			}
 		}

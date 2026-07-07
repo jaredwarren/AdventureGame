@@ -10,6 +10,8 @@ type Canvas interface {
 	FillCircle(cx, cy, r float32, c color.RGBA)
 	StrokeCircle(cx, cy, r float32, strokeWidth float32, c color.RGBA)
 	DrawPath(p Path, c color.RGBA, fill bool, strokeWidth float32)
+	Tick() int
+	GridPos() (int, int)
 }
 
 // PathOpKind specifies the operation type in a Path segment.

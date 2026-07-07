@@ -143,10 +143,14 @@ type Player struct {
 	Invuln          int // i-frames after taking damage
 	DodgeTimer      int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
 	Stamina         int // drained by sprint; refilled when not sprinting
-	SprintHeld      bool
-	SprintExhausted bool
-	IsMoving        bool
-	IsSprinting     bool
+	SprintHeld             bool
+	SprintExhausted        bool
+	IsMoving               bool
+	IsSprinting            bool
+	WasOnQuicksand         bool
+	RunningAcrossQuicksand bool
+	VX                     float64
+	VY                     float64
 
 	balance.PlayerTuning
 }

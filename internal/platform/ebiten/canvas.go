@@ -10,7 +10,17 @@ import (
 )
 
 type ebitenCanvas struct {
-	dst *ebiten.Image
+	dst    *ebiten.Image
+	tick   int
+	tx, ty int
+}
+
+func (c *ebitenCanvas) Tick() int {
+	return c.tick
+}
+
+func (c *ebitenCanvas) GridPos() (int, int) {
+	return c.tx, c.ty
 }
 
 func (c *ebitenCanvas) FillRect(x, y, w, h float32, clr color.RGBA) {

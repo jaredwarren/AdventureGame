@@ -73,10 +73,12 @@ func (d Tile) Solid() bool      { return d.HasTag(TagSolid) }
 func (d Tile) Wall() bool       { return d.HasTag(TagWall) }
 func (d Tile) Water() bool      { return d.HasTag(TagWater) }
 func (d Tile) WaterShore() bool { return d.HasTag(TagWaterShore) }
-func (d Tile) IsFloor() bool    { return d.GID == GIDGrass || d.GID == GIDFloor2 || d.GID == GIDDirtPath }
-func (d Tile) IsWall() bool     { return d.Solid() }
-func (d Tile) IsWater() bool    { return d.Water() }
-func (d Tile) IsLand() bool     { return !d.Water() && !d.Solid() }
+func (d Tile) IsFloor() bool {
+	return d.GID == GIDGrass || d.GID == GIDFloor2 || d.GID == GIDDirtPath || d.GID == GIDQuicksand || d.GID == GIDMud || d.GID == GIDIce || d.GID == GIDLava
+}
+func (d Tile) IsWall() bool  { return d.Solid() }
+func (d Tile) IsWater() bool { return d.Water() }
+func (d Tile) IsLand() bool  { return !d.Water() && !d.Solid() }
 
 func (d Tile) DrawVector(c Canvas, x, y, w, h float32) {
 	if d.VectorDraw != nil {
@@ -106,8 +108,8 @@ func (d Tile) ResolvedDestroyedGID() int {
 
 var waterSurface = SurfaceDef{
 	Type:            SurfaceWater,
-	SpeedMultiplier: 0.5,
-	Friction:        0.8,
+	SpeedMultiplier: 1, // was 0.5
+	Friction:        1, // was 0.8
 }
 
 var wallColor = color.RGBA{0x40, 0x40, 0x50, 0xff}
@@ -273,6 +275,18 @@ var defs = map[int]Tile{
 	GIDRockSEInner: {
 		GID: GIDRockSEInner, Name: "rock_se_inner", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: rockColor,
 		SolidRects: []geom.Rect{{X: 0, Y: 0, W: 8, H: 16}, {X: 8, Y: 0, W: 8, H: 8}}, VectorDraw: drawRockSEInner,
+	},
+	GIDQuicksand: {
+		GID: GIDQuicksand, Name: "quicksand", Tags: []TileTag{}, Surface: QuicksandSurface, SwatchColor: color.RGBA{0xdf, 0xc7, 0x94, 0xff}, VectorDraw: drawQuicksand,
+	},
+	GIDMud: {
+		GID: GIDMud, Name: "mud", Tags: []TileTag{}, Surface: MudSurface, SwatchColor: color.RGBA{0x6b, 0x4c, 0x35, 0xff}, VectorDraw: drawMud,
+	},
+	GIDIce: {
+		GID: GIDIce, Name: "ice", Tags: []TileTag{}, Surface: IceSurface, SwatchColor: color.RGBA{0xa0, 0xd8, 0xef, 0xff}, VectorDraw: drawIce,
+	},
+	GIDLava: {
+		GID: GIDLava, Name: "lava", Tags: []TileTag{}, Surface: LavaSurface, SwatchColor: color.RGBA{0xd3, 0x54, 0x00, 0xff}, VectorDraw: drawLava,
 	},
 }
 

@@ -3,6 +3,7 @@ package scenes
 import (
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
@@ -107,13 +108,27 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 	spd := w.EffectiveStat(world.StatBaseSpeed, w.Player.EffectiveBaseSpeed())
 	if w.Player.IsSprinting {
 		spd = w.EffectiveStat(world.StatSprintSpeed, w.Player.EffectiveSprintSpeed())
+	} else {
+		w.Player.RunningAcrossQuicksand = false
 	}
-	surface := w.SurfaceAtFeet(w.Player.X, w.Player.Y)
-	spd *= surface.SpeedMultiplier
+	surface := w.SurfaceAtFeet(w.Player.X+w.Player.W*0.5, w.Player.Y+w.Player.H*0.5)
+	onQuicksand := surface.Type == tile.SurfaceQuicksand
 
-	dx := float64(ax) * spd
-	dy := float64(ay) * spd
-	if dx != 0 || dy != 0 {
+	if onQuicksand && w.Player.RunningAcrossQuicksand {
+		// Do not slow down when running across quicksand
+	} else {
+		spd *= surface.SpeedMultiplier
+	}
+
+	targetVX := float64(ax) * spd
+	targetVY := float64(ay) * spd
+
+	w.Player.VX += (targetVX - w.Player.VX) * surface.Friction
+	w.Player.VY += (targetVY - w.Player.VY) * surface.Friction
+
+	dx := w.Player.VX
+	dy := w.Player.VY
+	if ax != 0 || ay != 0 {
 		w.SetFacingFromMotion(dx, dy)
 	}
 
@@ -133,4 +148,19 @@ func (s *PlayScene) handleMovement(ctx GameContext, w *world.World) {
 	}
 
 	w.TryMove(dx, dy)
+
+	// Update quicksand state at the new position so StaminaSystem (running next) sees it correctly.
+	newSurface := w.SurfaceAtFeet(w.Player.X+w.Player.W*0.5, w.Player.Y+w.Player.H*0.5)
+	newOnQuicksand := newSurface.Type == tile.SurfaceQuicksand
+	if newOnQuicksand {
+		if !w.Player.WasOnQuicksand {
+			w.Player.RunningAcrossQuicksand = w.Player.IsSprinting
+		}
+		if !w.Player.IsSprinting {
+			w.Player.RunningAcrossQuicksand = false
+		}
+	} else {
+		w.Player.RunningAcrossQuicksand = false
+	}
+	w.Player.WasOnQuicksand = newOnQuicksand
 }

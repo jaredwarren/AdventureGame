@@ -116,7 +116,7 @@ func (r *Renderer) DrawTileScreen(gid int, x, y, dw, dh float32) {
 		return
 	}
 	if !useTileSprites || gid == tile.GIDEmpty {
-		r.drawVectorTile(r.screen, gid, x, y, dw, dh)
+		r.drawVectorTile(r.screen, gid, x, y, dw, dh, 0, 0, 0)
 		return
 	}
 	atlas, err := r.assets.Atlas(services.AtlasTile)
@@ -203,7 +203,7 @@ func (r *Renderer) DrawPickupScreen(kind *world.PickupKind, px, py, w, h float32
 	r.pickupFallback(float64(px), float64(py))
 }
 
-func (r *Renderer) drawVectorTile(dst *ebiten.Image, gid int, x, y, w, h float32) {
-	c := &ebitenCanvas{dst: dst}
+func (r *Renderer) drawVectorTile(dst *ebiten.Image, gid int, x, y, w, h float32, tick int, tx, ty int) {
+	c := &ebitenCanvas{dst: dst, tick: tick, tx: tx, ty: ty}
 	tile.DefOf(gid).DrawVector(c, x, y, w, h)
 }
