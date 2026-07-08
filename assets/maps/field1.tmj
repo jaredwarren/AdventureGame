@@ -778,6 +778,22 @@
               "value": "200"
             }
           ]
+        },
+        {
+          "id": 7,
+          "name": "sign1",
+          "type": "sign",
+          "x": 48,
+          "y": 144,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "text",
+              "type": "string",
+              "value": "Danger! Lava pit ahead!"
+            }
+          ]
         }
       ]
     }

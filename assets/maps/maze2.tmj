@@ -1164,11 +1164,27 @@
               "value": "208"
             }
           ]
+        },
+        {
+          "id": 6,
+          "name": "sign_6",
+          "type": "sign",
+          "x": 239,
+          "y": 182,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "text",
+              "type": "string",
+              "value": "A wooden sign..."
+            }
+          ]
         }
       ]
     }
   ],
   "nextlayerid": 4,
-  "nextobjectid": 6,
+  "nextobjectid": 7,
   "tilesets": []
 }

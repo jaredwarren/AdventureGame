@@ -4,6 +4,9 @@ import (
 	"math"
 	"testing"
 
+	"github.com/jaredwarren/game-test/internal/geom"
+	"github.com/jaredwarren/game-test/internal/run"
+	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/systems"
 	"github.com/jaredwarren/game-test/internal/world"
 	"github.com/jaredwarren/game-test/internal/world/tile"
@@ -196,5 +199,78 @@ func TestIceFriction(t *testing.T) {
 	}
 	if w.Player.X <= lastX {
 		t.Error("expected player position to have moved forward due to sliding")
+	}
+}
+
+type signMockInput struct {
+	services.Input
+	interactPressed bool
+}
+
+func (m *signMockInput) IsDown(a services.Action) bool          { return false }
+func (m *signMockInput) JustPressed(a services.Action) bool      { return a == services.ActionInteract && m.interactPressed }
+func (m *signMockInput) JustReleased(a services.Action) bool     { return false }
+func (m *signMockInput) Axis2D() (x, y int)                      { return 0, 0 }
+func (m *signMockInput) IsModifierDown(mod services.Modifier) bool { return false }
+
+type signMockAudio struct {
+	services.Audio
+}
+func (signMockAudio) Play(name string, volume float64) {}
+
+type signMockGameContext struct {
+	GameContext
+	input services.Input
+	sess  *run.Session
+	audio services.Audio
+}
+func (c *signMockGameContext) Input() services.Input { return c.input }
+func (c *signMockGameContext) Session() *run.Session { return c.sess }
+func (c *signMockGameContext) Audio() services.Audio { return c.audio }
+
+func TestSignInteraction(t *testing.T) {
+	s := &PlayScene{}
+	w := &world.World{}
+	w.Player = world.DefaultPlayerTuning()
+	w.Player.X = 100
+	w.Player.Y = 100
+	w.Player.W = 12
+	w.Player.H = 12
+
+	// Spawn a sign at (100, 84) - directly above the player (player's top is 100, sign's bottom is 84 + 16 = 100)
+	w.Signs = append(w.Signs, world.Sign{
+		ID:   1,
+		Rect: geom.Rect{X: 100, Y: 84, W: 16, H: 16},
+		Text: "Hello sign!",
+	})
+
+	mi := &signMockInput{}
+	ctx := &signMockGameContext{
+		input: mi,
+		sess:  &run.Session{World: w},
+		audio: signMockAudio{},
+	}
+
+	// Case 1: Player is facing DirDown (away from the sign) and presses interact
+	w.Player.Dir = world.DirDown
+	mi.interactPressed = true
+	s.handleActions(ctx, w)
+
+	if s.toastMessage != "" {
+		t.Error("expected sign NOT to be read when player is facing away from it")
+	}
+
+	// Case 2: Player is facing DirUp (towards the sign) and presses interact
+	w.Player.Dir = world.DirUp
+	s.handleActions(ctx, w)
+
+	if s.toastMessage != "Hello sign!" {
+		t.Errorf("expected sign to be read, got toastMessage = %q", s.toastMessage)
+	}
+	if s.toastTimer != 150 {
+		t.Errorf("expected toastTimer = 150, got %d", s.toastTimer)
+	}
+	if s.toastItem != nil {
+		t.Error("expected toastItem to be nil for text-only sign toast")
 	}
 }

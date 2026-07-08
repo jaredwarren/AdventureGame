@@ -455,3 +455,27 @@ func drawLava(c Canvas, x, y, w, h float32) {
 		c.StrokeCircle(x+w*0.7, y+h*0.3, w*0.21, 1, color.RGBA{0xf1, 0xc4, 0x0f, 0xff})
 	}
 }
+
+func drawSign(c Canvas, x, y, w, h float32) {
+	// Grass background
+	c.FillRect(x, y, w, h, tileGrassColor)
+
+	// Wood post in the center
+	postW := w * 0.15
+	postH := h * 0.6
+	postX := x + (w-postW)*0.5
+	postY := y + h*0.4
+	c.FillRect(postX, postY, postW, postH, color.RGBA{0x6a, 0x3d, 0x1b, 0xff})
+
+	// Plaque at the top
+	plaqueW := w * 0.8
+	plaqueH := h * 0.4
+	plaqueX := x + w*0.1
+	plaqueY := y + h*0.1
+	c.FillRect(plaqueX, plaqueY, plaqueW, plaqueH, color.RGBA{0x8b, 0x5a, 0x2b, 0xff})
+	c.StrokeRect(plaqueX, plaqueY, plaqueW, plaqueH, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
+
+	// Text lines/grain
+	c.StrokeLine(plaqueX+w*0.1, plaqueY+h*0.15, plaqueX+plaqueW-w*0.1, plaqueY+h*0.15, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
+	c.StrokeLine(plaqueX+w*0.15, plaqueY+h*0.27, plaqueX+plaqueW-w*0.15, plaqueY+h*0.27, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
+}

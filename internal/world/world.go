@@ -125,6 +125,13 @@ type Shrine struct {
 	Active  bool
 }
 
+// Sign is an authored interactable wooden sign.
+type Sign struct {
+	ID   EntityID
+	Rect geom.Rect
+	Text string
+}
+
 // Player holds locomotion + combat timers (frame counts, not seconds).
 // Player-only state (Swing, Dodge, Stamina) stays inline rather than as
 // one-off components; those concerns aren't shared with other entities.
@@ -176,6 +183,7 @@ type World struct {
 	DestroyedTiles map[int]bool
 	Doors          []Door
 	Shrines        []Shrine
+	Signs          []Sign
 	Pickups        []Pickup
 	IsEditor       bool // set true when running in editor mode
 	Enemies        []Enemy

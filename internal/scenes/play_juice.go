@@ -178,9 +178,22 @@ func (s *PlayScene) handleDeath(ctx GameContext) {
 }
 
 func (s *PlayScene) drawToast(r services.Renderer) {
-	const bannerW float32 = 180
 	const bannerH float32 = 26
 	const screenW float32 = 320
+
+	textWidth := float32(len(s.toastMessage) * 7)
+	var bannerW float32
+	if s.toastItem != nil {
+		bannerW = 32 + textWidth + 12
+	} else {
+		bannerW = textWidth + 24
+	}
+	if bannerW < 120 {
+		bannerW = 120
+	}
+	if bannerW > 300 {
+		bannerW = 300
+	}
 
 	bx := (screenW - bannerW) / 2
 	var by float32 = 16
@@ -197,6 +210,11 @@ func (s *PlayScene) drawToast(r services.Renderer) {
 	borderCol := color.RGBA{0xd8, 0xa0, 0x20, uint8(255 * alpha)}
 	r.FillRect(bx, by, bannerW, bannerH, bgCol)
 	r.StrokeRect(bx, by, bannerW, bannerH, 1, borderCol)
-	r.DrawPickupScreen(s.toastItem, bx+8, by+5, 16, 16)
-	r.DrawText(int(bx)+32, int(by)+9, s.toastMessage)
+
+	if s.toastItem != nil {
+		r.DrawPickupScreen(s.toastItem, bx+8, by+5, 16, 16)
+		r.DrawText(int(bx)+32, int(by)+9, s.toastMessage)
+	} else {
+		r.DrawText(int(bx)+12, int(by)+9, s.toastMessage)
+	}
 }

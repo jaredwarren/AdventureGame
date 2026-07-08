@@ -65,6 +65,7 @@ var (
 		tile.GIDRock, tile.GIDRockTop, tile.GIDRockBottom, tile.GIDRockLeft, tile.GIDRockRight,
 		tile.GIDRockNE, tile.GIDRockNW, tile.GIDRockSW, tile.GIDRockSE,
 		tile.GIDRockNEInner, tile.GIDRockNWInner, tile.GIDRockSWInner, tile.GIDRockSEInner,
+		tile.GIDQuicksand, tile.GIDMud, tile.GIDIce, tile.GIDLava, tile.GIDSign,
 	}
 	// editorBrushActions aligns 1:1 with editorBrushPalette; index N selects palette[N].
 	editorBrushActions = []services.Action{

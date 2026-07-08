@@ -67,4 +67,5 @@ const (
 	GIDMud         = 48
 	GIDIce         = 49
 	GIDLava        = 50
+	GIDSign        = 51
 )

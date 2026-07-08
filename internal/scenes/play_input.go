@@ -1,6 +1,7 @@
 package scenes
 
 import (
+	"github.com/jaredwarren/game-test/internal/geom"
 	"github.com/jaredwarren/game-test/internal/services"
 	"github.com/jaredwarren/game-test/internal/world"
 	"github.com/jaredwarren/game-test/internal/world/tile"
@@ -11,10 +12,35 @@ func (s *PlayScene) handleActions(ctx GameContext, w *world.World) {
 	pr := w.PlayerRect()
 	if in.JustPressed(services.ActionInteract) {
 		if !w.TryOpenChest() {
-			for _, sh := range w.Shrines {
-				if pr.Overlaps(sh.Rect) {
-					ctx.Manager().PushOverlay(SceneShop, nil)
+			signInteracted := false
+			const reach = 6.0
+			var checkRect geom.Rect
+			switch w.Player.Dir {
+			case world.DirUp:
+				checkRect = geom.Rect{X: pr.X, Y: pr.Y - reach, W: pr.W, H: reach}
+			case world.DirDown:
+				checkRect = geom.Rect{X: pr.X, Y: pr.Y + pr.H, W: pr.W, H: reach}
+			case world.DirLeft:
+				checkRect = geom.Rect{X: pr.X - reach, Y: pr.Y, W: reach, H: pr.H}
+			case world.DirRight:
+				checkRect = geom.Rect{X: pr.X + pr.W, Y: pr.Y, W: reach, H: pr.H}
+			}
+			for _, sign := range w.Signs {
+				if checkRect.Overlaps(sign.Rect) {
+					s.toastItem = nil
+					s.toastTimer = 150
+					s.toastMessage = sign.Text
+					ctx.Audio().Play("pickup.wav", 0.25)
+					signInteracted = true
 					break
+				}
+			}
+			if !signInteracted {
+				for _, sh := range w.Shrines {
+					if pr.Overlaps(sh.Rect) {
+						ctx.Manager().PushOverlay(SceneShop, nil)
+						break
+					}
 				}
 			}
 		}

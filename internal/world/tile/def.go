@@ -288,6 +288,9 @@ var defs = map[int]Tile{
 	GIDLava: {
 		GID: GIDLava, Name: "lava", Tags: []TileTag{}, Surface: LavaSurface, SwatchColor: color.RGBA{0xd3, 0x54, 0x00, 0xff}, VectorDraw: drawLava,
 	},
+	GIDSign: {
+		GID: GIDSign, Name: "sign", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: color.RGBA{0x8b, 0x5a, 0x2b, 0xff}, VectorDraw: drawSign,
+	},
 }
 
 // DefOf returns the registered definition for a GID.

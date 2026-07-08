@@ -2,6 +2,7 @@ package world
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -51,6 +52,7 @@ func init() {
 	registerMarker(pickupMarker{})
 	registerMarker(doorMarker{})
 	registerMarker(shrineMarker{})
+	registerMarker(signMarker{})
 }
 
 // MarkerTypeNames returns registered marker types in editor/loader order.
@@ -251,4 +253,61 @@ func doorSpawnStyleFromTiled(o *tiled.Object) DoorSpawnStyle {
 		}
 	}
 	return style
+}
+
+type signMarker struct{}
+
+func (signMarker) Type() string { return "sign" }
+
+func (signMarker) SpawnFromTiled(w *World, o *tiled.Object, _ string, _ MarkerSpawnContext) {
+	txt, _ := tiled.ObjProp(o, "text")
+	if txt == "" {
+		txt = "A wooden sign..."
+	}
+
+	tx := int(math.Round(o.X / float64(w.TileW)))
+	ty := int(math.Round(o.Y / float64(w.TileH)))
+
+	snappedX := float64(tx * w.TileW)
+	snappedY := float64(ty * w.TileH)
+
+	w.Signs = append(w.Signs, Sign{
+		ID:   w.allocID(),
+		Rect: geom.Rect{X: snappedX, Y: snappedY, W: float64(w.TileW), H: float64(w.TileH)},
+		Text: txt,
+	})
+
+	if tx >= 0 && tx < w.MapW && ty >= 0 && ty < w.MapH {
+		idx := ty*w.MapW + tx
+		w.Tiles[idx] = tile.GIDSign
+	}
+}
+
+func (signMarker) ObjectHitRect(o tiled.Object) geom.Rect {
+	w, h := o.Width, o.Height
+	if w <= 0 {
+		w = 16
+	}
+	if h <= 0 {
+		h = 16
+	}
+	return geom.Rect{X: o.X, Y: o.Y, W: w, H: h}
+}
+
+func (signMarker) InitMarkerObject(o *tiled.Object, wx, wy float64, ctx MarkerEditorContext) {
+	tw := ctx.TileWidth
+	if tw <= 0 {
+		tw = tile.Size
+	}
+	th := ctx.TileHeight
+	if th <= 0 {
+		th = tile.Size
+	}
+	o.X = float64(int(wx/tw) * int(tw))
+	o.Y = float64(int(wy/th) * int(th))
+	o.Width = 16
+	o.Height = 16
+	o.Properties = []tiled.Property{
+		{Name: "text", Type: "string", Value: "A wooden sign..."},
+	}
 }
