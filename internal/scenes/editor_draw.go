@@ -12,9 +12,6 @@ import (
 func (s *EditorScene) Draw(ctx GameContext) {
 	sess := ctx.Session()
 	r := ctx.Renderer()
-	cam := r.Camera()
-	cam.X, cam.Y = 0, 0
-	cam.ShakeTime = 0
 
 	if s.errMsg != "" && s.tm == nil {
 		r.DrawText(0, 0, s.errMsg)
@@ -78,14 +75,17 @@ func (s *EditorScene) drawTileGrid(ctx GameContext) {
 		return
 	}
 	r := ctx.Renderer()
+	cam := r.Camera()
+	cx := float32(cam.X)
+	cy := float32(cam.Y)
 	gc := color.RGBA{0xff, 0xff, 0xff, 0x18}
 	for tx := 0; tx <= w.MapW; tx++ {
-		x := float32(tx * tile.Size)
-		r.StrokeLine(x, 0, x, float32(w.MapH*tile.Size), 1, gc)
+		x := float32(tx*tile.Size) - cx
+		r.StrokeLine(x, -cy, x, float32(w.MapH*tile.Size)-cy, 1, gc)
 	}
 	for ty := 0; ty <= w.MapH; ty++ {
-		y := float32(ty * tile.Size)
-		r.StrokeLine(0, y, float32(w.MapW*tile.Size), y, 1, gc)
+		y := float32(ty*tile.Size) - cy
+		r.StrokeLine(-cx, y, float32(w.MapW*tile.Size)-cx, y, 1, gc)
 	}
 }
 
@@ -107,6 +107,7 @@ func (s *EditorScene) drawSelectedEnemyProps(r services.Renderer) {
 
 func (s *EditorScene) drawMarkerOverlay(ctx GameContext) {
 	r := ctx.Renderer()
+	cam := r.Camera()
 	lg := s.markersLayer()
 	if lg == nil {
 		return
@@ -114,16 +115,24 @@ func (s *EditorScene) drawMarkerOverlay(ctx GameContext) {
 	wx, wy := s.worldXY(ctx)
 	hover := s.hitMarker(wx, wy)
 
+	cx := float32(cam.X)
+	cy := float32(cam.Y)
+
 	for i := range lg.Objects {
 		rc := world.MarkerObjectHitRect(lg.Objects[i])
 		col := color.RGBA{0x00, 0xff, 0xff, 0x55}
+		rx := float32(rc.X) - cx
+		ry := float32(rc.Y) - cy
+		rw := float32(rc.W)
+		rh := float32(rc.H)
+
 		if i == hover {
-			r.StrokeRect(float32(rc.X), float32(rc.Y), float32(rc.W), float32(rc.H), 2, color.RGBA{0x00, 0xff, 0xff, 0xcc})
+			r.StrokeRect(rx, ry, rw, rh, 2, color.RGBA{0x00, 0xff, 0xff, 0xcc})
 		}
 		if i == s.selObj {
-			r.StrokeRect(float32(rc.X), float32(rc.Y), float32(rc.W), float32(rc.H), 2, color.RGBA{0xff, 0xff, 0x00, 0xff})
+			r.StrokeRect(rx, ry, rw, rh, 2, color.RGBA{0xff, 0xff, 0x00, 0xff})
 		} else if i != hover {
-			r.StrokeRect(float32(rc.X), float32(rc.Y), float32(rc.W), float32(rc.H), 1, col)
+			r.StrokeRect(rx, ry, rw, rh, 1, col)
 		}
 	}
 }

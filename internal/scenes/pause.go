@@ -55,6 +55,10 @@ func (s *PauseScene) Update(ctx GameContext) error {
 			_ = run.LoadGameFromSave(ctx.Assets(), sess, cam, sv)
 		}
 	}
+	if (in.JustPressed(services.ActionInteract) || in.JustPressed(services.ActionEditorToggleMode)) && sess.World != nil {
+		ctx.Manager().Replace(SceneEditor, map[string]any{"mapID": sess.World.MapID})
+		return nil
+	}
 	return nil
 }
 
@@ -77,6 +81,9 @@ func (s *PauseScene) Draw(ctx GameContext) {
 		r.DrawText(40, 132, fmt.Sprintf("dungeon: %s", sess.LastDungeonDigest))
 	}
 	r.DrawText(40, 148, "C copy bug digest")
+	if sess.World != nil {
+		r.DrawText(40, 164, fmt.Sprintf("E open editor for '%s'", sess.World.MapID))
+	}
 
 	if sess.ShowDebugOverlay {
 		DrawDebugOverlay(r, sess, s.ID(), DebugOverlayExtras{})

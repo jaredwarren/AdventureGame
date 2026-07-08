@@ -632,7 +632,11 @@ func (w *World) ConvertLockToFloor(tx, ty int) bool {
 	if w.Tiles[idx] != tile.GIDLock {
 		return false
 	}
-	w.Tiles[idx] = tile.GIDGrass
+	if len(w.Layers) > 0 {
+		w.Tiles[idx] = tile.GIDEmpty
+	} else {
+		w.Tiles[idx] = tile.GIDGrass
+	}
 	return true
 }
 

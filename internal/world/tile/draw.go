@@ -13,6 +13,8 @@ var (
 	tileWallEdgeColor  = color.RGBA{0x20, 0x20, 0x28, 0xff}
 )
 
+const tileShoreLineWidth float32 = 2.0
+
 func drawEmpty(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h, color.RGBA{0x00, 0x00, 0x00, 0xff})
 }
@@ -174,22 +176,22 @@ func drawTree(c Canvas, x, y, w, h float32) {
 
 func drawShoreTop(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y+h*0.5, w, h*0.5, tileWaterColor)
-	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileShoreLineColor)
+	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, tileShoreLineWidth, tileShoreLineColor)
 }
 
 func drawShoreBottom(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h*0.5, tileWaterColor)
-	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileShoreLineColor)
+	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, tileShoreLineWidth, tileShoreLineColor)
 }
 
 func drawShoreLeft(c Canvas, x, y, w, h float32) {
 	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileShoreLineColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, tileShoreLineWidth, tileShoreLineColor)
 }
 
 func drawShoreRight(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w*0.5, h, tileWaterColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileShoreLineColor)
+	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, tileShoreLineWidth, tileShoreLineColor)
 }
 
 func drawShoreNW(c Canvas, x, y, w, h float32) {
@@ -197,7 +199,7 @@ func drawShoreNW(c Canvas, x, y, w, h float32) {
 	var lp Path
 	lp.MoveTo(x+w, y+h*0.5)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreNE(c Canvas, x, y, w, h float32) {
@@ -205,7 +207,7 @@ func drawShoreNE(c Canvas, x, y, w, h float32) {
 	var lp Path
 	lp.MoveTo(x+w*0.5, y+h)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreSW(c Canvas, x, y, w, h float32) {
@@ -213,7 +215,7 @@ func drawShoreSW(c Canvas, x, y, w, h float32) {
 	var lp Path
 	lp.MoveTo(x+w*0.5, y)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreSE(c Canvas, x, y, w, h float32) {
@@ -221,7 +223,7 @@ func drawShoreSE(c Canvas, x, y, w, h float32) {
 	var lp Path
 	lp.MoveTo(x, y+h*0.5)
 	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreNWInner(c Canvas, x, y, w, h float32) {
@@ -229,8 +231,8 @@ func drawShoreNWInner(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w*0.5, y)
-	lp.QuadTo(x, y, x, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreNEInner(c Canvas, x, y, w, h float32) {
@@ -238,8 +240,8 @@ func drawShoreNEInner(c Canvas, x, y, w, h float32) {
 	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w, y+h*0.5)
-	lp.QuadTo(x+w, y, x+w*0.5, y)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreSWInner(c Canvas, x, y, w, h float32) {
@@ -247,8 +249,8 @@ func drawShoreSWInner(c Canvas, x, y, w, h float32) {
 	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w*0.5, y+h)
-	lp.QuadTo(x, y+h, x, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 func drawShoreSEInner(c Canvas, x, y, w, h float32) {
@@ -256,8 +258,8 @@ func drawShoreSEInner(c Canvas, x, y, w, h float32) {
 	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWaterColor)
 	var lp Path
 	lp.MoveTo(x+w, y+h*0.5)
-	lp.QuadTo(x+w, y+h, x+w*0.5, y+h)
-	c.DrawPath(lp, tileShoreLineColor, false, 1)
+	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
+	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
 }
 
 var (

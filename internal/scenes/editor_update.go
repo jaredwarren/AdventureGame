@@ -362,5 +362,41 @@ func (s *EditorScene) Update(ctx GameContext) error {
 		}
 	}
 
+	// Camera panning when menus are closed
+	if !s.showTileMenu && !s.showItemMenu {
+		cam := ctx.Renderer().Camera()
+		const scrollSpeed = 4.0
+		if in.IsDown(services.ActionMoveUp) {
+			cam.Y -= scrollSpeed
+		}
+		if in.IsDown(services.ActionMoveDown) {
+			cam.Y += scrollSpeed
+		}
+		if in.IsDown(services.ActionMoveLeft) {
+			cam.X -= scrollSpeed
+		}
+		if in.IsDown(services.ActionMoveRight) {
+			cam.X += scrollSpeed
+		}
+
+		// Clamp camera to map boundaries to avoid scrolling past edges
+		if s.tm != nil {
+			maxCamX := float64(s.tm.Width*tile.Size) - 320.0
+			maxCamY := float64(s.tm.Height*tile.Size) - 240.0
+			if cam.X < 0 {
+				cam.X = 0
+			}
+			if cam.Y < 0 {
+				cam.Y = 0
+			}
+			if maxCamX > 0 && cam.X > maxCamX {
+				cam.X = maxCamX
+			}
+			if maxCamY > 0 && cam.Y > maxCamY {
+				cam.Y = maxCamY
+			}
+		}
+	}
+
 	return nil
 }

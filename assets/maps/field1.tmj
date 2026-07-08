@@ -644,8 +644,8 @@
           "id": 1,
           "name": "spawn",
           "type": "spawn",
-          "x": 31,
-          "y": 187
+          "x": 35,
+          "y": 189
         },
         {
           "id": 2,
@@ -783,8 +783,8 @@
           "id": 7,
           "name": "sign1",
           "type": "sign",
-          "x": 48,
-          "y": 144,
+          "x": 257,
+          "y": 191,
           "width": 16,
           "height": 16,
           "properties": [
@@ -794,11 +794,27 @@
               "value": "Danger! Lava pit ahead!"
             }
           ]
+        },
+        {
+          "id": 100,
+          "name": "sign_100",
+          "type": "sign",
+          "x": 176,
+          "y": 192,
+          "width": 16,
+          "height": 16,
+          "properties": [
+            {
+              "name": "text",
+              "type": "string",
+              "value": "A wooden sign..."
+            }
+          ]
         }
       ]
     }
   ],
   "nextlayerid": 4,
-  "nextobjectid": 100,
+  "nextobjectid": 101,
   "tilesets": []
 }

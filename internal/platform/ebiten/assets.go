@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"image"
 	_ "image/png"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -61,6 +63,13 @@ func NewAssetCache(mapFS embed.FS, mapDir string) *AssetCache {
 
 // MapData returns the raw .tmj bytes for a map id (e.g. "field1" -> maps/field1.tmj).
 func (c *AssetCache) MapData(id string) ([]byte, error) {
+	// Try loading from the local assets directory on disk first.
+	// This ensures that map edits made in the editor reload immediately in play mode.
+	localPath := filepath.Join("assets", "maps", id+".tmj")
+	if data, err := os.ReadFile(localPath); err == nil {
+		return data, nil
+	}
+	// Fallback to the embedded maps filesystem.
 	return c.mapFS.ReadFile(c.mapDir + id + ".tmj")
 }
 

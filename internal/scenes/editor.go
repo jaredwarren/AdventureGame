@@ -95,6 +95,9 @@ func (s *EditorScene) Enter(ctx GameContext, params map[string]any) error {
 	if pickups := world.AllPickups; len(pickups) > 0 {
 		s.activePickupKind = pickups[0].TiledName()
 	}
+	cam := ctx.Renderer().Camera()
+	cam.X, cam.Y = 0, 0
+	cam.ShakeTime = 0
 	return nil
 }
 

@@ -107,9 +107,6 @@ func (s *EditorScene) rebuild(ctx GameContext) {
 	w.AmbientLightOverride = 1.0
 	w.TimeOfDay = 3000
 	ctx.Session().World = w
-	cam := ctx.Renderer().Camera()
-	cam.X, cam.Y = 0, 0
-	cam.ShakeTime = 0
 }
 
 func pointInRect(px, py float64, r geom.Rect) bool {
@@ -132,7 +129,8 @@ func (s *EditorScene) hitMarker(wx, wy float64) int {
 
 func (s *EditorScene) worldXY(ctx GameContext) (float64, float64) {
 	mx, my := ctx.Input().CursorPosition()
-	return float64(mx), float64(my)
+	cam := ctx.Renderer().Camera()
+	return float64(mx) + cam.X, float64(my) + cam.Y
 }
 
 func (s *EditorScene) newMarkerObject(wx, wy float64) tiled.Object {

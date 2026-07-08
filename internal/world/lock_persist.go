@@ -18,7 +18,11 @@ func ApplyPersistedOpenedLocks(w *World, keys map[string]struct{}) {
 		}
 		idx := w.tileIndex(tx, ty)
 		if w.Tiles[idx] == tile.GIDLock {
-			w.Tiles[idx] = tile.GIDGrass
+			if len(w.Layers) > 0 {
+				w.Tiles[idx] = tile.GIDEmpty
+			} else {
+				w.Tiles[idx] = tile.GIDGrass
+			}
 		}
 	}
 }
