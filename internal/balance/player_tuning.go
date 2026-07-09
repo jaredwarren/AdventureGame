@@ -34,6 +34,8 @@ type PlayerTuning struct {
 	TorchBurnDamage            int     `json:"torch_burn_damage,omitempty"`
 	TorchLightRadius           float64 `json:"torch_light_radius,omitempty"`
 	PersonalLightRadius        float64 `json:"personal_light_radius,omitempty"`
+	ShieldL1BlockPercent       float64 `json:"shield_l1_block_percent,omitempty"`
+	ShieldL2BlockPercent       float64 `json:"shield_l2_block_percent,omitempty"`
 }
 
 // DefaultPlayerTuning returns a copy of the canonical player tuning defaults.
@@ -71,5 +73,7 @@ func DefaultPlayerTuning() PlayerTuning {
 		TorchBurnDamage:            1,
 		TorchLightRadius:           85.0,
 		PersonalLightRadius:        35.0,
+		ShieldL1BlockPercent:       0.50,
+		ShieldL2BlockPercent:       0.75,
 	}
 }

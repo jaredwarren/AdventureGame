@@ -292,9 +292,9 @@
         1,
         1,
         1,
-        1,
-        1,
-        1,
+        52,
+        52,
+        52,
         1,
         1,
         1,
@@ -603,9 +603,9 @@
         1,
         1,
         1,
-        1,
-        1,
-        1,
+        52,
+        52,
+        52,
         1,
         8,
         1,
@@ -810,11 +810,25 @@
               "value": "A wooden sign..."
             }
           ]
+        },
+        {
+          "id": 101,
+          "name": "pickup_101",
+          "type": "pickup",
+          "x": 57,
+          "y": 88,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "shield"
+            }
+          ]
         }
       ]
     }
   ],
   "nextlayerid": 4,
-  "nextobjectid": 101,
+  "nextobjectid": 102,
   "tilesets": []
 }

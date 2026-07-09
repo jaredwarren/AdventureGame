@@ -481,3 +481,17 @@ func drawSign(c Canvas, x, y, w, h float32) {
 	c.StrokeLine(plaqueX+w*0.1, plaqueY+h*0.15, plaqueX+plaqueW-w*0.1, plaqueY+h*0.15, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
 	c.StrokeLine(plaqueX+w*0.15, plaqueY+h*0.27, plaqueX+plaqueW-w*0.15, plaqueY+h*0.27, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
 }
+
+func drawSand(c Canvas, x, y, w, h float32) {
+	// A warm, sunny desert sand base color
+	c.FillRect(x, y, w, h, color.RGBA{0xe5, 0xd3, 0xa3, 0xff})
+	// Draw small sand grains
+	c.FillRect(x+w*0.2, y+h*0.15, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+	c.FillRect(x+w*0.75, y+h*0.3, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+	c.FillRect(x+w*0.4, y+h*0.5, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+	c.FillRect(x+w*0.8, y+h*0.75, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+	c.FillRect(x+w*0.15, y+h*0.8, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+	// Draw horizontal wind ripple lines (stable, not wavy/shifting like quicksand)
+	c.StrokeLine(x+w*0.15, y+h*0.35, x+w*0.45, y+h*0.35, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+	c.StrokeLine(x+w*0.55, y+h*0.65, x+w*0.85, y+h*0.65, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
+}

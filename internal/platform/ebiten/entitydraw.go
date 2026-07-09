@@ -10,7 +10,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
-func (r *Renderer) drawCharacter(x, y, w, h float32, dir world.Dir, isPlayer bool, isBoss bool) {
+func (r *Renderer) drawCharacter(worldObj *world.World, x, y, w, h float32, dir world.Dir, isPlayer bool, isBoss bool) {
 	var baseCol color.RGBA
 	var borderCol color.RGBA
 	var eyeCol color.RGBA = color.RGBA{0xff, 0xff, 0xff, 0xff}
@@ -46,6 +46,35 @@ func (r *Renderer) drawCharacter(x, y, w, h float32, dir world.Dir, isPlayer boo
 	case world.DirRight:
 		r.FillRect(x+w-4, y+4, 2, 2, eyeCol)
 		r.FillRect(x+w-4, y+5, 1, 1, pupilCol)
+	}
+
+	if isPlayer && worldObj != nil && worldObj.ShieldLevel > 0 {
+		var shieldFill, shieldBorder color.RGBA
+		if worldObj.ShieldLevel >= 2 {
+			// Mirror Shield colors
+			shieldFill = color.RGBA{0x50, 0xd0, 0xff, 0xff}   // vibrant cyan
+			shieldBorder = color.RGBA{0xff, 0xd7, 0x00, 0xff} // gold
+		} else {
+			// Basic Shield colors
+			shieldFill = color.RGBA{0x8b, 0x5a, 0x2b, 0xff}   // brown wood
+			shieldBorder = color.RGBA{0xa0, 0xa0, 0xa0, 0xff} // silver/grey
+		}
+
+		// Draw shield depending on direction
+		switch dir {
+		case world.DirDown:
+			r.FillRect(x+w*0.5-4, y+h-2, 8, 3, shieldFill)
+			r.StrokeRect(x+w*0.5-4, y+h-2, 8, 3, 1, shieldBorder)
+		case world.DirUp:
+			r.FillRect(x+w*0.5-4, y-1, 8, 3, shieldFill)
+			r.StrokeRect(x+w*0.5-4, y-1, 8, 3, 1, shieldBorder)
+		case world.DirLeft:
+			r.FillRect(x-2, y+h*0.5-4, 3, 8, shieldFill)
+			r.StrokeRect(x-2, y+h*0.5-4, 3, 8, 1, shieldBorder)
+		case world.DirRight:
+			r.FillRect(x+w-1, y+h*0.5-4, 3, 8, shieldFill)
+			r.StrokeRect(x+w-1, y+h*0.5-4, 3, 8, 1, shieldBorder)
+		}
 	}
 }
 

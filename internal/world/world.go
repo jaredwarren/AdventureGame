@@ -197,6 +197,7 @@ type World struct {
 	Bombs           int
 	HasTorch        bool
 	HasPegasusBoots bool
+	ShieldLevel     int
 	OwnedItems      map[string]bool
 	ActiveBuffs     []Buff
 	SmallKey        int

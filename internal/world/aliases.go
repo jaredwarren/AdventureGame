@@ -31,6 +31,7 @@ var (
 	PickupSmallKey = pickup.SmallKey
 	PickupTorch        = pickup.Torch
 	PickupPegasusBoots = pickup.PegasusBoots
+	PickupShield       = pickup.Shield
 	AllPickups         = pickup.All
 )
 

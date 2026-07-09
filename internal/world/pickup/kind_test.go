@@ -38,8 +38,8 @@ func TestToastMessage(t *testing.T) {
 
 func TestAll_Count(t *testing.T) {
 	t.Parallel()
-	if len(All) != 6 {
-		t.Fatalf("expected 6 pickups, got %d", len(All))
+	if len(All) != 7 {
+		t.Fatalf("expected 7 pickups, got %d", len(All))
 	}
 }
 

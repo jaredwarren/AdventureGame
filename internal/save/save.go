@@ -27,6 +27,7 @@ type GameSave struct {
 	Bombs    int     `json:"bombs,omitempty"`
 	HasTorch        bool     `json:"has_torch"`
 	HasPegasusBoots bool     `json:"has_pegasus_boots,omitempty"`
+	ShieldLevel     int      `json:"shield_level,omitempty"`
 	OwnedItems      []string `json:"owned_items,omitempty"`
 	SmallKey        int      `json:"small_key"`
 	Vitality int     `json:"vitality"`

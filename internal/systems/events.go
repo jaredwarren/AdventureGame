@@ -78,6 +78,7 @@ func (PickupEvent) isEvent() {}
 type PlayerHurtEvent struct {
 	EnemyID world.EntityID
 	Damage  int
+	Blocked bool
 }
 
 func (PlayerHurtEvent) isEvent() {}

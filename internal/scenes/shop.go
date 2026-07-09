@@ -37,7 +37,7 @@ func (s *ShopScene) Exit(ctx GameContext) error { return nil }
 func (s *ShopScene) getItems(w *world.World) []ShopItem {
 	cfg := progression.DefaultConfig()
 	econ := progression.DefaultEconomy()
-	return []ShopItem{
+	items := []ShopItem{
 		{
 			Name:        "Upgrade Vitality",
 			Cost:        econ.ShopVitalityCost,
@@ -109,6 +109,40 @@ func (s *ShopScene) getItems(w *world.World) []ShopItem {
 			},
 		},
 	}
+
+	if w.ShieldLevel == 0 {
+		items = append(items, ShopItem{
+			Name:        "Buy Shield",
+			Cost:        econ.ShopShieldCost,
+			Description: "Block frontal attacks",
+			Buy: func(w *world.World) bool {
+				w.GrantItem("shield")
+				return true
+			},
+			IsEnabled: func(w *world.World) bool { return true },
+		})
+	} else if w.ShieldLevel < 2 {
+		items = append(items, ShopItem{
+			Name:        "Upgrade Shield",
+			Cost:        econ.ShopShieldUpgradeCost,
+			Description: "+25% Block (Mirror Shield)",
+			Buy: func(w *world.World) bool {
+				w.GrantItem("shield")
+				return true
+			},
+			IsEnabled: func(w *world.World) bool { return true },
+		})
+	} else {
+		items = append(items, ShopItem{
+			Name:        "Shield Maxed",
+			Cost:        0,
+			Description: "Maximum defense reached",
+			Buy:         func(w *world.World) bool { return false },
+			IsEnabled:   func(w *world.World) bool { return false },
+		})
+	}
+
+	return items
 }
 
 func (s *ShopScene) Update(ctx GameContext) error {

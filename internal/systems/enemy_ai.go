@@ -53,9 +53,7 @@ func (EnemyAISystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			tgx, tgy := w.EnemyChaseTarget(ecx, ecy, pcx, pcy)
 			stepEnemyTowards(w, e, tgx, tgy, speed)
 		}
-		if tryEnemyContactDamage(w, e) {
-			tryPush(bus, PlayerHurtEvent{EnemyID: e.ID, Damage: e.Damage})
-		}
+		tryEnemyContactDamage(w, bus, e)
 	}
 	return nil
 }
@@ -93,8 +91,8 @@ func stepEnemyTowards(w *world.World, e *world.Enemy, tx, ty float64, speed floa
 }
 
 // tryEnemyContactDamage applies contact damage if eligibility checks pass.
-// Returns true iff a hit landed (for event emission).
-func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
+// Returns true iff a hit landed.
+func tryEnemyContactDamage(w *world.World, bus *EventBus, e *world.Enemy) bool {
 	if w.Player.Invuln > 0 || w.Player.DodgeTimer > 0 {
 		return false
 	}
@@ -105,7 +103,49 @@ func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
 	if !w.PlayerRect().OverlapsExpanded(e.Rect(), contactCfg.ContactMargin) {
 		return false
 	}
-	w.HP -= e.Damage
+
+	damage := e.Damage
+	blocked := false
+	if w.ShieldLevel > 0 {
+		pcx := w.Player.X + w.Player.W*0.5
+		pcy := w.Player.Y + w.Player.H*0.5
+		ecx, ecy := e.Center()
+		dx := ecx - pcx
+		dy := ecy - pcy
+		dist := math.Hypot(dx, dy)
+		if dist > 0 {
+			ndx := dx / dist
+			ndy := dy / dist
+
+			var fdx, fdy float64
+			switch w.Player.Dir {
+			case world.DirRight:
+				fdx, fdy = 1, 0
+			case world.DirLeft:
+				fdx, fdy = -1, 0
+			case world.DirDown:
+				fdx, fdy = 0, 1
+			case world.DirUp:
+				fdx, fdy = 0, -1
+			}
+
+			dot := ndx*fdx + ndy*fdy
+			if dot >= 0.5 {
+				blocked = true
+				percent := w.Player.PlayerTuning.ShieldL1BlockPercent
+				if w.ShieldLevel >= 2 {
+					percent = w.Player.PlayerTuning.ShieldL2BlockPercent
+				}
+				reduced := int(float64(damage) * percent)
+				damage = damage - reduced
+				if damage < 1 {
+					damage = 1
+				}
+			}
+		}
+	}
+
+	w.HP -= damage
 	if w.HP < 0 {
 		w.HP = 0
 	}
@@ -114,5 +154,7 @@ func tryEnemyContactDamage(w *world.World, e *world.Enemy) bool {
 	w.Player.X, w.Player.Y = nx, ny
 	w.Player.Invuln = w.Player.EffectiveInvulnFrames()
 	e.HurtCD = contactCfg.EnemyHurtCD
+
+	tryPush(bus, PlayerHurtEvent{EnemyID: e.ID, Damage: damage, Blocked: blocked})
 	return true
 }

@@ -74,7 +74,7 @@ func (d Tile) Wall() bool       { return d.HasTag(TagWall) }
 func (d Tile) Water() bool      { return d.HasTag(TagWater) }
 func (d Tile) WaterShore() bool { return d.HasTag(TagWaterShore) }
 func (d Tile) IsFloor() bool {
-	return d.GID == GIDGrass || d.GID == GIDFloor2 || d.GID == GIDDirtPath || d.GID == GIDQuicksand || d.GID == GIDMud || d.GID == GIDIce || d.GID == GIDLava
+	return d.GID == GIDGrass || d.GID == GIDFloor2 || d.GID == GIDDirtPath || d.GID == GIDQuicksand || d.GID == GIDMud || d.GID == GIDIce || d.GID == GIDLava || d.GID == GIDSand
 }
 func (d Tile) IsWall() bool  { return d.Solid() }
 func (d Tile) IsWater() bool { return d.Water() }
@@ -290,6 +290,9 @@ var defs = map[int]Tile{
 	},
 	GIDSign: {
 		GID: GIDSign, Name: "sign", Tags: []TileTag{TagSolid, TagWall}, SwatchColor: color.RGBA{0x8b, 0x5a, 0x2b, 0xff}, VectorDraw: drawSign,
+	},
+	GIDSand: {
+		GID: GIDSand, Name: "sand", Tags: []TileTag{}, Surface: DefaultSurface, SwatchColor: color.RGBA{0xe5, 0xd3, 0xa3, 0xff}, VectorDraw: drawSand,
 	},
 }
 

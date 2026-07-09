@@ -147,12 +147,23 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				}
 			}
 		case systems.PlayerHurtEvent:
-			cam.AddShake(4, 2)
-			pr := w.PlayerRect()
-			pxx := pr.X + pr.W*0.5
-			pyy := pr.Y + pr.H*0.5
-			for k := 0; k < 8; k++ {
-				s.particles = append(s.particles, NewDebrisParticle(pxx, pyy, color.RGBA{220, 30, 30, 255}))
+			if e.Blocked {
+				cam.AddShake(1, 0.5)
+				ctx.Audio().Play("swing.wav", 0.35)
+				pr := w.PlayerRect()
+				pxx := pr.X + pr.W*0.5
+				pyy := pr.Y + pr.H*0.5
+				for k := 0; k < 6; k++ {
+					s.particles = append(s.particles, NewSparkleParticle(pxx, pyy))
+				}
+			} else {
+				cam.AddShake(4, 2)
+				pr := w.PlayerRect()
+				pxx := pr.X + pr.W*0.5
+				pyy := pr.Y + pr.H*0.5
+				for k := 0; k < 8; k++ {
+					s.particles = append(s.particles, NewDebrisParticle(pxx, pyy, color.RGBA{220, 30, 30, 255}))
+				}
 			}
 		case systems.LockOpenEvent:
 			ctx.Session().MarkOpenedLockTile(w.MapID, world.MapTilePersistKey(w.MapID, e.Tile[0], e.Tile[1]))

@@ -71,10 +71,14 @@ var (
 		id: 5, tiledName: "pegasus_boots", toast: "Found Pegasus Boots!", editorLabel: "Pegasus Boots",
 		apply: applyPegasusBoots,
 	}
+	Shield = &Kind{
+		id: 6, tiledName: "shield", toast: "Found Shield!", editorLabel: "Shield",
+		apply: applyShield,
+	}
 )
 
 // All lists every pickup kind in atlas / save ID order.
-var All = []*Kind{Coin, Heart, Bomb, SmallKey, Torch, PegasusBoots}
+var All = []*Kind{Coin, Heart, Bomb, SmallKey, Torch, PegasusBoots, Shield}
 
 var (
 	byTiledName map[string]*Kind

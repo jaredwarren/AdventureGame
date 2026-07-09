@@ -79,7 +79,11 @@ func DrawHUD(r services.Renderer, w *world.World, sess *run.Session) {
 	for _, item := range world.RegisteredItems() {
 		if item.Category == world.CategoryPassive {
 			if w.HasItem(item.ID) && item.PickupKind != nil {
-				drawSlot(item.PickupKind, false, "")
+				countText := ""
+				if item.ID == "shield" && w.ShieldLevel > 1 {
+					countText = fmt.Sprintf("L%d", w.ShieldLevel)
+				}
+				drawSlot(item.PickupKind, false, countText)
 			}
 		}
 	}

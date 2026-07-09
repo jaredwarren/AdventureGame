@@ -32,6 +32,9 @@ func (w *World) HasItem(id string) bool {
 	if id == "pegasus_boots" {
 		return w.HasPegasusBoots
 	}
+	if id == "shield" {
+		return w.ShieldLevel > 0
+	}
 	return false
 }
 
@@ -48,6 +51,13 @@ func (w *World) GrantItem(id string) {
 	}
 	if id == "pegasus_boots" {
 		w.HasPegasusBoots = true
+	}
+	if id == "shield" {
+		if w.ShieldLevel == 0 {
+			w.ShieldLevel = 1
+		} else if w.ShieldLevel < 2 {
+			w.ShieldLevel = 2
+		}
 	}
 }
 

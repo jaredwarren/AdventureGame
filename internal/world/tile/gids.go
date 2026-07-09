@@ -68,4 +68,5 @@ const (
 	GIDIce         = 49
 	GIDLava        = 50
 	GIDSign        = 51
+	GIDSand        = 52
 )

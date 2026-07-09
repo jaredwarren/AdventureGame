@@ -48,3 +48,7 @@ func applyTorch(rt RewardTarget) {
 func applyPegasusBoots(rt RewardTarget) {
 	rt.PickupGrantItem("pegasus_boots")
 }
+
+func applyShield(rt RewardTarget) {
+	rt.PickupGrantItem("shield")
+}

@@ -608,3 +608,121 @@ func TestHazardSystem_LavaDamageAndKnockback(t *testing.T) {
 		t.Error("expected PlayerHurtEvent to be emitted")
 	}
 }
+
+func TestShieldSystem_DirectionalBlock(t *testing.T) {
+	// 1. Initialize a test world
+	w := newTestWorld()
+	// Let's grant the shield and set default shield percentages
+	w.GrantItem("shield")
+	w.ShieldLevel = 1
+	w.Player.PlayerTuning.ShieldL1BlockPercent = 0.50
+	w.Player.PlayerTuning.ShieldL2BlockPercent = 0.75
+
+	// Player is at X: 16, Y: 16, W: 12, H: 12. Center: (22, 22). Facing: DirDown.
+	w.Player.Dir = world.DirDown
+
+	// 2. Spawn enemy directly in front (below player, e.g. at X: 16, Y: 24).
+	// Enemy size: 12x12 (center 22, 30).
+	// Vector from player to enemy is (0, 8), unit vector (0, 1).
+	// Facing vector for DirDown is (0, 1). Dot product = 1 >= 0.5.
+	// This is a block!
+	enemyFront := world.NewEnemy(world.EntityID(10), 16, 24, 5, false)
+	enemyFront.Damage = 4
+	w.Enemies = []world.Enemy{enemyFront}
+
+	bus := systems.EventBus{}
+	enemyAISys := systems.EnemyAISystem{}
+
+	// Player HP starts at MaxHP (which is 8 by default for Vitality 1: 6 + 2*1)
+	initialHP := w.HP
+
+	// Trigger collision (EnemyAISystem updates enemy and contact damage)
+	if err := enemyAISys.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("EnemyAISystem failed: %v", err)
+	}
+
+	// Damage should be reduced by 50%: 4 -> 2. HP should be initialHP - 2
+	expectedHP := initialHP - 2
+	if w.HP != expectedHP {
+		t.Errorf("expected player HP after block to be %d, got %d", expectedHP, w.HP)
+	}
+
+	// Verify PlayerHurtEvent has Blocked = true
+	events := bus.Drain()
+	var hurtEvent systems.PlayerHurtEvent
+	found := false
+	for _, ev := range events {
+		if e, ok := ev.(systems.PlayerHurtEvent); ok {
+			hurtEvent = e
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected PlayerHurtEvent to be emitted")
+	}
+	if !hurtEvent.Blocked {
+		t.Errorf("expected Blocked to be true, got %t", hurtEvent.Blocked)
+	}
+	if hurtEvent.Damage != 2 {
+		t.Errorf("expected event Damage to be 2, got %d", hurtEvent.Damage)
+	}
+
+	// 3. Reset player HP, invuln, CD, position, change facing to DirUp (opposite of enemy).
+	w.HP = initialHP
+	w.Player.Invuln = 0
+	w.Player.X, w.Player.Y = 16, 16
+	w.Enemies[0].HurtCD = 0
+
+	w.Player.Dir = world.DirUp // Face away from enemy below
+	// Facing vector: (0, -1). Dot product with enemy direction: (0, 1) * (0, -1) = -1 < 0.5.
+	// This should NOT block!
+
+	if err := enemyAISys.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("EnemyAISystem failed: %v", err)
+	}
+
+	// Damage should NOT be reduced: full 4 damage. HP should be initialHP - 4
+	expectedHP = initialHP - 4
+	if w.HP != expectedHP {
+		t.Errorf("expected player HP after back attack to be %d, got %d", expectedHP, w.HP)
+	}
+
+	events = bus.Drain()
+	found = false
+	for _, ev := range events {
+		if e, ok := ev.(systems.PlayerHurtEvent); ok {
+			hurtEvent = e
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected PlayerHurtEvent to be emitted")
+	}
+	if hurtEvent.Blocked {
+		t.Errorf("expected Blocked to be false, got %t", hurtEvent.Blocked)
+	}
+	if hurtEvent.Damage != 4 {
+		t.Errorf("expected event Damage to be 4, got %d", hurtEvent.Damage)
+	}
+
+	// 4. Upgrade shield to level 2 (Mirror Shield), reset player, hit from front.
+	w.ShieldLevel = 2
+	w.HP = initialHP
+	w.Player.Invuln = 0
+	w.Player.X, w.Player.Y = 16, 16
+	w.Player.Dir = world.DirDown
+	w.Enemies[0].HurtCD = 0
+
+	if err := enemyAISys.Update(w, &bus, 1.0/60); err != nil {
+		t.Fatalf("EnemyAISystem failed: %v", err)
+	}
+
+	// Level 2 reduces by 75%: 4 -> 1. HP should be initialHP - 1
+	expectedHP = initialHP - 1
+	if w.HP != expectedHP {
+		t.Errorf("expected player HP after level 2 block to be %d, got %d", expectedHP, w.HP)
+	}
+}
+

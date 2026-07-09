@@ -12,6 +12,8 @@ type Economy struct {
 	CoinPickupValue   int
 	HeartPickupHeal   int
 	ShrineHealAmount  int
+	ShopShieldCost        int
+	ShopShieldUpgradeCost int
 }
 
 var defaultEconomy = Economy{
@@ -25,6 +27,8 @@ var defaultEconomy = Economy{
 	CoinPickupValue:   1,
 	HeartPickupHeal:   1,
 	ShrineHealAmount:  2,
+	ShopShieldCost:        8,
+	ShopShieldUpgradeCost: 15,
 }
 
 // DefaultEconomy returns the canonical economy tuning defaults.

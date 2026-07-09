@@ -75,12 +75,19 @@ var (
 		PickupKind:   PickupPegasusBoots,
 		Capabilities: []CapabilityID{CapSprint},
 	}
+	ItemShield = ItemDef{
+		ID:         "shield",
+		Name:       "Shield",
+		Category:   CategoryPassive,
+		PickupKind: PickupShield,
+	}
 )
 
 func init() {
 	RegisterItem(ItemBomb)
 	RegisterItem(ItemTorch)
 	RegisterItem(ItemPegasusBoots)
+	RegisterItem(ItemShield)
 }
 
 // RegisterItem adds an item definition to the global item registry.
