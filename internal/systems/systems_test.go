@@ -388,6 +388,7 @@ func TestPickupSystem_ChestsAreIgnored(t *testing.T) {
 	w := newTestWorld()
 	p := world.NewPickup(world.NoEntity, w.Player.X+2, w.Player.Y+2, world.PickupSmallKey)
 	p.PersistentSaveKey = "testmap:1"
+	p.IsChest = true
 	w.Pickups = []world.Pickup{p}
 
 	var bus systems.EventBus
@@ -403,6 +404,29 @@ func TestPickupSystem_ChestsAreIgnored(t *testing.T) {
 	}
 	if bus.Len() != 0 {
 		t.Errorf("expected 0 events, got %d", bus.Len())
+	}
+}
+
+func TestPickupSystem_PersistentNonChestsAreCollected(t *testing.T) {
+	w := newTestWorld()
+	p := world.NewPickup(world.NoEntity, w.Player.X+2, w.Player.Y+2, world.PickupSmallKey)
+	p.PersistentSaveKey = "testmap:2"
+	p.IsChest = false
+	w.Pickups = []world.Pickup{p}
+
+	var bus systems.EventBus
+	if err := (systems.PickupSystem{}).Update(w, &bus, 0); err != nil {
+		t.Fatalf("PickupSystem returned %v", err)
+	}
+
+	if w.SmallKey != 1 {
+		t.Errorf("SmallKey = %d, want 1 (flat persistent pickup should be collected automatically)", w.SmallKey)
+	}
+	if !w.Pickups[0].Gone {
+		t.Errorf("expected pickup to be marked Gone, got %+v", w.Pickups[0])
+	}
+	if bus.Len() != 1 {
+		t.Errorf("expected 1 event, got %d", bus.Len())
 	}
 }
 

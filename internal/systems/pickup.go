@@ -35,7 +35,7 @@ func (PickupSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			tryPush(bus, PickupEvent{PickupID: p.ID, Kind: p.Kind, PersistentSaveKey: p.PersistentSaveKey})
 			continue
 		}
-		if p.Opened || p.PersistentSaveKey != "" {
+		if p.Opened || p.IsChest {
 			continue
 		}
 		if !pr.Overlaps(p.Rect()) {

@@ -71,7 +71,7 @@ func (w *World) TryOpenChest() bool {
 	pr := w.PlayerRect()
 	for i := range w.Pickups {
 		p := &w.Pickups[i]
-		if p.PersistentSaveKey != "" && !p.Opened && !p.Gone && pr.OverlapsExpanded(p.Rect(), 2.0) {
+		if p.IsChest && !p.Opened && !p.Gone && pr.OverlapsExpanded(p.Rect(), 2.0) {
 			p.Opened = true
 			p.PendingCollect = true
 			return true

@@ -698,6 +698,35 @@
               "name": "persistent",
               "type": "bool",
               "value": true
+            },
+            {
+              "name": "chest",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "shield_chest",
+          "type": "pickup",
+          "x": 152,
+          "y": 100,
+          "properties": [
+            {
+              "name": "kind",
+              "type": "string",
+              "value": "shield"
+            },
+            {
+              "name": "persistent",
+              "type": "bool",
+              "value": true
+            },
+            {
+              "name": "chest",
+              "type": "bool",
+              "value": true
             }
           ]
         },

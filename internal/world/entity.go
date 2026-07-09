@@ -109,9 +109,10 @@ func (w *World) SpawnEnemyConfig(x, y float64, cfg EnemyConfig) EntityID {
 // SpawnPickup allocates an ID, builds the Pickup, appends it, and returns
 // the ID. persistentSaveKey should be empty except for Tiled pickups marked
 // persistent (see BuildFromTiled).
-func (w *World) SpawnPickup(x, y float64, kind *PickupKind, persistentSaveKey string) EntityID {
+func (w *World) SpawnPickup(x, y float64, kind *PickupKind, persistentSaveKey string, isChest bool) EntityID {
 	p := NewPickup(w.allocID(), x, y, kind)
 	p.PersistentSaveKey = persistentSaveKey
+	p.IsChest = isChest
 	w.Pickups = append(w.Pickups, p)
 	return p.ID
 }

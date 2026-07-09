@@ -125,7 +125,11 @@ func (pickupMarker) SpawnFromTiled(w *World, o *tiled.Object, mapID string, ctx 
 	if s, ok := tiled.ObjProp(o, "kind"); ok {
 		kind = PickupKindFromTiled(s)
 	}
+	isChest, _ := tiled.ObjPropBool(o, "chest")
 	persist, _ := tiled.ObjPropBool(o, "persistent")
+	if isChest {
+		persist = true
+	}
 	var saveKey string
 	if persist {
 		if o.ID != 0 {
@@ -140,7 +144,7 @@ func (pickupMarker) SpawnFromTiled(w *World, o *tiled.Object, mapID string, ctx 
 			opened = true
 		}
 	}
-	id := w.SpawnPickup(o.X, o.Y-defaultPickupHitbox, kind, saveKey)
+	id := w.SpawnPickup(o.X, o.Y-defaultPickupHitbox, kind, saveKey, isChest)
 	if opened {
 		for i := range w.Pickups {
 			if w.Pickups[i].ID == id {

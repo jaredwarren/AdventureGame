@@ -69,6 +69,7 @@ type Pickup struct {
 	Gone           bool // set true when consumed; kept in the slice for stable indices
 	Opened         bool // set true when chest is opened
 	PendingCollect bool // set true when chest is opened by player intent until PickupSystem processes it
+	IsChest        bool // set true if this is visually and behaviorally a chest
 
 	// PersistentSaveKey is non-empty when this pickup was authored with
 	// persistent=true in Tiled; format from PersistentPickupSaveKey. Consumed
@@ -413,7 +414,7 @@ func (w *World) RectOverlapsAnyLiveEnemy(r geom.Rect) bool {
 func (w *World) RectOverlapsAnyClosedChest(r geom.Rect) bool {
 	for i := range w.Pickups {
 		p := &w.Pickups[i]
-		if p.PersistentSaveKey != "" && !p.Opened && !p.Gone {
+		if p.IsChest && !p.Opened && !p.Gone {
 			if r.Overlaps(p.Rect()) {
 				return true
 			}

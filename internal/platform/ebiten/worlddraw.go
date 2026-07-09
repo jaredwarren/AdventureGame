@@ -102,7 +102,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 		r.drawList = append(r.drawList, drawItem{
 			footY: footY,
 			draw: func() {
-				if w.IsEditor || pickup.PersistentSaveKey == "" {
+				if w.IsEditor || !pickup.IsChest {
 					r.drawPickup(pickup, ox, oy)
 				} else {
 					if pickup.Opened {
