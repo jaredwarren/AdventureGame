@@ -69,12 +69,9 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 	lockOpened := false
 	for _, ev := range events {
 		switch e := ev.(type) {
-		case systems.HitEvent:
-			if !e.FromBurnDoT {
-				s.hitStop = 5
-				cam.AddShake(6, 2.5)
-				ctx.Audio().Play("hit.wav", 0.3)
-			}
+		case systems.ArmorBrokenEvent:
+			ctx.Audio().Play("hit.wav", 0.6)
+			cam.AddShake(24, 8.0)
 			var ex, ey float64
 			for _, enemy := range w.Enemies {
 				if enemy.ID == e.EnemyID {
@@ -83,12 +80,43 @@ func (s *PlayScene) reactToEvents(ctx GameContext, w *world.World, events []syst
 				}
 			}
 			if ex != 0 || ey != 0 {
+				for k := 0; k < 25; k++ {
+					s.particles = append(s.particles, NewDebrisParticle(ex, ey, color.RGBA{160, 160, 165, 255}))
+				}
+			}
+		case systems.HitEvent:
+			var ex, ey float64
+			var isArmored bool
+			for _, enemy := range w.Enemies {
+				if enemy.ID == e.EnemyID {
+					ex, ey = enemy.X+enemy.W*0.5, enemy.Y+enemy.H*0.5
+					isArmored = enemy.Armor != nil && enemy.Armor.Health > 0
+					break
+				}
+			}
+			if e.Damage == 0 {
+				ctx.Audio().Play("swing.wav", 0.5)
+				if ex != 0 || ey != 0 {
+					for k := 0; k < 3; k++ {
+						s.particles = append(s.particles, NewDebrisParticle(ex, ey, color.RGBA{160, 160, 165, 255}))
+					}
+				}
+				continue
+			}
+			if !e.FromBurnDoT {
+				s.hitStop = 5
+				cam.AddShake(6, 2.5)
+				ctx.Audio().Play("hit.wav", 0.3)
+			}
+			if ex != 0 || ey != 0 {
 				count := 5
 				clr := color.RGBA{180, 40, 40, 255}
 				if e.Killed {
 					count = 15
 				}
-				if e.IsBoss {
+				if isArmored {
+					clr = color.RGBA{160, 160, 165, 255}
+				} else if e.IsBoss {
 					clr = color.RGBA{110, 10, 10, 255}
 				}
 				for k := 0; k < count; k++ {

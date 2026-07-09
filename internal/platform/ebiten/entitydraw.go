@@ -10,7 +10,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/world"
 )
 
-func (r *Renderer) drawCharacter(worldObj *world.World, x, y, w, h float32, dir world.Dir, isPlayer bool, isBoss bool) {
+func (r *Renderer) drawCharacter(worldObj *world.World, x, y, w, h float32, dir world.Dir, isPlayer bool, isBoss bool, isArmored bool, armorHP int, swingWindup int, swingTimer int) {
 	var baseCol color.RGBA
 	var borderCol color.RGBA
 	var eyeCol color.RGBA = color.RGBA{0xff, 0xff, 0xff, 0xff}
@@ -20,7 +20,10 @@ func (r *Renderer) drawCharacter(worldObj *world.World, x, y, w, h float32, dir 
 		baseCol = color.RGBA{0x40, 0x70, 0xff, 0xff} // vibrant blue
 		borderCol = color.RGBA{0x1b, 0x2b, 0x5a, 0xff}
 	} else {
-		if isBoss {
+		if isArmored && armorHP > 0 {
+			baseCol = color.RGBA{0x90, 0x9a, 0xa0, 0xff} // silver steel
+			borderCol = color.RGBA{0x3b, 0x4b, 0x5a, 0xff}
+		} else if isBoss {
 			baseCol = color.RGBA{0x70, 0x10, 0x10, 0xff} // dark red
 			borderCol = color.RGBA{0x2b, 0x05, 0x05, 0xff}
 		} else {
@@ -29,8 +32,18 @@ func (r *Renderer) drawCharacter(worldObj *world.World, x, y, w, h float32, dir 
 		}
 	}
 
+	if !isPlayer && swingWindup > 0 && (swingWindup/4)%2 == 0 {
+		baseCol = color.RGBA{0xff, 0xff, 0xff, 0xff} // flash white during windup
+		borderCol = color.RGBA{0xff, 0xa0, 0x20, 0xff}
+	}
+
 	r.FillRect(x, y, w, h, baseCol)
 	r.StrokeRect(x, y, w, h, 1, borderCol)
+
+	if !isPlayer && isArmored && armorHP > 0 {
+		// Draw helmet crest on top of the helmet/armor
+		r.FillRect(x+w*0.5-2, y-2, 4, 3, color.RGBA{0xd8, 0xa0, 0x20, 0xff}) // gold crest
+	}
 
 	switch dir {
 	case world.DirDown:
@@ -398,4 +411,56 @@ func drawPath(dst *ebiten.Image, path *vector.Path, clr color.Color, fill bool, 
 		sop.Width = strokeWidth
 		vector.StrokePath(dst, path, &sop, &op)
 	}
+}
+
+func (r *Renderer) drawBossSwordSwing(bx, by, bw, bh float32, dir world.Dir, swingTimer int) {
+	dur := 30.0
+	t := 1.0 - float64(swingTimer)/dur
+	const sweep = 1.2
+	var baseAngle float64
+	switch dir {
+	case world.DirDown:
+		baseAngle = math.Pi / 2
+	case world.DirUp:
+		baseAngle = -math.Pi / 2
+	case world.DirLeft:
+		baseAngle = math.Pi
+	default:
+		baseAngle = 0
+	}
+	angle := baseAngle - sweep + t*2.0*sweep
+	screen := r.screen
+
+	const numTrails = 4
+	const step = 0.12
+	for i := numTrails; i > 0; i-- {
+		trailAngle := angle - float64(i)*step
+		if trailAngle >= baseAngle-sweep {
+			trailAlpha := float32(0.12) * float32(numTrails-i+1) / float32(numTrails)
+			cos := float32(math.Cos(trailAngle))
+			sin := float32(math.Sin(trailAngle))
+			vector.StrokeLine(screen,
+				bx+bw*0.5+6*cos, by+bh*0.5+6*sin,
+				bx+bw*0.5+28*cos, by+bh*0.5+28*sin,
+				2.5, color.RGBA{0xff, 0x40, 0x30, uint8(255 * trailAlpha)}, true)
+		}
+	}
+
+	cos := float32(math.Cos(angle))
+	sin := float32(math.Sin(angle))
+	cx := bx + bw*0.5
+	cy := by + bh*0.5
+
+	vector.StrokeLine(screen,
+		cx+2*cos, cy+2*sin,
+		cx+26*cos, cy+26*sin,
+		2.0, color.RGBA{0xd8, 0xdf, 0xe5, 0xff}, true)
+
+	perpCos := -sin
+	perpSin := cos
+	const guardW = 6.0
+	vector.StrokeLine(screen,
+		cx+4*cos-guardW*perpCos, cy+4*sin-guardW*perpSin,
+		cx+4*cos+guardW*perpCos, cy+4*sin+guardW*perpSin,
+		2.5, color.RGBA{0x4a, 0x4a, 0x4a, 0xff}, true)
 }

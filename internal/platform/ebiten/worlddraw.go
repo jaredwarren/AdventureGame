@@ -124,9 +124,25 @@ func (r *Renderer) DrawWorld(w *world.World) {
 		r.drawList = append(r.drawList, drawItem{
 			footY: footY,
 			draw: func() {
+				isArmored := enemy.Armor != nil
+				armorHP := 0
+				swingWindup := 0
+				swingTimer := 0
+				if enemy.Armor != nil {
+					armorHP = enemy.Armor.Health
+				}
+				if enemy.MeleeAttack != nil {
+					swingWindup = enemy.MeleeAttack.Windup
+					swingTimer = enemy.MeleeAttack.Timer
+				}
 				r.drawCharacter(w, float32(enemy.X-ox), float32(enemy.Y-oy),
 					float32(enemy.Hitbox.W), float32(enemy.Hitbox.H),
-					enemy.Dir, false, enemy.IsBoss)
+					enemy.Dir, false, enemy.IsBoss, isArmored, armorHP, swingWindup, swingTimer)
+				if enemy.MeleeAttack != nil && enemy.MeleeAttack.Timer > 0 {
+					r.drawBossSwordSwing(float32(enemy.X-ox), float32(enemy.Y-oy),
+						float32(enemy.Hitbox.W), float32(enemy.Hitbox.H),
+						enemy.Dir, enemy.MeleeAttack.Timer)
+				}
 			},
 		})
 	}
@@ -169,7 +185,7 @@ func (r *Renderer) DrawWorld(w *world.World) {
 	r.drawList = append(r.drawList, drawItem{
 		footY: playerFootY,
 		draw: func() {
-			r.drawCharacter(w, float32(pr.X-ox), float32(pr.Y-oy), float32(pr.W), float32(pr.H), w.Player.Dir, true, false)
+			r.drawCharacter(w, float32(pr.X-ox), float32(pr.Y-oy), float32(pr.W), float32(pr.H), w.Player.Dir, true, false, false, 0, 0, 0)
 			r.drawSwordSwing(w, pr.X, pr.Y, pr.W, pr.H, ox, oy)
 			r.drawTorchSwing(w, pr.X, pr.Y, pr.W, pr.H, ox, oy)
 		},

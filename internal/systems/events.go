@@ -93,6 +93,13 @@ type LockOpenEvent struct {
 
 func (LockOpenEvent) isEvent() {}
 
+// ArmorBrokenEvent is emitted when an armored enemy's armor is destroyed.
+type ArmorBrokenEvent struct {
+	EnemyID world.EntityID
+}
+
+func (ArmorBrokenEvent) isEvent() {}
+
 // EventBus is the per-tick event queue. Not safe for concurrent use.
 type EventBus struct {
 	events []Event

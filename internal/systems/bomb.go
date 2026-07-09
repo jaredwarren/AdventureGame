@@ -30,7 +30,7 @@ func (BombSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 				ecx, ecy := enemy.Center()
 				dist := math.Hypot(ecx-b.X, ecy-b.Y)
 				if dist <= bombRadius {
-					applyEnemyDamage(w, bus, i, bombDamage, b.X, b.Y, 0, false)
+					applyEnemyDamage(w, bus, i, bombDamage, b.X, b.Y, 0, false, true)
 				}
 			}
 

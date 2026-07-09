@@ -62,7 +62,7 @@ func NewEnemy(id EntityID, x, y float64, hp int, isBoss bool) Enemy {
 
 // NewEnemyWithConfig builds an enemy from a fully resolved EnemyConfig.
 func NewEnemyWithConfig(id EntityID, x, y float64, cfg EnemyConfig) Enemy {
-	return Enemy{
+	e := Enemy{
 		ID:        id,
 		Transform: Transform{X: x, Y: y},
 		Hitbox:    Hitbox{W: defaultEnemyW, H: defaultEnemyH},
@@ -76,6 +76,21 @@ func NewEnemyWithConfig(id EntityID, x, y float64, cfg EnemyConfig) Enemy {
 		},
 		IsBoss: cfg.IsBoss,
 	}
+	if cfg.IsArmoredKnight {
+		e.Armor = &Armor{
+			Health:    cfg.ArmorHealth,
+			MaxHealth: cfg.ArmorHealth,
+		}
+		e.MeleeAttack = &MeleeAttack{
+			Damage:         4,
+			Reach:          24,
+			Thickness:      24,
+			WindupFrames:   30,
+			ActiveFrames:   30,
+			CooldownFrames: 90,
+		}
+	}
+	return e
 }
 
 // NewPickup is the pure factory for Pickup values.

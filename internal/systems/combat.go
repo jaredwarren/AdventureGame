@@ -34,7 +34,7 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			if e.HP <= 0 || !hb.Overlaps(e.Rect()) {
 				continue
 			}
-			applyEnemyDamage(w, bus, i, dmg, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
+			applyEnemyDamage(w, bus, i, dmg, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false, false)
 		}
 		return nil
 	}
@@ -45,7 +45,7 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 			if e.HP <= 0 || !hb.Overlaps(e.Rect()) {
 				continue
 			}
-			applyEnemyDamage(w, bus, i, dmg, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false)
+			applyEnemyDamage(w, bus, i, dmg, pcx, pcy, w.Player.EffectiveEnemyKnockbackForce(), false, false)
 			w.IgniteEnemy(i)
 		}
 		// Try to ignite a tree in front of us
@@ -72,11 +72,30 @@ func (CombatSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 
 // applyEnemyDamage applies damage to enemy at idx, optional knockback away from (originX, originY),
 // and pushes a HitEvent to bus.
-func applyEnemyDamage(w *world.World, bus *EventBus, idx int, dmg int, originX, originY float64, knockbackForce float64, fromBurnDoT bool) {
+func applyEnemyDamage(w *world.World, bus *EventBus, idx int, dmg int, originX, originY float64, knockbackForce float64, fromBurnDoT bool, isBomb bool) {
 	e := &w.Enemies[idx]
 	if e.HP <= 0 {
 		return
 	}
+
+	// Armor deflection checks
+	if e.Armor != nil && e.Armor.Health > 0 {
+		if isBomb {
+			if e.DamageArmor(1) {
+				tryPush(bus, ArmorBrokenEvent{EnemyID: e.ID})
+			}
+		}
+		// Push a deflect/hit event with 0 damage
+		tryPush(bus, HitEvent{
+			EnemyID:     e.ID,
+			Damage:      0,
+			Killed:      false,
+			IsBoss:      e.IsBoss,
+			FromBurnDoT: fromBurnDoT,
+		})
+		return
+	}
+
 	before := e.HP
 	w.DamageEnemy(idx, dmg)
 	if knockbackForce > 0 {

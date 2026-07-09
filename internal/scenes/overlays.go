@@ -33,6 +33,48 @@ func DrawHUD(r services.Renderer, w *world.World, sess *run.Session) {
 	if w == nil {
 		return
 	}
+
+	// Boss Health Bar
+	var boss *world.Enemy
+	for i := range w.Enemies {
+		if w.Enemies[i].IsBoss && w.Enemies[i].HP > 0 {
+			boss = &w.Enemies[i]
+			break
+		}
+	}
+	if boss != nil {
+		// Draw background box outline
+		r.FillRect(80, 16, 160, 8, color.RGBA{0x10, 0x10, 0x18, 0xcc})
+		r.StrokeRect(80, 16, 160, 8, 1, color.RGBA{0x60, 0x60, 0x60, 0xff})
+
+		if boss.Armor != nil {
+			if boss.Armor.Health > 0 {
+				r.DrawText(118, 6, "ARMORED KNIGHT")
+				// Draw armor blocks (X=80 to X=120, maxArmorHealth blocks)
+				maxArmor := boss.Armor.MaxHealth
+				if maxArmor <= 0 {
+					maxArmor = 3
+				}
+				for i := 0; i < boss.Armor.Health; i++ {
+					// 3 blocks of width 12, with 2px gap = 12 * 3 + 4 = 40 wide
+					bx := float32(80 + i*14)
+					r.FillRect(bx, 17, 12, 6, color.RGBA{0xa0, 0xa0, 0xa5, 0xff})
+				}
+			} else {
+				r.DrawText(106, 6, "KNIGHT (UNARMORED)")
+			}
+
+			// Draw red HP bar (X=124 to X=240, width 116)
+			hpPct := float32(boss.HP) / float32(boss.MaxHP)
+			r.FillRect(124, 17, hpPct*116, 6, color.RGBA{0xe0, 0x30, 0x40, 0xff})
+		} else {
+			r.DrawText(148, 6, "BOSS")
+			// Full HP bar
+			hpPct := float32(boss.HP) / float32(boss.MaxHP)
+			r.FillRect(81, 17, hpPct*158, 6, color.RGBA{0xe0, 0x30, 0x40, 0xff})
+		}
+	}
+
 	y := 4
 	maxH := w.MaxHP()
 	for i := 0; i < maxH; i++ {

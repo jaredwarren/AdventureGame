@@ -5,21 +5,25 @@ import "github.com/jaredwarren/game-test/internal/tiled"
 
 // Config holds per-enemy tuning authored in Tiled or applied at spawn.
 type Config struct {
-	HP            int
-	Speed         float64
-	AggroRadius   float64
-	ContactDamage int
-	IsBoss        bool
+	HP              int
+	Speed           float64
+	AggroRadius     float64
+	ContactDamage   int
+	IsBoss          bool
+	IsArmoredKnight bool
+	ArmorHealth     int
 }
 
 // DefaultConfig returns canonical enemy tuning when map props are absent.
 func DefaultConfig() Config {
 	return Config{
-		HP:            DefaultHP,
-		Speed:         DefaultSeekSpeed,
-		AggroRadius:   DefaultAggroRadiusPx,
-		ContactDamage: DefaultContactDamage,
-		IsBoss:        false,
+		HP:              DefaultHP,
+		Speed:           DefaultSeekSpeed,
+		AggroRadius:     DefaultAggroRadiusPx,
+		ContactDamage:   DefaultContactDamage,
+		IsBoss:          false,
+		IsArmoredKnight: false,
+		ArmorHealth:     0,
 	}
 }
 
@@ -44,6 +48,14 @@ func ConfigFromTiled(o *tiled.Object) Config {
 	if v, ok := tiled.ObjPropBool(o, "is_boss"); ok {
 		cfg.IsBoss = v
 	}
+	if v, ok := tiled.ObjPropBool(o, "is_armored_knight"); ok {
+		cfg.IsArmoredKnight = v
+	}
+	if v, ok := tiled.ObjPropInt(o, "armor_hp"); ok && v > 0 {
+		cfg.ArmorHealth = v
+	} else if cfg.IsArmoredKnight {
+		cfg.ArmorHealth = 3
+	}
 	return cfg
 }
 
@@ -60,5 +72,7 @@ func TiledProperties(cfg Config) []tiled.Property {
 		{Name: "aggro", Type: "float", Value: cfg.AggroRadius},
 		{Name: "damage", Type: "int", Value: cfg.ContactDamage},
 		{Name: "is_boss", Type: "bool", Value: cfg.IsBoss},
+		{Name: "is_armored_knight", Type: "bool", Value: cfg.IsArmoredKnight},
+		{Name: "armor_hp", Type: "int", Value: cfg.ArmorHealth},
 	}
 }

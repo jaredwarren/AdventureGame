@@ -101,6 +101,29 @@ type Enemy struct {
 
 	Dir    Dir // facing direction for rendering
 	IsBoss bool
+
+	Armor       *Armor
+	MeleeAttack *MeleeAttack
+}
+
+// Armor allows an entity to deflect damage until the armor is broken.
+type Armor struct {
+	Health    int
+	MaxHealth int
+}
+
+// MeleeAttack allows an entity to perform telegraphed swing attacks.
+type MeleeAttack struct {
+	Damage         int
+	Reach          float64
+	Thickness      float64
+	WindupFrames   int
+	ActiveFrames   int
+	CooldownFrames int
+
+	Windup   int
+	Timer    int
+	Cooldown int
 }
 
 // Door is an authored map transition marker. Rect is baked by Tiled so it
@@ -556,6 +579,18 @@ func (e Enemy) Rect() geom.Rect { return geom.Rect{X: e.X, Y: e.Y, W: e.W, H: e.
 
 // Center returns the enemy's AABB center point.
 func (e Enemy) Center() (float64, float64) { return e.X + e.W*0.5, e.Y + e.H*0.5 }
+
+// DamageArmor decrements armor health and returns true if the armor broke this frame.
+func (e *Enemy) DamageArmor(amount int) bool {
+	if e.Armor == nil || e.Armor.Health <= 0 {
+		return false
+	}
+	e.Armor.Health -= amount
+	if e.Armor.Health < 0 {
+		e.Armor.Health = 0
+	}
+	return e.Armor.Health == 0
+}
 
 // Rect returns the player's AABB.
 func (p Player) Rect() geom.Rect { return geom.Rect{X: p.X, Y: p.Y, W: p.W, H: p.H} }

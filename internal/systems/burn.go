@@ -12,7 +12,7 @@ type BurnSystem struct{}
 func (BurnSystem) Update(w *world.World, bus *EventBus, _ float64) error {
 	for i := range w.Enemies {
 		e := &w.Enemies[i]
-		if e.HP <= 0 || e.BurnTimer <= 0 {
+		if e.HP <= 0 || e.BurnTimer <= 0 || (e.Armor != nil && e.Armor.Health > 0) {
 			continue
 		}
 		e.BurnTimer--

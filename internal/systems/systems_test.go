@@ -172,6 +172,96 @@ func TestCombatSystem_EmitsHitAndKillFlags(t *testing.T) {
 	}
 }
 
+func TestArmoredKnightBossMechanics(t *testing.T) {
+	w := newTestWorld()
+	e := world.NewEnemy(world.NoEntity, w.Player.X+w.Player.W*0.5+4, w.Player.Y+w.Player.H*0.5-6, 10, true)
+	e.Armor = &world.Armor{
+		Health:    3,
+		MaxHealth: 3,
+	}
+	e.MeleeAttack = &world.MeleeAttack{
+		Damage:         4,
+		Reach:          24,
+		Thickness:      24,
+		WindupFrames:   30,
+		ActiveFrames:   30,
+		CooldownFrames: 90,
+	}
+	w.Enemies = []world.Enemy{e}
+
+	// 1. Attack with sword - should deflect (0 HP damage, no armor change)
+	w.Player.Swing = 7
+	w.Player.Dir = world.DirRight
+	var bus systems.EventBus
+	if err := (systems.CombatSystem{}).Update(w, &bus, 0); err != nil {
+		t.Fatalf("CombatSystem swing: %v", err)
+	}
+	if w.Enemies[0].HP != 10 {
+		t.Errorf("expected HP to be 10, got %d", w.Enemies[0].HP)
+	}
+	if w.Enemies[0].Armor.Health != 3 {
+		t.Errorf("expected Armor Health to be 3, got %d", w.Enemies[0].Armor.Health)
+	}
+
+	// 2. Explode bomb 1 - should decrease armor HP but not boss HP
+	w.ActiveBombs = []world.ActiveBomb{
+		{
+			X: w.Enemies[0].X + w.Enemies[0].W*0.5,
+			Y: w.Enemies[0].Y + w.Enemies[0].H*0.5,
+			TX: 0, TY: 0,
+			Timer: 1,
+		},
+	}
+	if err := (systems.BombSystem{}).Update(w, &bus, 0); err != nil {
+		t.Fatalf("BombSystem: %v", err)
+	}
+	if w.Enemies[0].Armor.Health != 2 {
+		t.Errorf("expected Armor Health to be 2, got %d", w.Enemies[0].Armor.Health)
+	}
+	if w.Enemies[0].HP != 10 {
+		t.Errorf("expected HP to be 10, got %d", w.Enemies[0].HP)
+	}
+
+	// 3. Explode remaining 2 bombs - armor should break and emit event
+	for i := 0; i < 2; i++ {
+		w.ActiveBombs = []world.ActiveBomb{
+			{
+				X: w.Enemies[0].X + w.Enemies[0].W*0.5,
+				Y: w.Enemies[0].Y + w.Enemies[0].H*0.5,
+				TX: 0, TY: 0,
+				Timer: 1,
+			},
+		}
+		if err := (systems.BombSystem{}).Update(w, &bus, 0); err != nil {
+			t.Fatalf("BombSystem: %v", err)
+		}
+	}
+	if w.Enemies[0].Armor.Health != 0 {
+		t.Errorf("expected Armor Health to be 0, got %d", w.Enemies[0].Armor.Health)
+	}
+
+	evs := bus.Drain()
+	foundBroken := false
+	for _, ev := range evs {
+		if _, ok := ev.(systems.ArmorBrokenEvent); ok {
+			foundBroken = true
+			break
+		}
+	}
+	if !foundBroken {
+		t.Error("expected ArmorBrokenEvent to be emitted")
+	}
+
+	// 4. Attack with sword now that armor is broken - should deal damage
+	w.Player.Swing = 7
+	if err := (systems.CombatSystem{}).Update(w, &bus, 0); err != nil {
+		t.Fatalf("CombatSystem swing post-armor: %v", err)
+	}
+	if w.Enemies[0].HP >= 10 {
+		t.Errorf("expected HP to be reduced, got %d", w.Enemies[0].HP)
+	}
+}
+
 // TestCombatSystem_TorchBurnsFaceTile verifies fire damage in front of the
 // player during an active torch swing.
 // TestCombatSystem_TorchBurnsFaceTile verifies that swinging a torch ignites
