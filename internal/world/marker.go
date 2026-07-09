@@ -36,7 +36,17 @@ type markerRegistry struct {
 	order  []string
 }
 
-var markers markerRegistry
+var markers = markerRegistry{
+	byType: map[string]MarkerHandler{
+		"spawn":  spawnMarker{},
+		"enemy":  enemyMarker{},
+		"pickup": pickupMarker{},
+		"door":   doorMarker{},
+		"shrine": shrineMarker{},
+		"sign":   signMarker{},
+	},
+	order: []string{"spawn", "enemy", "pickup", "door", "shrine", "sign"},
+}
 
 func registerMarker(h MarkerHandler) {
 	if markers.byType == nil {
@@ -44,15 +54,6 @@ func registerMarker(h MarkerHandler) {
 	}
 	markers.byType[h.Type()] = h
 	markers.order = append(markers.order, h.Type())
-}
-
-func init() {
-	registerMarker(spawnMarker{})
-	registerMarker(enemyMarker{})
-	registerMarker(pickupMarker{})
-	registerMarker(doorMarker{})
-	registerMarker(shrineMarker{})
-	registerMarker(signMarker{})
 }
 
 // MarkerTypeNames returns registered marker types in editor/loader order.

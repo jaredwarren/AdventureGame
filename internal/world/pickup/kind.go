@@ -81,13 +81,25 @@ var (
 var All = []*Kind{Coin, Heart, Bomb, SmallKey, Torch, PegasusBoots, Shield}
 
 var (
-	byTiledName map[string]*Kind
-	byID        map[int]*Kind
+	byTiledName = map[string]*Kind{
+		"coin":          Coin,
+		"heart":         Heart,
+		"bomb":          Bomb,
+		"key":           SmallKey,
+		"torch":         Torch,
+		"pegasus_boots": PegasusBoots,
+		"shield":        Shield,
+	}
+	byID = map[int]*Kind{
+		0: Coin,
+		1: Heart,
+		2: Bomb,
+		3: SmallKey,
+		4: Torch,
+		5: PegasusBoots,
+		6: Shield,
+	}
 )
-
-func init() {
-	rebuildIndexes()
-}
 
 func rebuildIndexes() {
 	byTiledName = make(map[string]*Kind, len(All))

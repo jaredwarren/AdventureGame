@@ -52,9 +52,6 @@ type ItemDef struct {
 }
 
 var (
-	itemsByID = make(map[string]ItemDef)
-	allItems  []ItemDef
-
 	ItemBomb = ItemDef{
 		ID:         "bomb",
 		Name:       "Bomb",
@@ -81,14 +78,21 @@ var (
 		Category:   CategoryPassive,
 		PickupKind: PickupShield,
 	}
-)
 
-func init() {
-	RegisterItem(ItemBomb)
-	RegisterItem(ItemTorch)
-	RegisterItem(ItemPegasusBoots)
-	RegisterItem(ItemShield)
-}
+	itemsByID = map[string]ItemDef{
+		"bomb":          ItemBomb,
+		"torch":         ItemTorch,
+		"pegasus_boots": ItemPegasusBoots,
+		"shield":        ItemShield,
+	}
+
+	allItems = []ItemDef{
+		ItemBomb,
+		ItemTorch,
+		ItemPegasusBoots,
+		ItemShield,
+	}
+)
 
 // RegisterItem adds an item definition to the global item registry.
 func RegisterItem(def ItemDef) {
