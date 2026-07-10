@@ -1081,48 +1081,6 @@
         2,
         2,
         2
-      ],
-      "properties": [
-        {
-          "name": "proc_seed",
-          "type": "string",
-          "value": "1"
-        },
-        {
-          "name": "proc_style",
-          "type": "string",
-          "value": "backtracker"
-        },
-        {
-          "name": "proc_cells_w",
-          "type": "string",
-          "value": "12"
-        },
-        {
-          "name": "proc_cells_h",
-          "type": "string",
-          "value": "10"
-        },
-        {
-          "name": "proc_floor_grass_w",
-          "type": "string",
-          "value": "0.5"
-        },
-        {
-          "name": "proc_floor_water_w",
-          "type": "string",
-          "value": "0.2"
-        },
-        {
-          "name": "proc_floor_floor2_w",
-          "type": "string",
-          "value": "0.3"
-        },
-        {
-          "name": "proc_tree_deadend_p",
-          "type": "string",
-          "value": "0.35"
-        }
       ]
     },
     {
@@ -1137,7 +1095,9 @@
           "name": "spawn",
           "type": "spawn",
           "x": 22,
-          "y": 81
+          "y": 81,
+          "width": 0,
+          "height": 0
         },
         {
           "id": 5,
@@ -1180,11 +1140,37 @@
               "value": "A wooden sign..."
             }
           ]
+        },
+        {
+          "id": 7,
+          "name": "to_boss",
+          "type": "door",
+          "x": 96,
+          "y": -8,
+          "width": 48,
+          "height": 16,
+          "properties": [
+            {
+              "name": "target_map",
+              "type": "string",
+              "value": "knight_boss"
+            },
+            {
+              "name": "spawn_x",
+              "type": "string",
+              "value": "120"
+            },
+            {
+              "name": "spawn_y",
+              "type": "string",
+              "value": "200"
+            }
+          ]
         }
       ]
     }
   ],
   "nextlayerid": 4,
-  "nextobjectid": 7,
+  "nextobjectid": 8,
   "tilesets": []
 }
