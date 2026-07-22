@@ -116,7 +116,7 @@ func (rs RunState) ToGameSave(mapID string, px, py float64) *save.GameSave {
 		MapID: mapID, PlayerX: px, PlayerY: py, HP: rs.HP, Currency: rs.Currency, Bombs: rs.Bombs,
 		HasTorch: rs.HasTorch || rs.OwnedItems["torch"], HasPegasusBoots: rs.HasPegasusBoots || rs.OwnedItems["pegasus_boots"],
 		ShieldLevel: rs.ShieldLevel,
-		OwnedItems: ownedList, SmallKey: rs.SmallKey, Vitality: rs.Stats.Vitality, Resolve: rs.Stats.Resolve,
+		OwnedItems:  ownedList, SmallKey: rs.SmallKey, Vitality: rs.Stats.Vitality, Resolve: rs.Stats.Resolve,
 		Might: rs.Stats.Might, Wits: rs.Stats.Wits, Fortune: rs.Stats.Fortune, TimeOfDay: rs.TimeOfDay,
 		SelectedItem: int(rs.SelectedItem), Tuning: rs.PlayerTuning,
 	}

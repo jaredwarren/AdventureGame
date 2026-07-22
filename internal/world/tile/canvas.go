@@ -26,8 +26,8 @@ const (
 
 // PathOp describes a single path operation segment.
 type PathOp struct {
-	Kind             PathOpKind
-	X, Y             float32
+	Kind               PathOpKind
+	X, Y               float32
 	ControlX, ControlY float32
 }
 

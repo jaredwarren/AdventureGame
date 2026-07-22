@@ -19,22 +19,22 @@ const CurrentVersion = 3
 type GameSave struct {
 	Version int `json:"version"`
 
-	MapID    string  `json:"map_id"`
-	PlayerX  float64 `json:"player_x"`
-	PlayerY  float64 `json:"player_y"`
-	HP       int     `json:"hp"`
-	Currency int     `json:"currency"`
-	Bombs    int     `json:"bombs,omitempty"`
+	MapID           string   `json:"map_id"`
+	PlayerX         float64  `json:"player_x"`
+	PlayerY         float64  `json:"player_y"`
+	HP              int      `json:"hp"`
+	Currency        int      `json:"currency"`
+	Bombs           int      `json:"bombs,omitempty"`
 	HasTorch        bool     `json:"has_torch"`
 	HasPegasusBoots bool     `json:"has_pegasus_boots,omitempty"`
 	ShieldLevel     int      `json:"shield_level,omitempty"`
 	OwnedItems      []string `json:"owned_items,omitempty"`
 	SmallKey        int      `json:"small_key"`
-	Vitality int     `json:"vitality"`
-	Resolve  int     `json:"resolve"`
-	Might    int     `json:"might"`
-	Wits     int     `json:"wits"`
-	Fortune  int     `json:"fortune"`
+	Vitality        int      `json:"vitality"`
+	Resolve         int      `json:"resolve"`
+	Might           int      `json:"might"`
+	Wits            int      `json:"wits"`
+	Fortune         int      `json:"fortune"`
 
 	// CollectedPickupKeys lists persistent pickup save keys already taken.
 	CollectedPickupKeys []string `json:"collected_pickups,omitempty"`

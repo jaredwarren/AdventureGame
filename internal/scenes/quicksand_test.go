@@ -208,21 +208,25 @@ type signMockInput struct {
 	interactPressed bool
 }
 
-func (m *signMockInput) IsDown(a services.Action) bool          { return false }
-func (m *signMockInput) JustPressed(a services.Action) bool      { return a == services.ActionInteract && m.interactPressed }
-func (m *signMockInput) JustReleased(a services.Action) bool     { return false }
-func (m *signMockInput) Axis2D() (x, y int)                      { return 0, 0 }
+func (m *signMockInput) IsDown(a services.Action) bool { return false }
+func (m *signMockInput) JustPressed(a services.Action) bool {
+	return a == services.ActionInteract && m.interactPressed
+}
+func (m *signMockInput) JustReleased(a services.Action) bool       { return false }
+func (m *signMockInput) Axis2D() (x, y int)                        { return 0, 0 }
 func (m *signMockInput) IsModifierDown(mod services.Modifier) bool { return false }
 
 type signMockAudio struct {
 	services.Audio
 }
+
 func (signMockAudio) Play(name string, volume float64) {}
 
 type signMockRenderer struct {
 	services.Renderer
 	camera *render.Camera
 }
+
 func (r *signMockRenderer) Camera() *render.Camera { return r.camera }
 
 type signMockGameContext struct {
@@ -233,10 +237,11 @@ type signMockGameContext struct {
 	manager  *Manager
 	renderer services.Renderer
 }
-func (c *signMockGameContext) Input() services.Input     { return c.input }
-func (c *signMockGameContext) Session() *run.Session     { return c.sess }
-func (c *signMockGameContext) Audio() services.Audio     { return c.audio }
-func (c *signMockGameContext) Manager() *Manager         { return c.manager }
+
+func (c *signMockGameContext) Input() services.Input       { return c.input }
+func (c *signMockGameContext) Session() *run.Session       { return c.sess }
+func (c *signMockGameContext) Audio() services.Audio       { return c.audio }
+func (c *signMockGameContext) Manager() *Manager           { return c.manager }
 func (c *signMockGameContext) Renderer() services.Renderer { return c.renderer }
 
 func TestSignInteraction(t *testing.T) {

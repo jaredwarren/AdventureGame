@@ -206,8 +206,8 @@ func TestArmoredKnightBossMechanics(t *testing.T) {
 	// 2. Explode bomb 1 - should decrease armor HP but not boss HP
 	w.ActiveBombs = []world.ActiveBomb{
 		{
-			X: w.Enemies[0].X + w.Enemies[0].W*0.5,
-			Y: w.Enemies[0].Y + w.Enemies[0].H*0.5,
+			X:  w.Enemies[0].X + w.Enemies[0].W*0.5,
+			Y:  w.Enemies[0].Y + w.Enemies[0].H*0.5,
 			TX: 0, TY: 0,
 			Timer: 1,
 		},
@@ -226,8 +226,8 @@ func TestArmoredKnightBossMechanics(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		w.ActiveBombs = []world.ActiveBomb{
 			{
-				X: w.Enemies[0].X + w.Enemies[0].W*0.5,
-				Y: w.Enemies[0].Y + w.Enemies[0].H*0.5,
+				X:  w.Enemies[0].X + w.Enemies[0].W*0.5,
+				Y:  w.Enemies[0].Y + w.Enemies[0].H*0.5,
 				TX: 0, TY: 0,
 				Timer: 1,
 			},
@@ -839,4 +839,3 @@ func TestShieldSystem_DirectionalBlock(t *testing.T) {
 		t.Errorf("expected player HP after level 2 block to be %d, got %d", expectedHP, w.HP)
 	}
 }
-

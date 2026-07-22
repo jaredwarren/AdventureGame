@@ -147,4 +147,3 @@ func TestWallTiles(t *testing.T) {
 		var _ Waller = d
 	}
 }
-

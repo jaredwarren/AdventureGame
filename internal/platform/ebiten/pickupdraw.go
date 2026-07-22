@@ -16,10 +16,10 @@ import (
 type pickupDrawer func(dst *ebiten.Image, px, py, w, h float32)
 
 var pickupDrawers = map[*world.PickupKind]pickupDrawer{
-	world.PickupCoin:     drawPickupCoin,
-	world.PickupHeart:    drawPickupHeart,
-	world.PickupBomb:     drawPickupBomb,
-	world.PickupSmallKey: drawPickupSmallKey,
+	world.PickupCoin:         drawPickupCoin,
+	world.PickupHeart:        drawPickupHeart,
+	world.PickupBomb:         drawPickupBomb,
+	world.PickupSmallKey:     drawPickupSmallKey,
 	world.PickupTorch:        drawPickupTorch,
 	world.PickupPegasusBoots: drawPickupPegasusBoots,
 }

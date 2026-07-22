@@ -18,13 +18,13 @@ type Player struct {
 	Hitbox
 	Facing
 
-	Swing           int // >0 while sword animation runs; only mid-window counts as hit frames (see SwordHitbox)
-	SwingCD         int // frames until another Z press is accepted
-	TorchSwing      int // >0 while torch swing runs; same active window as sword (see TorchHitbox)
-	TorchSwingCD    int // frames until another torch press is accepted
-	Invuln          int // i-frames after taking damage
-	DodgeTimer      int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
-	Stamina         int // drained by sprint; refilled when not sprinting
+	Swing                  int // >0 while sword animation runs; only mid-window counts as hit frames (see SwordHitbox)
+	SwingCD                int // frames until another Z press is accepted
+	TorchSwing             int // >0 while torch swing runs; same active window as sword (see TorchHitbox)
+	TorchSwingCD           int // frames until another torch press is accepted
+	Invuln                 int // i-frames after taking damage
+	DodgeTimer             int // if >0, enemy contact check skipped (paired with scene dodgeImpulse nudge)
+	Stamina                int // drained by sprint; refilled when not sprinting
 	SprintHeld             bool
 	SprintExhausted        bool
 	IsMoving               bool

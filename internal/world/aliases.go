@@ -25,10 +25,10 @@ func ParseMapTilePersistKey(k string) (string, int, int, bool) {
 type PickupKind = pickup.Kind
 
 var (
-	PickupCoin     = pickup.Coin
-	PickupHeart    = pickup.Heart
-	PickupBomb     = pickup.Bomb
-	PickupSmallKey = pickup.SmallKey
+	PickupCoin         = pickup.Coin
+	PickupHeart        = pickup.Heart
+	PickupBomb         = pickup.Bomb
+	PickupSmallKey     = pickup.SmallKey
 	PickupTorch        = pickup.Torch
 	PickupPegasusBoots = pickup.PegasusBoots
 	PickupShield       = pickup.Shield

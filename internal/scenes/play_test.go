@@ -171,10 +171,10 @@ type clickMockInput struct {
 	click  bool
 }
 
-func (m *clickMockInput) IsDown(a services.Action) bool          { return false }
-func (m *clickMockInput) JustPressed(a services.Action) bool      { return false }
-func (m *clickMockInput) JustReleased(a services.Action) bool     { return false }
-func (m *clickMockInput) Axis2D() (x, y int)                      { return 0, 0 }
+func (m *clickMockInput) IsDown(a services.Action) bool             { return false }
+func (m *clickMockInput) JustPressed(a services.Action) bool        { return false }
+func (m *clickMockInput) JustReleased(a services.Action) bool       { return false }
+func (m *clickMockInput) Axis2D() (x, y int)                        { return 0, 0 }
 func (m *clickMockInput) IsModifierDown(mod services.Modifier) bool { return false }
 func (m *clickMockInput) MousePressed(b services.MouseButton) bool {
 	if b == services.MouseLeft {
@@ -208,7 +208,7 @@ func TestEditorTileMenuClickSelection(t *testing.T) {
 	// Simulate clicking on row 1 (which is GIDWater base)
 	row := 1
 	mi := &clickMockInput{
-		cx:    100, // inside panelX (70..250)
+		cx:    100,                   // inside panelX (70..250)
 		cy:    30 + 22 + row*20 + 10, // inside row bounds
 		click: true,
 	}
@@ -301,5 +301,3 @@ func TestEditorTileMenuHierarchy(t *testing.T) {
 		t.Errorf("expected s.tileMenuCategory to be empty after clicking back, got %q", s.tileMenuCategory)
 	}
 }
-
-

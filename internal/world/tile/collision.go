@@ -39,4 +39,3 @@ func SolidRectsAt(gid int, tileIndex int, destroyedTiles map[int]bool, hasSmallK
 	}
 	return []geom.Rect{{X: 0, Y: 0, W: Size, H: Size}}
 }
-
