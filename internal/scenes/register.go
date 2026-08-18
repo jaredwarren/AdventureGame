@@ -15,4 +15,5 @@ func RegisterAll(mgr *Manager) {
 	mgr.Register(ScenePause, newPauseScene)
 	mgr.Register(SceneEditor, newEditorScene)
 	mgr.Register(SceneShop, newShopScene)
+	mgr.Register(SceneMap, newMapScene)
 }

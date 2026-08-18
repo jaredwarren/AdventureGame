@@ -105,6 +105,20 @@ func (r *Renderer) StrokeLine(x1, y1, x2, y2, lw float32, c color.RGBA) {
 	vector.StrokeLine(r.screen, x1, y1, x2, y2, lw, c, false)
 }
 
+func (r *Renderer) fillCircle(cx, cy, rad float32, c color.RGBA) {
+	if r.screen == nil {
+		return
+	}
+	vector.FillCircle(r.screen, cx, cy, rad, c, true)
+}
+
+func (r *Renderer) strokeCircle(cx, cy, rad, lw float32, c color.RGBA) {
+	if r.screen == nil {
+		return
+	}
+	vector.StrokeCircle(r.screen, cx, cy, rad, lw, c, true)
+}
+
 // TileSwatchColor returns the flat fallback color a GID renders as.
 func (r *Renderer) TileSwatchColor(gid int) color.RGBA {
 	return world.TileDefOf(gid).SwatchColor

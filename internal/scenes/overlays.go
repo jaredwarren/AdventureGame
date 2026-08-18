@@ -27,6 +27,16 @@ type DebugOverlayExtras struct {
 	DodgeImpulse int
 }
 
+// HandleSessionDebugInput toggles session-scoped debug flags (F3/F4).
+func HandleSessionDebugInput(sess *run.Session, in services.Input) {
+	if in.JustPressed(services.ActionDebugToggle) {
+		sess.ShowDebugOverlay = !sess.ShowDebugOverlay
+	}
+	if in.JustPressed(services.ActionDoorHitboxToggle) {
+		sess.ShowDoorHitboxes = !sess.ShowDoorHitboxes
+	}
+}
+
 // DrawHUD renders hearts, coins, keys, player pixel position (x,y),
 // bomb count / torch flag, stamina bar, and the weekly epoch stamp. No-op when w is nil.
 func DrawHUD(r services.Renderer, w *world.World, sess *run.Session) {
@@ -166,7 +176,7 @@ func DrawDebugOverlay(r services.Renderer, sess *run.Session, sceneID SceneID, e
 	line("scene %s tick %d", sceneID, tick)
 	line("cam %.0f %.0f shk %d", cam.X, cam.Y, cam.ShakeTime)
 	line("doorCD %d hitStop %d dodgeImp %d", doorCD, extras.HitStop, extras.DodgeImpulse)
-	line("dbgF3 on")
+	line("dbgF3 on  doorHitboxes %v", sess.ShowDoorHitboxes)
 
 	if w == nil {
 		line("world nil")

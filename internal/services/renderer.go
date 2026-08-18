@@ -51,6 +51,10 @@ type Renderer interface {
 	// offset captured at BeginFrame. No-op when w is nil.
 	DrawWorld(w *world.World)
 
+	// DrawDoorHitboxes outlines door warp rects in world space (debug).
+	// No-op when w is nil.
+	DrawDoorHitboxes(w *world.World)
+
 	// DrawTileScreen draws one ground tile GID in screen space at (x, y)
 	// with size (dw, dh). Used for the editor brush palette; uses the same
 	// tile atlas as DrawWorld when available, otherwise TileSwatchColor.

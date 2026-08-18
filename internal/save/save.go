@@ -48,6 +48,9 @@ type GameSave struct {
 	// ActivatedShrines lists keys of shrines that the player has touched.
 	ActivatedShrines []string `json:"activated_shrines,omitempty"`
 
+	// VisitedMaps lists IDs of maps the player has visited.
+	VisitedMaps []string `json:"visited_maps,omitempty"`
+
 	ReduceScreenShake bool                 `json:"reduce_screen_shake"`
 	TimeOfDay         int                  `json:"time_of_day"`
 	SelectedItem      int                  `json:"selected_item"`

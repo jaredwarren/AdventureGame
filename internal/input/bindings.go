@@ -63,12 +63,14 @@ func DefaultBindings() *Bindings {
 			ActionName(services.ActionPause):   {"P"},
 			ActionName(services.ActionConfirm): {"Enter"},
 			ActionName(services.ActionCancel):  {"Escape"},
+			ActionName(services.ActionMap):     {"M"},
 
 			ActionName(services.ActionQuickSave):     {"S"},
 			ActionName(services.ActionQuickLoad):     {"L", "K"},
 			ActionName(services.ActionCopyBugDigest): {"C"},
 
 			ActionName(services.ActionDebugToggle):       {"F3"},
+			ActionName(services.ActionDoorHitboxToggle):  {"F4"},
 			ActionName(services.ActionToggleReduceShake): {"R"},
 
 			ActionName(services.ActionEditorToggleMode):       {"E"},

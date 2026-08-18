@@ -25,6 +25,12 @@ type Input struct {
 	down        map[services.Action][]ebiten.Key
 	modifiers   map[services.Modifier][]ebiten.Key
 	mouseButton map[services.MouseButton]ebiten.MouseButton
+	touch       *TouchControls
+}
+
+// InputOptions configures optional touch overlay behavior.
+type InputOptions struct {
+	TouchControls bool
 }
 
 // NewInput resolves the symbolic key names in b against keynames.go and
@@ -37,6 +43,12 @@ type Input struct {
 // ignore. NewInput itself never returns an error — a bad config always
 // degrades, never blocks launch.
 func NewInput(b *input.Bindings) (*Input, []string) {
+	return NewInputWithOptions(b, InputOptions{})
+}
+
+// NewInputWithOptions is like NewInput but can enable the on-screen touch
+// overlay used for WASM and future mobile builds.
+func NewInputWithOptions(b *input.Bindings, opts InputOptions) (*Input, []string) {
 	if b == nil {
 		b = input.DefaultBindings()
 	}
@@ -72,7 +84,29 @@ func NewInput(b *input.Bindings) (*Input, []string) {
 			services.MouseRight:  ebiten.MouseButtonRight,
 			services.MouseMiddle: ebiten.MouseButtonMiddle,
 		},
+		touch: NewTouchControls(opts.TouchControls),
 	}, warnings
+}
+
+// BeginFrame samples touch overlay state for the current tick. App calls
+// this at the top of Update before scenes read input.
+func (i *Input) BeginFrame() {
+	if i.touch != nil {
+		i.touch.BeginFrame()
+	}
+}
+
+// TouchEnabled reports whether the on-screen overlay is active.
+func (i *Input) TouchEnabled() bool {
+	return i.touch != nil && i.touch.Enabled()
+}
+
+// DrawTouchControls renders the virtual button overlay. Call after scene
+// Draw while the renderer frame is still open.
+func (i *Input) DrawTouchControls(r *Renderer) {
+	if i.touch != nil {
+		i.touch.Draw(r)
+	}
 }
 
 // defaultModifierBindings returns the immutable mapping from logical
@@ -88,6 +122,9 @@ func defaultModifierBindings() map[services.Modifier][]ebiten.Key {
 }
 
 func (i *Input) IsDown(a services.Action) bool {
+	if i.touch != nil && i.touch.IsDown(a) {
+		return true
+	}
 	for _, k := range i.down[a] {
 		if ebiten.IsKeyPressed(k) {
 			return true
@@ -97,6 +134,9 @@ func (i *Input) IsDown(a services.Action) bool {
 }
 
 func (i *Input) JustPressed(a services.Action) bool {
+	if i.touch != nil && i.touch.JustPressed(a) {
+		return true
+	}
 	for _, k := range i.down[a] {
 		if inpututil.IsKeyJustPressed(k) {
 			return true
@@ -106,6 +146,9 @@ func (i *Input) JustPressed(a services.Action) bool {
 }
 
 func (i *Input) JustReleased(a services.Action) bool {
+	if i.touch != nil && i.touch.JustReleased(a) {
+		return true
+	}
 	for _, k := range i.down[a] {
 		if inpututil.IsKeyJustReleased(k) {
 			return true

@@ -32,6 +32,9 @@ type Session struct {
 	// flattened into save.GameSave on BuildSave.
 	Maps map[string]*MapProgress
 
+	// VisitedMaps records all map IDs the player has entered during this run/save.
+	VisitedMaps map[string]struct{}
+
 	// WeeklySeed refreshes from time.Now at the top of every Update; feeds
 	// any future weekly-rotation content (leaderboard epochs, event maps).
 	// Stored on Session so debug HUD + saves agree on the same epoch for a
@@ -49,6 +52,9 @@ type Session struct {
 	// ShowDebugOverlay toggles the F3 playtest HUD. Lives on Session (not
 	// any one scene) because every scene respects it.
 	ShowDebugOverlay bool
+
+	// ShowDoorHitboxes toggles door warp-rect overlays (F4). Off by default.
+	ShowDoorHitboxes bool
 }
 
 // ClearDungeonProgress removes all dun:* map progress entries when a new dungeon seed is generated.
@@ -99,12 +105,58 @@ func (s *Session) MarkShrineActivated(mapID, key string) {
 	s.ProgressFor(mapID).MarkActivatedShrine(key)
 }
 
+// MarkMapVisited marks mapID as visited by the player.
+func (s *Session) MarkMapVisited(mapID string) {
+	if s == nil || mapID == "" {
+		return
+	}
+	if s.VisitedMaps == nil {
+		s.VisitedMaps = make(map[string]struct{})
+	}
+	s.VisitedMaps[mapID] = struct{}{}
+}
+
+// IsMapVisited reports whether the player has visited mapID.
+func (s *Session) IsMapVisited(mapID string) bool {
+	if s == nil || s.VisitedMaps == nil || mapID == "" {
+		return false
+	}
+	_, ok := s.VisitedMaps[mapID]
+	return ok
+}
+
+// VisitedMapList returns a sorted list of visited map IDs.
+func (s *Session) VisitedMapList() []string {
+	if s == nil || len(s.VisitedMaps) == 0 {
+		return nil
+	}
+	return sortedKeys(s.VisitedMaps)
+}
+
+// SetVisitedMaps replaces the visited maps set with the given list.
+func (s *Session) SetVisitedMaps(maps []string) {
+	if s == nil {
+		return
+	}
+	if len(maps) == 0 {
+		s.VisitedMaps = nil
+		return
+	}
+	s.VisitedMaps = make(map[string]struct{}, len(maps))
+	for _, m := range maps {
+		if strings.TrimSpace(m) != "" {
+			s.VisitedMaps[m] = struct{}{}
+		}
+	}
+}
+
 // ClearPersistedProgress resets all per-map durable progress (e.g. new game).
 func (s *Session) ClearPersistedProgress() {
 	if s == nil {
 		return
 	}
 	s.Maps = nil
+	s.VisitedMaps = nil
 }
 
 // NewSession builds an empty session. Callers populate HasSave from disk

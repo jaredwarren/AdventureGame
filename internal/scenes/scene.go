@@ -50,6 +50,7 @@ const (
 	ScenePause  SceneID = "pause"
 	SceneEditor SceneID = "editor"
 	SceneShop   SceneID = "shop"
+	SceneMap    SceneID = "map"
 )
 
 // GameContext bundles the state and services a scene is allowed to touch.

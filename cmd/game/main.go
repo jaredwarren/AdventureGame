@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/hajimehoshi/ebiten/v2"
 
@@ -40,6 +41,7 @@ const configSubdir = "game-test"
 func main() {
 	editMap := flag.String("edit", "", "open the in-engine .tmj editor for this map id (e.g. field1); reads/writes assets/maps/<id>.tmj on disk")
 	balancePath := flag.String("balance", "", "path to optional balance.json overlay file for dev playtesting")
+	touchControls := flag.Bool("touch", runtime.GOOS == "js", "show on-screen virtual buttons (default on WASM)")
 	flag.Parse()
 
 	if *balancePath != "" {
@@ -63,9 +65,14 @@ func main() {
 
 	bindings := loadBindings()
 
-	inp, inpWarnings := ebitenplat.NewInput(bindings)
+	inp, inpWarnings := ebitenplat.NewInputWithOptions(bindings, ebitenplat.InputOptions{
+		TouchControls: *touchControls,
+	})
 	for _, w := range inpWarnings {
 		log.Printf("[input] %s", w)
+	}
+	if *touchControls {
+		log.Printf("[input] virtual touch controls enabled")
 	}
 
 	svc := game.Services{

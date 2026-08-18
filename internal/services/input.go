@@ -31,6 +31,7 @@ const (
 	ActionPause
 	ActionConfirm
 	ActionCancel
+	ActionMap
 
 	// Quick-save / load. Chorded behavior lives in the scene via IsModifierDown.
 	ActionQuickSave
@@ -39,6 +40,7 @@ const (
 
 	// Debug.
 	ActionDebugToggle
+	ActionDoorHitboxToggle
 	ActionToggleReduceShake
 
 	// Editor-specific.

@@ -90,3 +90,38 @@ func TestFlattenMapsToSave_RoundTrip(t *testing.T) {
 		t.Error("missing pickup after round trip")
 	}
 }
+
+func TestVisitedMaps_PersistAndRoundTrip(t *testing.T) {
+	assets := &mockAssetCache{mapJSON: tinyMapJSON()}
+	sess := NewSession()
+
+	if err := EnterMap(assets, sess, "E-5", MapLoadOpts{}); err != nil {
+		t.Fatal(err)
+	}
+	if !sess.IsMapVisited("E-5") {
+		t.Error("E-5 should be marked visited on EnterMap")
+	}
+	if sess.IsMapVisited("E-6") {
+		t.Error("E-6 should not be visited yet")
+	}
+
+	if err := EnterMap(assets, sess, "E-6", MapLoadOpts{CarryStatsFromSession: true}); err != nil {
+		t.Fatal(err)
+	}
+	if !sess.IsMapVisited("E-6") || !sess.IsMapVisited("E-5") {
+		t.Errorf("expected both E-5 and E-6 visited, got %v", sess.VisitedMapList())
+	}
+
+	sv := BuildSave(sess, nil)
+	if len(sv.VisitedMaps) != 2 || sv.VisitedMaps[0] != "E-5" || sv.VisitedMaps[1] != "E-6" {
+		t.Errorf("unexpected save VisitedMaps: %v", sv.VisitedMaps)
+	}
+
+	sess2 := NewSession()
+	if err := EnterMap(assets, sess2, "E-6", MapLoadOpts{Save: sv, ReplacePersistedProgress: true}); err != nil {
+		t.Fatal(err)
+	}
+	if !sess2.IsMapVisited("E-5") || !sess2.IsMapVisited("E-6") {
+		t.Errorf("expected both E-5 and E-6 visited in sess2, got %v", sess2.VisitedMapList())
+	}
+}

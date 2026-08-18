@@ -117,11 +117,16 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 	if opts.ReplacePersistedProgress {
 		if opts.Save != nil {
 			sess.Maps = progressMapsFromSave(opts.Save)
+			sess.SetVisitedMaps(opts.Save.VisitedMaps)
 		} else {
 			sess.Maps = nil
+			sess.VisitedMaps = nil
 		}
 	} else if opts.Save != nil {
 		sess.Maps = mergeSaveIntoMaps(sess.Maps, opts.Save)
+		for _, vm := range opts.Save.VisitedMaps {
+			sess.MarkMapVisited(vm)
+		}
 	}
 
 	progress := sess.ProgressFor(mapID)
@@ -136,6 +141,7 @@ func EnterMap(assets services.AssetCache, sess *Session, mapID string, opts MapL
 	w.DoorCooldown = w.EffectiveBalance().DoorCooldowns.MapLoadFrames
 
 	sess.World = w
+	sess.MarkMapVisited(mapID)
 	ApplyMapProgress(w, progress)
 
 	if opts.Save != nil && opts.Save.MapID == mapID {
@@ -256,6 +262,11 @@ func ApplySave(sess *Session, s *save.GameSave, cam *render.Camera) {
 	RunStateFromSave(s).ApplyTo(sess.World)
 	sess.World.Player.X = s.PlayerX
 	sess.World.Player.Y = s.PlayerY
+	if len(s.VisitedMaps) > 0 {
+		for _, vm := range s.VisitedMaps {
+			sess.MarkMapVisited(vm)
+		}
+	}
 	if cam != nil {
 		cam.ReduceShake = s.ReduceScreenShake
 	}
@@ -276,6 +287,7 @@ func BuildSave(sess *Session, cam *render.Camera) *save.GameSave {
 	}
 	if sess != nil {
 		flattenMapsToSave(gs, sess.Maps)
+		gs.VisitedMaps = sess.VisitedMapList()
 	}
 	return gs
 }

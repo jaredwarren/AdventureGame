@@ -42,6 +42,7 @@ import (
 type App struct {
 	session  *run.Session
 	renderer *ebitenplat.Renderer
+	input    *ebitenplat.Input
 	manager  *scenes.Manager
 
 	ctx *appContext
@@ -69,7 +70,7 @@ func (c *appContext) Manager() *scenes.Manager      { return c.manager }
 // mandatory; Clipboard may be nil on headless builds (scenes treat a nil
 // Clipboard as a no-op for best-effort actions like "copy bug digest").
 type Services struct {
-	Input     services.Input
+	Input     *ebitenplat.Input
 	Audio     services.Audio
 	Assets    services.AssetCache
 	Clipboard services.Clipboard
@@ -110,6 +111,7 @@ func NewApp(svc Services, editorMapID string) (*App, error) {
 	return &App{
 		session:  sess,
 		renderer: rend,
+		input:    svc.Input,
 		manager:  mgr,
 		ctx:      ctx,
 	}, nil
@@ -124,6 +126,9 @@ func NewApp(svc Services, editorMapID string) (*App, error) {
 // The weekly seed refreshes every tick so the debug HUD and saves agree on
 // the current epoch without scenes having to derive it.
 func (a *App) Update() error {
+	if a.input != nil {
+		a.input.BeginFrame()
+	}
 	a.session.WeeklySeed = time.Now().Unix() / (7 * 24 * 3600)
 	a.ctx.audio.Tick()
 	return a.manager.Update(a.ctx)
@@ -136,6 +141,9 @@ func (a *App) Draw(screen *ebiten.Image) {
 	a.renderer.BeginFrame(screen)
 	defer a.renderer.EndFrame()
 	a.manager.Draw(a.ctx)
+	if a.input != nil && a.input.TouchEnabled() {
+		a.input.DrawTouchControls(a.renderer)
+	}
 }
 
 // Layout fixes the internal resolution; Ebiten scales to the window.

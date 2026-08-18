@@ -35,12 +35,14 @@ var actionNames = map[services.Action]string{
 	services.ActionPause:   "Pause",
 	services.ActionConfirm: "Confirm",
 	services.ActionCancel:  "Cancel",
+	services.ActionMap:     "Map",
 
 	services.ActionQuickSave:     "QuickSave",
 	services.ActionQuickLoad:     "QuickLoad",
 	services.ActionCopyBugDigest: "CopyBugDigest",
 
 	services.ActionDebugToggle:       "DebugToggle",
+	services.ActionDoorHitboxToggle:  "DoorHitboxToggle",
 	services.ActionToggleReduceShake: "ToggleReduceShake",
 
 	services.ActionEditorToggleMode:       "EditorToggleMode",

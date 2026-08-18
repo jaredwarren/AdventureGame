@@ -853,11 +853,115 @@
               "value": "shield"
             }
           ]
+        },
+        {
+          "id": 114,
+          "name": "grid_door_N",
+          "type": "door",
+          "x": 96,
+          "y": 0,
+          "width": 32,
+          "height": 16,
+          "properties": [
+            {
+              "name": "target_map",
+              "type": "string",
+              "value": "F-4"
+            },
+            {
+              "name": "spawn_x",
+              "type": "string",
+              "value": "160"
+            },
+            {
+              "name": "spawn_y",
+              "type": "string",
+              "value": "200"
+            }
+          ]
+        },
+        {
+          "id": 115,
+          "name": "grid_door_S",
+          "type": "door",
+          "x": 160,
+          "y": 224,
+          "width": 32,
+          "height": 16,
+          "properties": [
+            {
+              "name": "target_map",
+              "type": "string",
+              "value": "F-6"
+            },
+            {
+              "name": "spawn_x",
+              "type": "string",
+              "value": "160"
+            },
+            {
+              "name": "spawn_y",
+              "type": "string",
+              "value": "40"
+            }
+          ]
+        },
+        {
+          "id": 116,
+          "name": "grid_door_W",
+          "type": "door",
+          "x": 0,
+          "y": 112,
+          "width": 16,
+          "height": 32,
+          "properties": [
+            {
+              "name": "target_map",
+              "type": "string",
+              "value": "E-5"
+            },
+            {
+              "name": "spawn_x",
+              "type": "string",
+              "value": "280"
+            },
+            {
+              "name": "spawn_y",
+              "type": "string",
+              "value": "112"
+            }
+          ]
+        },
+        {
+          "id": 117,
+          "name": "grid_door_E",
+          "type": "door",
+          "x": 304,
+          "y": 96,
+          "width": 16,
+          "height": 32,
+          "properties": [
+            {
+              "name": "target_map",
+              "type": "string",
+              "value": "G-5"
+            },
+            {
+              "name": "spawn_x",
+              "type": "string",
+              "value": "32"
+            },
+            {
+              "name": "spawn_y",
+              "type": "string",
+              "value": "112"
+            }
+          ]
         }
       ]
     }
   ],
   "nextlayerid": 4,
-  "nextobjectid": 102,
+  "nextobjectid": 118,
   "tilesets": []
 }

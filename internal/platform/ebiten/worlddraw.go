@@ -203,17 +203,35 @@ func (r *Renderer) DrawWorld(w *world.World) {
 
 	// 5. Draw editor door overlays
 	if w.IsEditor {
-		for _, d := range w.Doors {
-			rd := d.Rect
-			vector.FillRect(screen,
-				float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H),
-				color.RGBA{0xe0, 0x90, 0x18, 0x55}, false)
-			vector.StrokeRect(screen,
-				float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H), 2,
-				color.RGBA{0xff, 0xc8, 0x40, 0xff}, false)
-		}
+		r.drawDoorHitboxes(w.Doors)
 	}
 
 	// 6. Apply night lighting overlay
 	r.drawNightOverlay(w)
+}
+
+var (
+	doorHitboxFill   = color.RGBA{0xe0, 0x90, 0x18, 0x55}
+	doorHitboxStroke = color.RGBA{0xff, 0xc8, 0x40, 0xff}
+)
+
+func (r *Renderer) DrawDoorHitboxes(w *world.World) {
+	if w == nil || r.screen == nil {
+		return
+	}
+	r.drawDoorHitboxes(w.Doors)
+}
+
+func (r *Renderer) drawDoorHitboxes(doors []world.Door) {
+	screen := r.screen
+	ox, oy := r.camOffX, r.camOffY
+	for _, d := range doors {
+		rd := d.Rect
+		vector.FillRect(screen,
+			float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H),
+			doorHitboxFill, false)
+		vector.StrokeRect(screen,
+			float32(rd.X-ox), float32(rd.Y-oy), float32(rd.W), float32(rd.H), 2,
+			doorHitboxStroke, false)
+	}
 }

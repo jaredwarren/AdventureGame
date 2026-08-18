@@ -32,9 +32,7 @@ func (s *PauseScene) Update(ctx GameContext) error {
 	sess := ctx.Session()
 	cam := ctx.Renderer().Camera()
 
-	if in.JustPressed(services.ActionDebugToggle) {
-		sess.ShowDebugOverlay = !sess.ShowDebugOverlay
-	}
+	HandleSessionDebugInput(sess, in)
 	if in.JustPressed(services.ActionPause) {
 		ctx.Manager().PopOverlay()
 		return nil

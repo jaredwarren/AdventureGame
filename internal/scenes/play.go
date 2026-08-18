@@ -47,11 +47,13 @@ func (s *PlayScene) Update(ctx GameContext) error {
 	in := ctx.Input()
 	sess := ctx.Session()
 
-	if in.JustPressed(services.ActionDebugToggle) {
-		sess.ShowDebugOverlay = !sess.ShowDebugOverlay
-	}
+	HandleSessionDebugInput(sess, in)
 	if in.JustPressed(services.ActionPause) {
 		ctx.Manager().PushOverlay(ScenePause, nil)
+		return nil
+	}
+	if in.JustPressed(services.ActionMap) {
+		ctx.Manager().PushOverlay(SceneMap, nil)
 		return nil
 	}
 	if in.IsModifierDown(services.ModCtrl) && in.JustPressed(services.ActionQuickSave) {
@@ -124,6 +126,9 @@ func (s *PlayScene) Draw(ctx GameContext) {
 	r := ctx.Renderer()
 	if sess.World != nil {
 		r.DrawWorld(sess.World)
+		if sess.ShowDoorHitboxes {
+			r.DrawDoorHitboxes(sess.World)
+		}
 		DrawParticles(r, s.particles)
 
 		DrawHUD(r, sess.World, sess)
