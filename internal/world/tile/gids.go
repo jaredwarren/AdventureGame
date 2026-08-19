@@ -69,4 +69,21 @@ const (
 	GIDLava        = 50
 	GIDSign        = 51
 	GIDSand        = 52
+
+	// Dirt path edge transition tiles
+	GIDDirtPathTop     = 53
+	GIDDirtPathBottom  = 54
+	GIDDirtPathLeft    = 55
+	GIDDirtPathRight   = 56
+	GIDDirtPathNE      = 57
+	GIDDirtPathNW      = 58
+	GIDDirtPathSW      = 59
+	GIDDirtPathSE      = 60
+	GIDDirtPathNEInner = 61
+	GIDDirtPathNWInner = 62
+	GIDDirtPathSWInner = 63
+	GIDDirtPathSEInner = 64
+
+	// Cobblestone path (occupies 65..77: base + 12 transitions)
+	GIDCobblePath = 65
 )

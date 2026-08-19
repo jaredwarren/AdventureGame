@@ -8,101 +8,112 @@ import (
 
 // Tile palette grouping.
 //
-// The in-game editor collapses the water, wall and rock transition variants into
-// submenus (internal/scenes/editor_helpers.go) using a hand-maintained list,
-// which is how GIDs like sand get added to the registry and forgotten in the
-// palette. Here the grouping is derived from the registry by name prefix, so a
-// new GID always lands somewhere, and TestPaletteCoversAllRegisteredGIDs fails
-// if two rules ever claim the same tile.
+// The palette is dynamically generated from registered tile families (tile.RegisteredFamilies)
+// and predefined standalone categories. Any new family registered via tile.RegisterFamily
+// automatically creates its own collapsible group without needing manual rules.
 
 // paletteGroup is one collapsible section of the palette.
 type paletteGroup struct {
-	ID    string `json:"id"`
-	Label string `json:"label"`
-	GIDs  []int  `json:"gids"`
-	// Collapsed hints that this group is a big block of autotile variants that
-	// should start folded away.
-	Collapsed bool `json:"collapsed,omitempty"`
+	ID        string `json:"id"`
+	Label     string `json:"label"`
+	GIDs      []int  `json:"gids"`
+	Collapsed bool   `json:"collapsed,omitempty"`
 }
 
-// paletteRule assigns tiles to a group. Order matters: the first match wins, and
-// the final catch-all rule guarantees total coverage.
-type paletteRule struct {
-	id        string
-	label     string
-	collapsed bool
-	match     func(def tile.Tile) bool
-}
-
-var paletteRules = []paletteRule{
-	{
-		id: "terrain", label: "Terrain",
-		match: func(d tile.Tile) bool {
-			return d.GID == tile.GIDGrass || d.GID == tile.GIDDirtPath || d.GID == tile.GIDSand || d.GID == tile.GIDFloor2 || d.GID == tile.GIDEmpty
-		},
-	},
-	{
-		id: "hazards", label: "Hazards & Surfaces",
-		match: func(d tile.Tile) bool {
-			return d.GID == tile.GIDMud || d.GID == tile.GIDIce || d.GID == tile.GIDLava || d.GID == tile.GIDQuicksand
-		},
-	},
-	{
-		id: "structures", label: "Structures & Objects",
-		match: func(d tile.Tile) bool {
-			return d.GID == tile.GIDTree || d.GID == tile.GIDCracked || d.GID == tile.GIDDoor || d.GID == tile.GIDLock || d.GID == tile.GIDSign
-		},
-	},
-	{
-		id: "water", label: "Water", collapsed: true,
-		match: func(d tile.Tile) bool { return strings.HasPrefix(d.Name, "water") },
-	},
-	{
-		id: "wall", label: "Wall", collapsed: true,
-		match: func(d tile.Tile) bool { return strings.HasPrefix(d.Name, "wall") },
-	},
-	{
-		id: "rock", label: "Rock", collapsed: true,
-		match: func(d tile.Tile) bool { return strings.HasPrefix(d.Name, "rock") },
-	},
-	// Catch-all. Keep last.
-	{id: "other", label: "Other", match: func(tile.Tile) bool { return true }},
-}
-
-// buildPalette groups every registered GID, preserving registry order within
-// each group. Empty groups are dropped.
+// buildPalette groups every registered GID.
 func buildPalette() []paletteGroup {
-	byID := make(map[string]*paletteGroup, len(paletteRules))
-	order := make([]*paletteGroup, 0, len(paletteRules))
-	for _, r := range paletteRules {
-		g := &paletteGroup{ID: r.id, Label: r.label, Collapsed: r.collapsed, GIDs: []int{}}
-		byID[r.id] = g
-		order = append(order, g)
+	claimed := make(map[int]bool)
+	var out []paletteGroup
+
+	// 1. Terrain group
+	terrainGIDs := []int{tile.GIDGrass, tile.GIDSand, tile.GIDFloor2, tile.GIDEmpty}
+	var terrain []int
+	for _, gid := range terrainGIDs {
+		if tile.DefOf(gid).Name != "unknown" {
+			terrain = append(terrain, gid)
+			claimed[gid] = true
+		}
+	}
+	if len(terrain) > 0 {
+		out = append(out, paletteGroup{ID: "terrain", Label: "Terrain", GIDs: terrain})
 	}
 
-	for _, gid := range tile.RegisteredGIDs() {
-		def := tile.DefOf(gid)
-		for _, r := range paletteRules {
-			if r.match(def) {
-				byID[r.id].GIDs = append(byID[r.id].GIDs, gid)
-				break
+	// 2. Dynamic Family Groups (e.g. dirt_path, water, wall, rock, etc.)
+	for _, f := range tile.RegisteredFamilies() {
+		var gids []int
+		for _, gid := range f.GIDs {
+			if tile.DefOf(gid).Name != "unknown" {
+				gids = append(gids, gid)
+				claimed[gid] = true
 			}
 		}
-	}
-
-	out := make([]paletteGroup, 0, len(order))
-	for _, g := range order {
-		if len(g.GIDs) > 0 {
-			out = append(out, *g)
+		if len(gids) > 0 {
+			label := f.Label
+			if label == f.Name {
+				// Format "dirt_path" -> "Dirt Path", "water" -> "Water", etc.
+				label = formatFamilyLabel(f.Name)
+			}
+			out = append(out, paletteGroup{
+				ID:        f.Name,
+				Label:     label,
+				GIDs:      gids,
+				Collapsed: f.Collapsed,
+			})
 		}
 	}
+
+	// 3. Hazards & Surfaces
+	hazardGIDs := []int{tile.GIDMud, tile.GIDIce, tile.GIDLava, tile.GIDQuicksand}
+	var hazards []int
+	for _, gid := range hazardGIDs {
+		if tile.DefOf(gid).Name != "unknown" && !claimed[gid] {
+			hazards = append(hazards, gid)
+			claimed[gid] = true
+		}
+	}
+	if len(hazards) > 0 {
+		out = append(out, paletteGroup{ID: "hazards", Label: "Hazards & Surfaces", GIDs: hazards})
+	}
+
+	// 4. Structures & Objects
+	structureGIDs := []int{tile.GIDTree, tile.GIDCracked, tile.GIDDoor, tile.GIDLock, tile.GIDSign}
+	var structures []int
+	for _, gid := range structureGIDs {
+		if tile.DefOf(gid).Name != "unknown" && !claimed[gid] {
+			structures = append(structures, gid)
+			claimed[gid] = true
+		}
+	}
+	if len(structures) > 0 {
+		out = append(out, paletteGroup{ID: "structures", Label: "Structures & Objects", GIDs: structures})
+	}
+
+	// 5. Catch-all for any remaining registered GIDs
+	var other []int
+	for _, gid := range tile.RegisteredGIDs() {
+		if !claimed[gid] {
+			other = append(other, gid)
+			claimed[gid] = true
+		}
+	}
+	if len(other) > 0 {
+		out = append(out, paletteGroup{ID: "other", Label: "Other", GIDs: other})
+	}
+
 	return out
 }
 
+func formatFamilyLabel(name string) string {
+	parts := strings.Split(name, "_")
+	for i, p := range parts {
+		if len(p) > 0 {
+			parts[i] = strings.ToUpper(p[:1]) + p[1:]
+		}
+	}
+	return strings.Join(parts, " ")
+}
+
 // defaultFavorites seeds the palette's 1-9,0 hotkey slots.
-//
-// This ports the in-game editor's brush palette (internal/scenes/editor.go) so
-// existing muscle memory carries over: 1-8 are the common brushes and 0 erases.
 var defaultFavorites = []int{
 	tile.GIDGrass,
 	tile.GIDWall,

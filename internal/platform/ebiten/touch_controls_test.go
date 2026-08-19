@@ -52,8 +52,8 @@ func TestTouchControlsDisabled(t *testing.T) {
 
 func TestStickDirFromUnit(t *testing.T) {
 	cases := []struct {
-		name                 string
-		nx, ny               float32
+		name                  string
+		nx, ny                float32
 		up, down, left, right bool
 	}{
 		{"right", 1, 0, false, false, false, true},

@@ -147,3 +147,51 @@ func TestWallTiles(t *testing.T) {
 		var _ Waller = d
 	}
 }
+
+func TestDirtPathTransitionTiles(t *testing.T) {
+	t.Parallel()
+
+	dirtPathGIDs := []int{
+		GIDDirtPath,
+		GIDDirtPathTop, GIDDirtPathBottom, GIDDirtPathLeft, GIDDirtPathRight,
+		GIDDirtPathNE, GIDDirtPathNW, GIDDirtPathSW, GIDDirtPathSE,
+		GIDDirtPathNEInner, GIDDirtPathNWInner, GIDDirtPathSWInner, GIDDirtPathSEInner,
+	}
+
+	for _, gid := range dirtPathGIDs {
+		d := DefOf(gid)
+		if d.Name == "unknown" {
+			t.Errorf("gid %d is not registered in defs", gid)
+		}
+		if d.Solid() || d.Wall() || d.Water() || d.WaterShore() || !d.IsFloor() || !d.IsLand() || d.IsWall() || d.IsWater() {
+			t.Errorf("gid %d (%s): expected walkable floor & land, got Solid=%v Wall=%v Water=%v IsFloor=%v IsLand=%v IsWall=%v IsWater=%v",
+				gid, d.Name, d.Solid(), d.Wall(), d.Water(), d.IsFloor(), d.IsLand(), d.IsWall(), d.IsWater())
+		}
+		solidRects := SolidRectsAt(gid, 0, nil, false)
+		if len(solidRects) != 0 {
+			t.Errorf("gid %d (%s): expected no solid rects (fully walkable), got %v", gid, d.Name, solidRects)
+		}
+		var _ Floorer = d
+	}
+}
+
+func TestCobblePathTransitionTiles(t *testing.T) {
+	t.Parallel()
+
+	for i := 0; i < int(VariantCount); i++ {
+		gid := GIDCobblePath + i
+		d := DefOf(gid)
+		if d.Name == "unknown" {
+			t.Errorf("gid %d is not registered in defs", gid)
+		}
+		if d.Solid() || d.Wall() || d.Water() || d.WaterShore() || !d.IsFloor() || !d.IsLand() || d.IsWall() || d.IsWater() {
+			t.Errorf("gid %d (%s): expected walkable floor & land, got Solid=%v Wall=%v Water=%v IsFloor=%v IsLand=%v IsWall=%v IsWater=%v",
+				gid, d.Name, d.Solid(), d.Wall(), d.Water(), d.IsFloor(), d.IsLand(), d.IsWall(), d.IsWater())
+		}
+		solidRects := SolidRectsAt(gid, 0, nil, false)
+		if len(solidRects) != 0 {
+			t.Errorf("gid %d (%s): expected no solid rects (fully walkable), got %v", gid, d.Name, solidRects)
+		}
+		var _ Floorer = d
+	}
+}

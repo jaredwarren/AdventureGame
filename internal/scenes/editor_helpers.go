@@ -185,32 +185,13 @@ func (s *EditorScene) currentMenuItems() []editorMenuItem {
 	if s.tileMenuCategory != "" {
 		var items []editorMenuItem
 		items = append(items, editorMenuItem{isBack: true, name: ".. [Back]"})
-		if s.tileMenuCategory == "water" {
-			items = append(items, editorMenuItem{gid: tile.GIDWater, name: "water (base)"})
-			for _, g := range []int{
-				tile.GIDWaterShoreTop, tile.GIDWaterShoreBottom, tile.GIDWaterShoreLeft, tile.GIDWaterShoreRight,
-				tile.GIDWaterShoreNE, tile.GIDWaterShoreNW, tile.GIDWaterShoreSW, tile.GIDWaterShoreSE,
-				tile.GIDWaterShoreNEInner, tile.GIDWaterShoreNWInner, tile.GIDWaterShoreSWInner, tile.GIDWaterShoreSEInner,
-			} {
-				items = append(items, editorMenuItem{gid: g, name: world.TileDefOf(g).Name})
-			}
-		} else if s.tileMenuCategory == "wall" {
-			items = append(items, editorMenuItem{gid: tile.GIDWall, name: "wall (base)"})
-			for _, g := range []int{
-				tile.GIDWallTop, tile.GIDWallBottom, tile.GIDWallLeft, tile.GIDWallRight,
-				tile.GIDWallNE, tile.GIDWallNW, tile.GIDWallSW, tile.GIDWallSE,
-				tile.GIDWallNEInner, tile.GIDWallNWInner, tile.GIDWallSWInner, tile.GIDWallSEInner,
-			} {
-				items = append(items, editorMenuItem{gid: g, name: world.TileDefOf(g).Name})
-			}
-		} else if s.tileMenuCategory == "rock" {
-			items = append(items, editorMenuItem{gid: tile.GIDRock, name: "rock (base)"})
-			for _, g := range []int{
-				tile.GIDRockTop, tile.GIDRockBottom, tile.GIDRockLeft, tile.GIDRockRight,
-				tile.GIDRockNE, tile.GIDRockNW, tile.GIDRockSW, tile.GIDRockSE,
-				tile.GIDRockNEInner, tile.GIDRockNWInner, tile.GIDRockSWInner, tile.GIDRockSEInner,
-			} {
-				items = append(items, editorMenuItem{gid: g, name: world.TileDefOf(g).Name})
+		if fam, ok := tile.FamilyByName(s.tileMenuCategory); ok {
+			for i, g := range fam.GIDs {
+				name := world.TileDefOf(g).Name
+				if i == 0 {
+					name += " (base)"
+				}
+				items = append(items, editorMenuItem{gid: g, name: name})
 			}
 		}
 		return items
@@ -220,47 +201,25 @@ func (s *EditorScene) currentMenuItems() []editorMenuItem {
 	var items []editorMenuItem
 	allGIDs := s.filteredTileGIDs()
 
-	hasWater := false
-	hasWall := false
-	hasRock := false
-
-	for _, g := range allGIDs {
-		isWaterGID := g == tile.GIDWater || (g >= tile.GIDWaterShoreTop && g <= tile.GIDWaterShoreSEInner)
-		isWallGID := g == tile.GIDWall || (g >= tile.GIDWallTop && g <= tile.GIDWallSEInner)
-		isRockGID := g == tile.GIDRock || (g >= tile.GIDRockTop && g <= tile.GIDRockSEInner)
-
-		if isWaterGID {
-			hasWater = true
-		} else if isWallGID {
-			hasWall = true
-		} else if isRockGID {
-			hasRock = true
+	// Map GID -> Family for fast lookup
+	gidFamily := make(map[int]tile.FamilyInfo)
+	for _, fam := range tile.RegisteredFamilies() {
+		for _, g := range fam.GIDs {
+			gidFamily[g] = fam
 		}
 	}
 
-	addedWallCategory := false
-	addedWaterCategory := false
-	addedRockCategory := false
+	addedCategory := make(map[string]bool)
 
 	for _, g := range allGIDs {
-		isWaterGID := g == tile.GIDWater || (g >= tile.GIDWaterShoreTop && g <= tile.GIDWaterShoreSEInner)
-		isWallGID := g == tile.GIDWall || (g >= tile.GIDWallTop && g <= tile.GIDWallSEInner)
-		isRockGID := g == tile.GIDRock || (g >= tile.GIDRockTop && g <= tile.GIDRockSEInner)
-
-		if isWallGID {
-			if hasWall && !addedWallCategory {
-				items = append(items, editorMenuItem{isCategory: true, category: "wall", name: "wall >"})
-				addedWallCategory = true
-			}
-		} else if isWaterGID {
-			if hasWater && !addedWaterCategory {
-				items = append(items, editorMenuItem{isCategory: true, category: "water", name: "water >"})
-				addedWaterCategory = true
-			}
-		} else if isRockGID {
-			if hasRock && !addedRockCategory {
-				items = append(items, editorMenuItem{isCategory: true, category: "rock", name: "rock >"})
-				addedRockCategory = true
+		if fam, ok := gidFamily[g]; ok {
+			if !addedCategory[fam.Name] {
+				items = append(items, editorMenuItem{
+					isCategory: true,
+					category:   fam.Name,
+					name:       fam.Name + " >",
+				})
+				addedCategory[fam.Name] = true
 			}
 		} else {
 			items = append(items, editorMenuItem{gid: g, name: world.TileDefOf(g).Name})

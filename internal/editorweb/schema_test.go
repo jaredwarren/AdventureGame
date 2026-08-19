@@ -72,12 +72,14 @@ func TestPaletteCoversAllRegisteredGIDs(t *testing.T) {
 func TestPaletteGroupsAreStable(t *testing.T) {
 	s := testSchema(t)
 	want := map[string]int{
-		"terrain":    5,
-		"hazards":    4,
-		"structures": 5,
-		"water":      13,
-		"wall":       13,
-		"rock":       13,
+		"terrain":     4,
+		"dirt_path":   13,
+		"cobble_path": 13,
+		"hazards":     4,
+		"structures":  5,
+		"water":       13,
+		"wall":        13,
+		"rock":        13,
 	}
 	got := map[string]int{}
 	for _, g := range s.Palette {

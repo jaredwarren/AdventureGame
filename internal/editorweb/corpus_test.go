@@ -33,7 +33,6 @@ var knownCorpusIssues = map[string][]string{
 	// grid's fixed entry points, which land on wall tiles in the authored
 	// layout. Walking through these doors puts the player inside a wall.
 	"F-4":  {"door_spawn_in_solid"},
-	"F-6":  {"door_spawn_in_solid"},
 	"maze": {"door_spawn_in_solid"},
 
 	// Doors authored partly off the map: maze2 door 5 sits at x=-2 and door 7 at

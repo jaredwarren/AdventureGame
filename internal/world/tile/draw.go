@@ -6,11 +6,16 @@ import (
 )
 
 var (
-	tileGrassColor     = color.RGBA{0x55, 0x88, 0x55, 0xff}
-	tileWaterColor     = color.RGBA{0x2a, 0x4a, 0x8a, 0xff}
-	tileShoreLineColor = color.RGBA{0xe0, 0xd0, 0xa0, 0xff}
-	tileWallColor      = color.RGBA{0x40, 0x40, 0x50, 0xff}
-	tileWallEdgeColor  = color.RGBA{0x20, 0x20, 0x28, 0xff}
+	tileGrassColor        = color.RGBA{0x55, 0x88, 0x55, 0xff}
+	tileWaterColor        = color.RGBA{0x2a, 0x4a, 0x8a, 0xff}
+	tileShoreLineColor    = color.RGBA{0xe0, 0xd0, 0xa0, 0xff}
+	tileWallColor         = color.RGBA{0x40, 0x40, 0x50, 0xff}
+	tileWallEdgeColor     = color.RGBA{0x20, 0x20, 0x28, 0xff}
+	tileRockColor         = color.RGBA{0x8b, 0x4d, 0x3a, 0xff}
+	tileRockEdgeColor     = color.RGBA{0x5a, 0x2a, 0x1d, 0xff}
+	tileDirtPathColor     = color.RGBA{0x8b, 0x6a, 0x3a, 0xff}
+	tileDirtPathEdgeColor = color.RGBA{0x6b, 0x4e, 0x28, 0xff}
+	tileDirtPebbleColor   = color.RGBA{0xa8, 0x8a, 0x58, 0xff}
 )
 
 const tileShoreLineWidth float32 = 2.0
@@ -36,81 +41,58 @@ func drawWall(c Canvas, x, y, w, h float32) {
 	c.StrokeLine(x+w*0.75, y+h*0.5, x+w*0.75, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
 }
 
-func drawWallTop(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y+h*0.5, w, h*0.5, tileWallColor)
-	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.25, y+h*0.5, x+w*0.25, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
-	c.StrokeLine(x+w*0.75, y+h*0.5, x+w*0.75, y+h, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+func drawRock(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileRockColor)
+	c.StrokeRect(x+0.5, y+0.5, w-1, h-1, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.2, y+h*0.3, x+w*0.4, y+h*0.4, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.4, y+h*0.4, x+w*0.3, y+h*0.7, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.7, y+h*0.2, x+w*0.6, y+h*0.5, 1, tileRockEdgeColor)
+	c.StrokeLine(x+w*0.6, y+h*0.5, x+w*0.8, y+h*0.8, 1, tileRockEdgeColor)
 }
 
-func drawWallBottom(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h*0.5, tileWallColor)
-	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
+func drawDirtPath(c Canvas, x, y, w, h float32) {
+	c.FillRect(x, y, w, h, tileDirtPathColor)
+	c.StrokeLine(x, y+h*0.35, x+w, y+h*0.35, 1, tileDirtPathEdgeColor)
+	c.StrokeLine(x, y+h*0.65, x+w, y+h*0.65, 1, tileDirtPathEdgeColor)
+	c.FillRect(x+w*0.2, y+h*0.2, 2, 2, tileDirtPebbleColor)
+	c.FillRect(x+w*0.7, y+h*0.5, 2, 2, tileDirtPebbleColor)
+	c.FillRect(x+w*0.45, y+h*0.75, 2, 2, tileDirtPebbleColor)
 }
 
-func drawWallLeft(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
-}
+var (
+	tileCobblePathColor     = color.RGBA{0x72, 0x76, 0x82, 0xff} // Primary round stone color
+	tileCobblePathEdgeColor = color.RGBA{0x3a, 0x3d, 0x45, 0xff} // Dark mortar / gap color
+	tileCobblePebbleColor   = color.RGBA{0x92, 0x98, 0xa6, 0xff} // Top highlight on stones
+	tileCobbleDarkStone     = color.RGBA{0x5e, 0x62, 0x6e, 0xff} // Darker stone variant
+)
 
-func drawWallRight(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileWallColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileWallEdgeColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, color.RGBA{0x25, 0x25, 0x30, 0xff})
-}
+func drawCobblePath(c Canvas, x, y, w, h float32) {
+	// Dark mortar background
+	c.FillRect(x, y, w, h, tileCobblePathEdgeColor)
 
-func drawWallNW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
-}
+	// Round stone 1 (Top-Left, medium-large)
+	c.FillCircle(x+w*0.30, y+h*0.30, w*0.22, tileCobblePathColor)
+	c.StrokeCircle(x+w*0.30, y+h*0.30, w*0.22, 1, tileCobblePathEdgeColor)
+	c.FillCircle(x+w*0.26, y+h*0.26, w*0.08, tileCobblePebbleColor)
 
-func drawWallNE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
-}
+	// Round stone 2 (Top-Right, darker varied round stone)
+	c.FillCircle(x+w*0.75, y+h*0.25, w*0.19, tileCobbleDarkStone)
+	c.StrokeCircle(x+w*0.75, y+h*0.25, w*0.19, 1, tileCobblePathEdgeColor)
+	c.FillCircle(x+w*0.72, y+h*0.22, w*0.06, tileCobblePebbleColor)
 
-func drawWallSW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
-}
+	// Round stone 3 (Bottom-Left, medium)
+	c.FillCircle(x+w*0.26, y+h*0.74, w*0.18, tileCobbleDarkStone)
+	c.StrokeCircle(x+w*0.26, y+h*0.74, w*0.18, 1, tileCobblePathEdgeColor)
+	c.FillCircle(x+w*0.24, y+h*0.71, w*0.06, tileCobblePebbleColor)
 
-func drawWallSE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-}
+	// Round stone 4 (Bottom-Right, large round stone)
+	c.FillCircle(x+w*0.72, y+h*0.72, w*0.23, tileCobblePathColor)
+	c.StrokeCircle(x+w*0.72, y+h*0.72, w*0.23, 1, tileCobblePathEdgeColor)
+	c.FillCircle(x+w*0.68, y+h*0.68, w*0.09, tileCobblePebbleColor)
 
-func drawWallNWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-}
-
-func drawWallNEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileWallColor)
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-}
-
-func drawWallSWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h*0.5, tileWallColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileWallColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.5, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
-}
-
-func drawWallSEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileWallColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWallColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w, y+h*0.5, 1, tileWallEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.5, y+h, 1, tileWallEdgeColor)
+	// Round stone 5 (Center filler pebble)
+	c.FillCircle(x+w*0.50, y+h*0.50, w*0.11, tileCobblePathColor)
+	c.StrokeCircle(x+w*0.50, y+h*0.50, w*0.11, 1, tileCobblePathEdgeColor)
 }
 
 func drawCracked(c Canvas, x, y, w, h float32) {
@@ -159,261 +141,27 @@ func drawFloor2(c Canvas, x, y, w, h float32) {
 	c.StrokeRect(x+w*0.25, y+h*0.25, w*0.5, h*0.5, 1, color.RGBA{0x3c, 0x3c, 0x46, 0xff})
 }
 
-func drawDirtPath(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, color.RGBA{0x8b, 0x6a, 0x3a, 0xff})
-	c.StrokeLine(x, y+h*0.35, x+w, y+h*0.35, 1, color.RGBA{0x6b, 0x4e, 0x28, 0xff})
-	c.StrokeLine(x, y+h*0.65, x+w, y+h*0.65, 1, color.RGBA{0x6b, 0x4e, 0x28, 0xff})
-	c.FillRect(x+w*0.2, y+h*0.2, 2, 2, color.RGBA{0xa8, 0x8a, 0x58, 0xff})
-	c.FillRect(x+w*0.7, y+h*0.5, 2, 2, color.RGBA{0xa8, 0x8a, 0x58, 0xff})
-	c.FillRect(x+w*0.45, y+h*0.75, 2, 2, color.RGBA{0xa8, 0x8a, 0x58, 0xff})
-}
-
 func drawTree(c Canvas, x, y, w, h float32) {
 	c.FillRect(x+w*0.4, y+h*0.6, w*0.2, h*0.3, color.RGBA{0x6b, 0x4a, 0x2a, 0xff})
 	c.FillCircle(x+w*0.5, y+h*0.4, w*0.3, color.RGBA{0x2d, 0x7a, 0x2a, 0xff})
 	c.StrokeCircle(x+w*0.5, y+h*0.4, w*0.3, 1, color.RGBA{0x1d, 0x5a, 0x1a, 0xff})
 }
 
-func drawShoreTop(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y+h*0.5, w, h*0.5, tileWaterColor)
-	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, tileShoreLineWidth, tileShoreLineColor)
-}
-
-func drawShoreBottom(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h*0.5, tileWaterColor)
-	c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, tileShoreLineWidth, tileShoreLineColor)
-}
-
-func drawShoreLeft(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, tileShoreLineWidth, tileShoreLineColor)
-}
-
-func drawShoreRight(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileWaterColor)
-	c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, tileShoreLineWidth, tileShoreLineColor)
-}
-
-func drawShoreNW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w, y+h*0.5)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreNE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w*0.5, y+h)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreSW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w*0.5, y)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreSE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x, y+h*0.5)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreNWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w*0.5, y)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreNEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileWaterColor)
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w, y+h*0.5)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreSWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h*0.5, tileWaterColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w*0.5, y+h)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-func drawShoreSEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileWaterColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileWaterColor)
-	var lp Path
-	lp.MoveTo(x+w, y+h*0.5)
-	lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
-	c.DrawPath(lp, tileShoreLineColor, false, tileShoreLineWidth)
-}
-
-var (
-	tileRockColor     = color.RGBA{0x8b, 0x4d, 0x3a, 0xff}
-	tileRockEdgeColor = color.RGBA{0x5a, 0x2a, 0x1d, 0xff}
-)
-
-func drawRock(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h, tileRockColor)
-	c.StrokeRect(x+0.5, y+0.5, w-1, h-1, 1, tileRockEdgeColor)
-	// Draw craggy/jagged cracks inside
-	c.StrokeLine(x+w*0.2, y+h*0.3, x+w*0.4, y+h*0.4, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.4, y+h*0.4, x+w*0.3, y+h*0.7, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.7, y+h*0.2, x+w*0.6, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.6, y+h*0.5, x+w*0.8, y+h*0.8, 1, tileRockEdgeColor)
-}
-
-func drawRockTop(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y+h*0.5, w, h*0.5, tileRockColor)
-	// Draw jagged boundary
-	c.StrokeLine(x, y+h*0.5, x+w*0.3, y+h*0.45, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.3, y+h*0.45, x+w*0.6, y+h*0.55, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.6, y+h*0.55, x+w, y+h*0.5, 1, tileRockEdgeColor)
-	// Crag lines inside
-	c.StrokeLine(x+w*0.5, y+h*0.6, x+w*0.4, y+h*0.8, 1, tileRockEdgeColor)
-}
-
-func drawRockBottom(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w, h*0.5, tileRockColor)
-	// Jagged boundary
-	c.StrokeLine(x, y+h*0.5, x+w*0.4, y+h*0.55, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.4, y+h*0.55, x+w*0.7, y+h*0.45, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.7, y+h*0.45, x+w, y+h*0.5, 1, tileRockEdgeColor)
-	// Crag lines
-	c.StrokeLine(x+w*0.5, y+h*0.4, x+w*0.6, y+h*0.2, 1, tileRockEdgeColor)
-}
-
-func drawRockLeft(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileRockColor)
-	// Jagged boundary
-	c.StrokeLine(x+w*0.5, y, x+w*0.45, y+h*0.3, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.45, y+h*0.3, x+w*0.55, y+h*0.7, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.55, y+h*0.7, x+w*0.5, y+h, 1, tileRockEdgeColor)
-	// Crag lines
-	c.StrokeLine(x+w*0.7, y+h*0.5, x+w*0.8, y+h*0.6, 1, tileRockEdgeColor)
-}
-
-func drawRockRight(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileRockColor)
-	// Jagged boundary
-	c.StrokeLine(x+w*0.5, y, x+w*0.55, y+h*0.4, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.55, y+h*0.4, x+w*0.45, y+h*0.8, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.45, y+h*0.8, x+w*0.5, y+h, 1, tileRockEdgeColor)
-	// Crag lines
-	c.StrokeLine(x+w*0.2, y+h*0.5, x+w*0.3, y+h*0.4, 1, tileRockEdgeColor)
-}
-
-func drawRockNW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileRockColor)
-	// Jagged edges
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.45, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.75, y+h*0.45, x+w, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.45, y+h*0.75, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.45, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
-}
-
-func drawRockNE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileRockColor)
-	// Jagged edges
-	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.45, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.25, y+h*0.45, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.55, y+h*0.75, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.55, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
-}
-
-func drawRockSW(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileRockColor)
-	// Jagged edges
-	c.StrokeLine(x+w*0.5, y, x+w*0.45, y+h*0.25, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.45, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.55, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.75, y+h*0.55, x+w, y+h*0.5, 1, tileRockEdgeColor)
-}
-
-func drawRockSE(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h*0.5, tileRockColor)
-	// Jagged edges
-	c.StrokeLine(x+w*0.5, y, x+w*0.55, y+h*0.25, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.55, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.55, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.25, y+h*0.55, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-}
-
-func drawRockNEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileRockColor)
-	c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileRockColor)
-	// Jagged inner corner boundaries
-	c.StrokeLine(x+w*0.5, y, x+w*0.45, y+h*0.25, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.45, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.55, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.75, y+h*0.55, x+w, y+h*0.5, 1, tileRockEdgeColor)
-}
-
-func drawRockNWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileRockColor)
-	c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileRockColor)
-	// Jagged inner corner boundaries
-	c.StrokeLine(x+w*0.5, y, x+w*0.55, y+h*0.25, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.55, y+h*0.25, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.55, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.25, y+h*0.55, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-}
-
-func drawRockSWInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x+w*0.5, y, w*0.5, h, tileRockColor)
-	c.FillRect(x, y, w*0.5, h*0.5, tileRockColor)
-	// Jagged inner corner boundaries
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.75, y+h*0.45, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.75, y+h*0.45, x+w, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.55, y+h*0.75, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.55, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
-}
-
-func drawRockSEInner(c Canvas, x, y, w, h float32) {
-	c.FillRect(x, y, w*0.5, h, tileRockColor)
-	c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileRockColor)
-	// Jagged inner corner boundaries
-	c.StrokeLine(x, y+h*0.5, x+w*0.25, y+h*0.45, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.25, y+h*0.45, x+w*0.5, y+h*0.5, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.5, y+h*0.5, x+w*0.45, y+h*0.75, 1, tileRockEdgeColor)
-	c.StrokeLine(x+w*0.45, y+h*0.75, x+w*0.5, y+h, 1, tileRockEdgeColor)
-}
-
 func drawQuicksand(c Canvas, x, y, w, h float32) {
-	// Base color of tan/light-brown sand
 	c.FillRect(x, y, w, h, color.RGBA{0xdf, 0xc7, 0x94, 0xff})
-	// Draw subtle wavy lines to simulate shifting quicksand texture
 	c.StrokeLine(x+w*0.1, y+h*0.2, x+w*0.4, y+h*0.2, 1, color.RGBA{0xb8, 0x9e, 0x6a, 0xff})
 	c.StrokeLine(x+w*0.6, y+h*0.4, x+w*0.9, y+h*0.4, 1, color.RGBA{0xb8, 0x9e, 0x6a, 0xff})
 	c.StrokeLine(x+w*0.3, y+h*0.7, x+w*0.7, y+h*0.7, 1, color.RGBA{0xb8, 0x9e, 0x6a, 0xff})
 }
 
 func drawMud(c Canvas, x, y, w, h float32) {
-	// Dark brown mud base
 	c.FillRect(x, y, w, h, color.RGBA{0x6b, 0x4c, 0x35, 0xff})
-	// Draw mud spots
 	c.FillCircle(x+w*0.3, y+h*0.4, w*0.12, color.RGBA{0x4a, 0x32, 0x22, 0xff})
 	c.FillCircle(x+w*0.7, y+h*0.6, w*0.15, color.RGBA{0x4a, 0x32, 0x22, 0xff})
 }
 
 func drawIce(c Canvas, x, y, w, h float32) {
-	// Light blue ice base
 	c.FillRect(x, y, w, h, color.RGBA{0xa0, 0xd8, 0xef, 0xff})
-	// Highlights and cracks
 	c.StrokeLine(x+w*0.2, y+h*0.2, x+w*0.5, y+h*0.5, 1.5, color.RGBA{0xff, 0xff, 0xff, 0xff})
 	c.StrokeLine(x+w*0.6, y+h*0.7, x+w*0.8, y+h*0.9, 1, color.RGBA{0xff, 0xff, 0xff, 0xff})
 }
@@ -431,13 +179,11 @@ const (
 )
 
 func drawLava(c Canvas, x, y, w, h float32) {
-	// Red-orange lava base
 	c.FillRect(x, y, w, h, color.RGBA{0xd3, 0x54, 0x00, 0xff})
 
 	tick := c.Tick()
 	tx, ty := c.GridPos()
 
-	// Bubble 1 (Orange bubble in bottom-left quadrant)
 	phase1 := int(tx*37 + ty*17)
 	t1 := (tick + phase1) % lavaBubble1Cycle
 	if t1 >= lavaBubble1GrowStart && t1 < lavaBubble1PopStart {
@@ -447,7 +193,6 @@ func drawLava(c Canvas, x, y, w, h float32) {
 		c.StrokeCircle(x+w*0.3, y+h*0.6, w*0.18, 1, color.RGBA{0xe6, 0x7e, 0x22, 0xff})
 	}
 
-	// Bubble 2 (Yellow bubble in top-right quadrant)
 	phase2 := int(tx*53 + ty*29)
 	t2 := (tick + phase2) % lavaBubble2Cycle
 	if t2 >= lavaBubble2GrowStart && t2 < lavaBubble2PopStart {
@@ -459,17 +204,14 @@ func drawLava(c Canvas, x, y, w, h float32) {
 }
 
 func drawSign(c Canvas, x, y, w, h float32) {
-	// Grass background
 	c.FillRect(x, y, w, h, tileGrassColor)
 
-	// Wood post in the center
 	postW := w * 0.15
 	postH := h * 0.6
 	postX := x + (w-postW)*0.5
 	postY := y + h*0.4
 	c.FillRect(postX, postY, postW, postH, color.RGBA{0x6a, 0x3d, 0x1b, 0xff})
 
-	// Plaque at the top
 	plaqueW := w * 0.8
 	plaqueH := h * 0.4
 	plaqueX := x + w*0.1
@@ -477,21 +219,17 @@ func drawSign(c Canvas, x, y, w, h float32) {
 	c.FillRect(plaqueX, plaqueY, plaqueW, plaqueH, color.RGBA{0x8b, 0x5a, 0x2b, 0xff})
 	c.StrokeRect(plaqueX, plaqueY, plaqueW, plaqueH, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
 
-	// Text lines/grain
 	c.StrokeLine(plaqueX+w*0.1, plaqueY+h*0.15, plaqueX+plaqueW-w*0.1, plaqueY+h*0.15, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
 	c.StrokeLine(plaqueX+w*0.15, plaqueY+h*0.27, plaqueX+plaqueW-w*0.15, plaqueY+h*0.27, 1, color.RGBA{0x4a, 0x27, 0x0c, 0xff})
 }
 
 func drawSand(c Canvas, x, y, w, h float32) {
-	// A warm, sunny desert sand base color
 	c.FillRect(x, y, w, h, color.RGBA{0xe5, 0xd3, 0xa3, 0xff})
-	// Draw small sand grains
 	c.FillRect(x+w*0.2, y+h*0.15, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
 	c.FillRect(x+w*0.75, y+h*0.3, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
 	c.FillRect(x+w*0.4, y+h*0.5, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
 	c.FillRect(x+w*0.8, y+h*0.75, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
 	c.FillRect(x+w*0.15, y+h*0.8, 1, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
-	// Draw horizontal wind ripple lines (stable, not wavy/shifting like quicksand)
 	c.StrokeLine(x+w*0.15, y+h*0.35, x+w*0.45, y+h*0.35, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
 	c.StrokeLine(x+w*0.55, y+h*0.65, x+w*0.85, y+h*0.65, 1, color.RGBA{0xc8, 0xb6, 0x86, 0xff})
 }

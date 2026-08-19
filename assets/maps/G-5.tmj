@@ -1196,9 +1196,9 @@
           "name": "door_W",
           "type": "door",
           "x": 0,
-          "y": 112,
+          "y": 0,
           "width": 16,
-          "height": 32,
+          "height": 239,
           "properties": [
             {
               "name": "target_map",

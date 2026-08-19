@@ -53,10 +53,8 @@ func (s *EditorScene) drawTileMenu(ctx GameContext) {
 		if !item.isBack {
 			thumbnailGID := item.gid
 			if item.isCategory {
-				if item.category == "water" {
-					thumbnailGID = tile.GIDWater
-				} else if item.category == "rock" {
-					thumbnailGID = tile.GIDRock
+				if fam, ok := tile.FamilyByName(item.category); ok {
+					thumbnailGID = fam.BaseGID
 				} else {
 					thumbnailGID = tile.GIDWall
 				}
