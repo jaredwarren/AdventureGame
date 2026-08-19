@@ -1,7 +1,7 @@
-.PHONY: run test fmt vet check clean maps-check build edit edit-% gentmj world-grid wasm wasm-clean wasm-rebuild wasm-serve wasm-serve-lan
+.PHONY: run test fmt vet check clean maps-check maps-validate mapeditor mapeditor-headless build edit edit-% gentmj world-grid world-grid-stamp wasm wasm-clean wasm-rebuild wasm-serve wasm-serve-lan
 
 # Map id for the in-engine editor (assets/maps/$(MAP).tmj).
-MAP ?= field1
+MAP ?= F-5
 
 # Goals after `edit` are the map id (e.g. `make edit field2`). Consume them so Make does not
 # look for a file named `field2`.
@@ -29,6 +29,15 @@ edit:
 
 edit-%:
 	go run $(CMD) -edit $(patsubst edit-%,%,$@)
+
+# Web map editor. A second editor alongside the in-engine one above; both edit
+# the same assets/maps/*.tmj files. Prints a URL carrying a per-launch token.
+mapeditor:
+	go run ./cmd/mapeditor -open
+
+# Same, without opening a browser (for tmux, remote shells, or a second window).
+mapeditor-headless:
+	go run ./cmd/mapeditor
 
 sprite:
 	go run ./scripts/pickup_atlas_editor
@@ -73,6 +82,9 @@ gentmj:
 world-grid:
 	go run ./cmd/genworldgrid -out assets/maps
 
+world-grid-stamp:
+	go run ./cmd/genworldgrid -out assets/maps -stamp-authored
+
 check: fmt vet test
 
 test:
@@ -84,7 +96,13 @@ fmt:
 vet:
 	go vet ./...
 
-maps-check:
+# Validate every .tmj: the game's loader must accept it, GIDs must be registered,
+# object ids must be unique, doors must not drop the player inside a wall, and so
+# on. Exits non-zero on any error-level issue.
+maps-validate:
+	go run ./cmd/mapeditor -check
+
+maps-check: maps-validate
 	@test -f assets/maps/field1.tmj && test -f assets/maps/field2.tmj
 
 clean:

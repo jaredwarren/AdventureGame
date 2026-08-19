@@ -140,6 +140,18 @@ var allowedInternalImports = map[string][]string{
 		"internal/run",
 		"internal/world/tile",
 	},
+	// internal/editorweb is the web map editor's HTTP + schema layer. It is
+	// deliberately NOT a pureCorePackage (it needs net/http, embed, os), but it
+	// must never reach into internal/platform, internal/game, or Ebiten.
+	"internal/editorweb": {
+		"internal/tiled",
+		"internal/world",
+		"internal/world/tile",
+		"internal/world/pickup",
+		"internal/world/enemy",
+		"internal/geom",
+		"internal/progression",
+	},
 	"internal/platform/ebiten": {
 		"internal/services",
 		"internal/world",

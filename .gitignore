@@ -8,3 +8,6 @@ web/wasm_exec.js
 web/wasm-build-id.txt
 
 /game
+# Atomic-save temp files from the web map editor (cmd/mapeditor). These only
+# appear if the process is killed mid-write.
+.mapeditor-*.tmp

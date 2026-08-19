@@ -315,7 +315,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "maze2"
+              "value": "F-6"
             },
             {
               "name": "spawn_x",

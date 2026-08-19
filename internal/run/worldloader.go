@@ -196,7 +196,7 @@ func WarpDoor(assets services.AssetCache, sess *Session, cam *render.Camera, d *
 // keys, tuning). On error the World is cleared.
 func Respawn(assets services.AssetCache, sess *Session) {
 	var carry *RunState
-	targetMap := "field1"
+	targetMap := "F-5"
 	if sess.World != nil {
 		rs := RunStateFromWorld(sess.World)
 		carry = &rs

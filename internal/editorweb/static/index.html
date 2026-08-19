@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en" data-token="{{.Token}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map editor</title>
+  <link rel="stylesheet" href="/static/editor.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23558855'/><rect x='2' y='2' width='5' height='5' fill='%23404050'/></svg>">
+</head>
+<body>
+
+<div id="boot"><h1>Map editor</h1><p>Loading tile art and schema…</p></div>
+
+<div id="app" hidden>
+
+  <header id="toolbar">
+    <div class="toolbar-row">
+      <strong id="map-title">—</strong>
+      <span id="dirty-dot" class="dot" title="Unsaved changes" hidden>●</span>
+
+      <button id="btn-save" class="btn btn-primary" title="Save">Save</button>
+      <button id="btn-reload" class="btn" title="Reload from disk">Reload</button>
+      <button id="btn-validate" class="btn" title="Validate">
+        Validate <span id="validate-badge" class="badge" hidden></span>
+      </button>
+
+      <span class="sep"></span>
+      <button id="btn-undo" class="btn icon-btn" title="Undo">↶</button>
+      <button id="btn-redo" class="btn icon-btn" title="Redo">↷</button>
+
+      <span class="sep"></span>
+      <div class="segmented" role="group" aria-label="Edit mode">
+        <button id="mode-tile" class="btn" aria-pressed="true">Tiles</button>
+        <button id="mode-marker" class="btn" aria-pressed="false">Markers</button>
+      </div>
+
+      <span class="spacer"></span>
+      <span id="maps-root" class="muted" title="Maps directory"></span>
+    </div>
+
+    <div class="toolbar-row">
+      <div id="tool-buttons" class="tool-group"></div>
+
+      <span id="marker-controls" class="tool-group" hidden>
+        <label>type
+          <select id="marker-type"></select>
+        </label>
+      </span>
+
+      <span id="tile-controls" class="tool-group">
+        <span class="muted">brush:</span> <strong id="brush-label"></strong>
+      </span>
+
+      <span class="spacer"></span>
+      <label class="check"><input type="checkbox" id="toggle-grid" checked> grid</label>
+      <label class="check"><input type="checkbox" id="toggle-markers" checked> markers</label>
+      <label class="check">view
+        <select id="layer-view-mode">
+          <option value="all">all layers</option>
+          <option value="dim" selected>dim inactive</option>
+          <option value="isolate">isolate active</option>
+        </select>
+      </label>
+
+      <span class="sep"></span>
+      <button id="btn-zoom-out" class="btn icon-btn" title="Zoom out">−</button>
+      <span id="zoom-label" class="zoom">300%</span>
+      <button id="btn-zoom-in" class="btn icon-btn" title="Zoom in">+</button>
+      <button id="btn-zoom-fit" class="btn" title="Fit map">Fit</button>
+    </div>
+  </header>
+
+  <aside id="left-panel">
+    <div class="panel-head">
+      <input type="search" id="map-search" placeholder="Filter maps…" aria-label="Filter maps">
+    </div>
+    <details class="panel" open>
+      <summary>World grid</summary>
+      <div id="world-grid" class="world-grid"></div>
+      <p class="grid-legend muted">Letter = row (north→south), number = column (west→east)</p>
+    </details>
+    <div id="map-lists"></div>
+  </aside>
+
+  <main id="center">
+    <div id="viewport">
+      <canvas id="c-map"></canvas>
+      <canvas id="c-overlay"></canvas>
+      <button id="adj-n" class="adj adj-n" hidden></button>
+      <button id="adj-s" class="adj adj-s" hidden></button>
+      <button id="adj-w" class="adj adj-w" hidden></button>
+      <button id="adj-e" class="adj adj-e" hidden></button>
+    </div>
+  </main>
+
+  <aside id="right-panel">
+    <details class="panel" open>
+      <summary>Layers</summary>
+      <div id="layer-list"></div>
+      <div id="layer-banner" class="banner" hidden></div>
+    </details>
+
+    <details class="panel" open>
+      <summary>Tile palette</summary>
+      <div class="panel-head">
+        <input type="search" id="palette-search" placeholder="Filter tiles…" aria-label="Filter tiles">
+        <label class="check" title="The bottom layer is the ground plane, so it only offers floor tiles">
+          <input type="checkbox" id="palette-filter-layer" checked> layer
+        </label>
+      </div>
+      <div id="palette-groups"></div>
+    </details>
+
+    <details class="panel" open>
+      <summary>Properties</summary>
+      <div id="props-tabs" class="tabs" role="group">
+        <button class="btn btn-small" data-tab="marker" aria-pressed="true">Marker</button>
+        <button class="btn btn-small" data-tab="map" aria-pressed="false">Map</button>
+      </div>
+      <p id="props-title" class="props-title"></p>
+      <div id="props-body"></div>
+    </details>
+
+    <details class="panel">
+      <summary>Validation</summary>
+      <div id="validate-body"></div>
+    </details>
+  </aside>
+
+  <footer id="status">
+    <span id="status-left"></span>
+    <span id="status-right"></span>
+  </footer>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script type="module" src="/static/js/main.js"></script>
+</body>
+</html>

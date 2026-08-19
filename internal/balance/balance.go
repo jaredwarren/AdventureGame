@@ -84,7 +84,7 @@ func Default() *GameBalance {
 			FlameInterval:    1,
 		},
 		Respawn: Respawn{
-			MapID:      "field1",
+			MapID:      "F-5",
 			HPFraction: 0.5,
 			HPMinimum:  2,
 		},

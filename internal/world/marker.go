@@ -215,7 +215,7 @@ func (doorMarker) InitMarkerObject(o *tiled.Object, wx, wy float64, ctx MarkerEd
 	o.Width = 16
 	o.Height = 32
 	o.Properties = []tiled.Property{
-		{Name: "target_map", Type: "string", Value: "field1"},
+		{Name: "target_map", Type: "string", Value: "F-5"},
 		{Name: "spawn_x", Type: "string", Value: strconv.Itoa(int(o.X))},
 		{Name: "spawn_y", Type: "string", Value: strconv.Itoa(int(o.Y))},
 	}

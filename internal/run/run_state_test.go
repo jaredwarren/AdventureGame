@@ -83,7 +83,7 @@ func TestRespawn_PreservesRunProgress(t *testing.T) {
 	if sess.World == nil {
 		t.Fatal("world nil after respawn")
 	}
-	if sess.World.MapID != "field1" {
+	if sess.World.MapID != "F-5" {
 		t.Errorf("MapID = %q", sess.World.MapID)
 	}
 	if sess.World.Currency != 77 {

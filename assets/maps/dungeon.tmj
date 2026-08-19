@@ -711,14 +711,14 @@
           "name": "out",
           "type": "door",
           "x": 160,
-          "y": 217,
+          "y": 224,
           "width": 32,
           "height": 16,
           "properties": [
             {
               "name": "target_map",
               "type": "string",
-              "value": "field1"
+              "value": "F-5"
             },
             {
               "name": "spawn_x",

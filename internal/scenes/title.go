@@ -27,7 +27,7 @@ func (s *TitleScene) Update(ctx GameContext) error {
 	HandleSessionDebugInput(sess, in)
 	if in.JustPressed(services.ActionConfirm) {
 		sess.ClearPersistedProgress()
-		if err := run.OpenWorld(ctx.Assets(), sess, "field1", nil); err != nil {
+		if err := run.OpenWorld(ctx.Assets(), sess, "F-5", nil); err != nil {
 			return err
 		}
 		ctx.Manager().Replace(ScenePlay, nil)

@@ -348,7 +348,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "G-8"
+              "value": "F-9"
             },
             {
               "name": "spawn_x",
@@ -374,7 +374,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "G-10"
+              "value": "H-9"
             },
             {
               "name": "spawn_x",
@@ -400,7 +400,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "F-9"
+              "value": "G-8"
             },
             {
               "name": "spawn_x",
@@ -426,7 +426,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "H-9"
+              "value": "G-10"
             },
             {
               "name": "spawn_x",

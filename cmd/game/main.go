@@ -39,7 +39,7 @@ import (
 const configSubdir = "game-test"
 
 func main() {
-	editMap := flag.String("edit", "", "open the in-engine .tmj editor for this map id (e.g. field1); reads/writes assets/maps/<id>.tmj on disk")
+	editMap := flag.String("edit", "", "open the in-engine .tmj editor for this map id (e.g. F-5); reads/writes assets/maps/<id>.tmj on disk")
 	balancePath := flag.String("balance", "", "path to optional balance.json overlay file for dev playtesting")
 	touchControls := flag.Bool("touch", runtime.GOOS == "js", "show on-screen virtual buttons (default on WASM)")
 	flag.Parse()

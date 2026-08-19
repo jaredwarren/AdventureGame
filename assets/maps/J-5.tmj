@@ -179,7 +179,6 @@
         1,
         1,
         1,
-        2,
         1,
         1,
         1,
@@ -199,27 +198,8 @@
         1,
         1,
         1,
-        2,
-        2,
         1,
         1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        2,
         2,
         1,
         1,
@@ -301,17 +281,37 @@
         1,
         2,
         2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
-        2,
         1,
         1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
         2,
         2,
         2,
@@ -348,7 +348,7 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "J-4"
+              "value": "I-5"
             },
             {
               "name": "spawn_x",
@@ -364,32 +364,6 @@
         },
         {
           "id": 3,
-          "name": "door_S",
-          "type": "door",
-          "x": 160,
-          "y": 224,
-          "width": 32,
-          "height": 16,
-          "properties": [
-            {
-              "name": "target_map",
-              "type": "string",
-              "value": "J-6"
-            },
-            {
-              "name": "spawn_x",
-              "type": "string",
-              "value": "160"
-            },
-            {
-              "name": "spawn_y",
-              "type": "string",
-              "value": "40"
-            }
-          ]
-        },
-        {
-          "id": 4,
           "name": "door_W",
           "type": "door",
           "x": 0,
@@ -400,12 +374,38 @@
             {
               "name": "target_map",
               "type": "string",
-              "value": "I-5"
+              "value": "J-4"
             },
             {
               "name": "spawn_x",
               "type": "string",
               "value": "280"
+            },
+            {
+              "name": "spawn_y",
+              "type": "string",
+              "value": "112"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "name": "door_E",
+          "type": "door",
+          "x": 304,
+          "y": 112,
+          "width": 16,
+          "height": 32,
+          "properties": [
+            {
+              "name": "target_map",
+              "type": "string",
+              "value": "J-6"
+            },
+            {
+              "name": "spawn_x",
+              "type": "string",
+              "value": "32"
             },
             {
               "name": "spawn_y",

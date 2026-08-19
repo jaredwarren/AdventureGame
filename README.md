@@ -62,13 +62,19 @@ When reporting a bug:
 2. Edit **only** files under **`assets/maps/`**. They are embedded at compile time via [`assets/embed_maps.go`](assets/embed_maps.go) (`//go:embed maps/*.tmj`).
 3. Run **`go build ./cmd/game`** or **`go run ./cmd/game`** — **no copy step**; the binary always embeds whatever is on disk in `assets/maps/` when you build.
 
+**Web editor (recommended):** `make mapeditor` (or `go run ./cmd/mapeditor -open`) serves a local editor at `http://127.0.0.1:7777` with a per-launch access token. It edits the same `assets/maps/*.tmj` files on disk, and everything it draws — tile art, marker hit boxes, default properties, validation rules — is derived from `internal/world` at startup, so it cannot drift from the game.
+
+Over the in-engine editor it adds undo/redo, rectangle and flood fill, mouse-wheel zoom, a **property panel** for enemy stats, door targets, sign text and pickup kinds (previously only editable by hand-editing JSON), a **validation panel**, and a world-grid browser for jumping between adjacent cells. It preserves each file's own formatting, so opening a map and saving it unchanged leaves no diff.
+
 **In-engine editor (dev):** `go run ./cmd/game -edit field1` (or `make edit field1`, `make edit MAP=field2`, or `make edit-field2`) loads `assets/maps/<id>.tmj` from **disk** (not the embed), lets you paint the `ground` layer and add/move/delete `markers` objects with the same Ebiten renderer as play mode, and writes the file with **Ctrl+S**. Run the game again (or rebuild) so embedded maps match what you saved.
 
-Optional sanity check:
+Validate every map — the game's loader must accept it, GIDs must be registered, object ids must be unique (duplicates corrupt save keys), and doors must not drop the player inside a wall:
 
 ```bash
-make maps-check
+make maps-validate     # or: go run ./cmd/mapeditor -check
 ```
+
+`make maps-check` runs the same validation plus the original file-presence check.
 
 **Adding a new map:** place `yourmap.tmj` in `assets/maps/`, reference it from door `target_map` properties as `yourmap` (loader uses `maps/<name>.tmj`).
 
