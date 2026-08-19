@@ -36,6 +36,24 @@ type paletteRule struct {
 
 var paletteRules = []paletteRule{
 	{
+		id: "terrain", label: "Terrain",
+		match: func(d tile.Tile) bool {
+			return d.GID == tile.GIDGrass || d.GID == tile.GIDDirtPath || d.GID == tile.GIDSand || d.GID == tile.GIDFloor2 || d.GID == tile.GIDEmpty
+		},
+	},
+	{
+		id: "hazards", label: "Hazards & Surfaces",
+		match: func(d tile.Tile) bool {
+			return d.GID == tile.GIDMud || d.GID == tile.GIDIce || d.GID == tile.GIDLava || d.GID == tile.GIDQuicksand
+		},
+	},
+	{
+		id: "structures", label: "Structures & Objects",
+		match: func(d tile.Tile) bool {
+			return d.GID == tile.GIDTree || d.GID == tile.GIDCracked || d.GID == tile.GIDDoor || d.GID == tile.GIDLock || d.GID == tile.GIDSign
+		},
+	},
+	{
 		id: "water", label: "Water", collapsed: true,
 		match: func(d tile.Tile) bool { return strings.HasPrefix(d.Name, "water") },
 	},
@@ -48,7 +66,7 @@ var paletteRules = []paletteRule{
 		match: func(d tile.Tile) bool { return strings.HasPrefix(d.Name, "rock") },
 	},
 	// Catch-all. Keep last.
-	{id: "terrain", label: "Terrain", match: func(tile.Tile) bool { return true }},
+	{id: "other", label: "Other", match: func(tile.Tile) bool { return true }},
 }
 
 // buildPalette groups every registered GID, preserving registry order within

@@ -17,30 +17,15 @@ let host, searchEl, filterEl;
 export function initPalette() {
   host = document.getElementById('palette-groups');
   searchEl = document.getElementById('palette-search');
-  filterEl = document.getElementById('palette-filter-layer');
 
   searchEl.addEventListener('input', () => {
     state.ui.paletteQuery = searchEl.value.trim().toLowerCase();
-    renderPalette();
-  });
-  filterEl.addEventListener('change', () => {
-    state.ui.filterPaletteByLayer = filterEl.checked;
     renderPalette();
   });
 
   subscribe('palette', renderPalette);
   subscribe('ui', updateSelection);
   subscribe('doc', renderPalette);
-}
-
-/**
- * Layer-role filter: the bottom layer is the ground plane and should only offer
- * floor tiles, while upper layers hold everything that sits on top of it.
- */
-function allowedOnActiveLayer(def) {
-  if (!state.ui.filterPaletteByLayer) return true;
-  const isBase = state.ui.activeLayer === 0;
-  return isBase ? def.floor : !def.floor || def.gid === 0;
 }
 
 function matchesQuery(def) {
@@ -59,7 +44,7 @@ export function renderPalette() {
   for (const group of schema.palette) {
     const defs = group.gids
       .map((gid) => atlas.def(gid))
-      .filter((d) => d && allowedOnActiveLayer(d) && matchesQuery(d));
+      .filter((d) => d && matchesQuery(d));
     if (defs.length === 0) continue;
 
     const details = document.createElement('details');
@@ -83,7 +68,7 @@ export function renderPalette() {
     empty.className = 'empty';
     empty.textContent = state.ui.paletteQuery
       ? 'No tiles match.'
-      : 'No tiles available for this layer. Turn off the layer filter to see all tiles.';
+      : 'No tiles available.';
     host.append(empty);
   }
   updateSelection();

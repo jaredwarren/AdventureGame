@@ -36,14 +36,13 @@ var knownCorpusIssues = map[string][]string{
 	// layout. Walking through these doors puts the player inside a wall.
 	"F-4":  {"door_spawn_in_solid"},
 	"F-6":  {"door_spawn_in_solid"},
-	"G-6":  {"door_spawn_in_solid"},
 	"maze": {"door_spawn_in_solid"},
 
 	// Doors authored partly off the map: maze2 door 5 sits at x=-2 and door 7 at
 	// y=-8. They still work, because the player collides with the visible part.
 	// G-5 is the same map stamped onto its grid cell (south of start).
 	"maze2": {"marker_out_of_bounds", "marker_out_of_bounds", "sign_not_tile_aligned"},
-	"G-5":   {"marker_out_of_bounds", "sign_not_tile_aligned"},
+	"G-5":   {"sign_not_tile_aligned"},
 }
 
 // TestCorpusIssuesAreKnown validates every shipped map and compares the result

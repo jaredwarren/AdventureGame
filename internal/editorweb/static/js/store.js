@@ -51,7 +51,6 @@ export const state = {
     favorites: [],
     markerType: 'enemy',
     pickupKind: 'coin',
-    filterPaletteByLayer: true,
     paletteQuery: '',
     mapQuery: '',
     selection: null,         // object id

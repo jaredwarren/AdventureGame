@@ -819,12 +819,12 @@
             {
               "name": "spawn_x",
               "type": "string",
-              "value": "160"
+              "value": "270"
             },
             {
               "name": "spawn_y",
               "type": "string",
-              "value": "40"
+              "value": "18"
             }
           ]
         },
