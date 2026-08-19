@@ -14,6 +14,11 @@ import * as render from '../render.js';
 const SWATCH = 30;
 let host, searchEl, filterEl;
 
+// User-toggled open/closed state, keyed by palette group id. Absent means use
+// the schema default (!group.collapsed). Search does not write here, so clearing
+// the query restores whatever the user last chose.
+const openById = new Map();
+
 export function initPalette() {
   host = document.getElementById('palette-groups');
   searchEl = document.getElementById('palette-search');
@@ -25,13 +30,18 @@ export function initPalette() {
 
   subscribe('palette', renderPalette);
   subscribe('ui', updateSelection);
-  subscribe('doc', renderPalette);
 }
 
 function matchesQuery(def) {
   const q = state.ui.paletteQuery;
   if (!q) return true;
   return def.name.includes(q) || String(def.gid) === q || (def.tags ?? []).some((t) => t.includes(q));
+}
+
+function groupIsOpen(group) {
+  if (state.ui.paletteQuery) return true;
+  if (openById.has(group.id)) return openById.get(group.id);
+  return !group.collapsed;
 }
 
 export function renderPalette() {
@@ -49,8 +59,8 @@ export function renderPalette() {
 
     const details = document.createElement('details');
     details.className = 'palette-group';
-    // Collapse the big autotile blocks unless a search is narrowing them.
-    details.open = !group.collapsed || !!state.ui.paletteQuery;
+    details.dataset.groupId = group.id;
+    details.open = groupIsOpen(group);
 
     const summary = document.createElement('summary');
     summary.innerHTML = `<span>${group.label}</span><span class="count">${defs.length}</span>`;
@@ -61,6 +71,11 @@ export function renderPalette() {
     for (const def of defs) grid.append(makeSwatch(def));
     details.append(grid);
     host.append(details);
+
+    details.addEventListener('toggle', () => {
+      if (state.ui.paletteQuery) return;
+      openById.set(group.id, details.open);
+    });
   }
 
   if (!host.children.length) {

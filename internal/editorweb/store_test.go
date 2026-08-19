@@ -259,7 +259,6 @@ func TestRoundTripPreservesSemantics(t *testing.T) {
 // The list should only shrink. A new entry means a map regressed or the writer
 // lost a convention it used to preserve.
 var reformattingMaps = map[string]bool{
-	"maps/knight_boss.tmj":    true,
 	"maps/maze2.tmj":          true,
 	"maps/rooms/boss.tmj":     true,
 	"maps/rooms/combat.tmj":   true,

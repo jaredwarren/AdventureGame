@@ -59,4 +59,7 @@ export const api = {
   validateAll: () => request('GET', '/api/validate'),
 
   thumb: (id) => request('GET', `/api/thumbs/${id}`),
+
+  /** Starts `make run` in the repo (restarts if the game is already running). */
+  play: () => request('POST', '/api/play'),
 };

@@ -31,5 +31,7 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/validate", s.handleValidate)
 	mux.HandleFunc("GET /api/validate", s.handleValidateAll)
 
+	mux.HandleFunc("POST /api/play", s.handlePlay)
+
 	return s.wrap(mux)
 }

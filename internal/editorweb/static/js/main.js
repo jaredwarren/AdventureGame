@@ -45,7 +45,7 @@ async function boot() {
 
   render.init(document.getElementById('c-map'), document.getElementById('c-overlay'));
   initViewport(document.getElementById('viewport'));
-  initToolbar({ onSave: save, onReload: reload });
+  initToolbar({ onSave: save, onReload: reload, onPlay: play });
   initPalette();
   initLayers();
   initProps();
@@ -269,6 +269,20 @@ export async function reload(discard = false) {
   state.doc = null;
   await openMap(id);
   toast(`Reloaded ${id}`, 'info', 1500);
+}
+
+export async function play() {
+  const btn = document.getElementById('btn-play');
+  btn.disabled = true;
+  try {
+    const res = await api.play();
+    const note = history.isDirty() ? ' (map has unsaved changes)' : '';
+    toast(res.restarted ? `Restarted game${note}` : `Game launched${note}`, 'success', 2200);
+  } catch (err) {
+    toast(`Could not run the game: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // ---- status bar ----

@@ -28,8 +28,6 @@ var knownCorpusIssues = map[string][]string{
 	// both report its off-grid sign.
 	"field1": {"duplicate_object_id", "sign_not_tile_aligned"},
 	"F-5":    {"sign_not_tile_aligned"},
-	// Three objects share id 2, same problem.
-	"dungeon": {"duplicate_object_id", "duplicate_object_id"},
 
 	// F-5 is the authored field1 map, but its neighbours use the generated
 	// grid's fixed entry points, which land on wall tiles in the authored
@@ -104,8 +102,8 @@ func TestCorpusErrorsAreOnlyDuplicateIDs(t *testing.T) {
 		sort.Strings(offenders)
 		t.Errorf("unexpected error-level issues: %v", offenders)
 	}
-	if report.ErrorCount != 3 {
-		t.Errorf("%d error-level issues, expected the 3 known duplicate object ids (field1 x1, dungeon x2)", report.ErrorCount)
+	if report.ErrorCount != 1 {
+		t.Errorf("%d error-level issues, expected the 1 known duplicate object id (field1 x1)", report.ErrorCount)
 	}
 }
 

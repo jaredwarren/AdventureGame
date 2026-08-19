@@ -7,7 +7,7 @@
 import { TILE } from './tileart.js';
 import { state, mapW, mapH, topGidAt } from './store.js';
 import * as view from './view.js';
-import { hitRect, markerColor, markerGlyph } from './markers.js';
+import { hitRect, markerColor, markerGlyph, drawMarkerGraphic } from './markers.js';
 
 const DIRTY_MAP = 1;
 const DIRTY_OVERLAY = 2;
@@ -251,12 +251,22 @@ function paintMarker(ctx, obj) {
   ctx.moveTo(ox, oy - arm); ctx.lineTo(ox, oy + arm);
   ctx.stroke();
 
-  if (w >= 12 * view.view.dpr && h >= 12 * view.view.dpr) {
-    ctx.fillStyle = color;
-    ctx.font = `${Math.round(9 * view.view.dpr)}px ui-monospace, monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(markerGlyph(obj.type), x + w / 2, y + h / 2);
+  if (w >= 10 * view.view.dpr && h >= 10 * view.view.dpr) {
+    const cx = x + w / 2;
+    const cy = y + h / 2;
+    const iconSize = Math.min(w, h) * 0.75;
+    ctx.save();
+    ctx.globalAlpha = (ctx.globalAlpha || 1) * 0.65;
+    const drawn = drawMarkerGraphic(ctx, obj, cx, cy, iconSize);
+    ctx.restore();
+
+    if (!drawn) {
+      ctx.fillStyle = color;
+      ctx.font = `${Math.round(9 * view.view.dpr)}px ui-monospace, monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(markerGlyph(obj.type), cx, cy);
+    }
   }
 
   if (selected) {

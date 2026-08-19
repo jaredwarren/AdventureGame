@@ -11,7 +11,7 @@ const TOOL_ORDER = ['brush', 'eraser', 'rect', 'flood', 'eyedropper', 'select', 
 
 let toolHost, markerTypeEl;
 
-export function initToolbar({ onSave, onReload }) {
+export function initToolbar({ onSave, onReload, onPlay }) {
   toolHost = document.getElementById('tool-buttons');
   markerTypeEl = document.getElementById('marker-type');
 
@@ -43,6 +43,7 @@ export function initToolbar({ onSave, onReload }) {
 
   document.getElementById('btn-save').addEventListener('click', () => onSave());
   document.getElementById('btn-reload').addEventListener('click', () => onReload());
+  document.getElementById('btn-play').addEventListener('click', () => onPlay());
   document.getElementById('btn-undo').addEventListener('click', () => { history.undo(); render.invalidateAll(); });
   document.getElementById('btn-redo').addEventListener('click', () => { history.redo(); render.invalidateAll(); });
 

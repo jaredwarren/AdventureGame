@@ -12,7 +12,8 @@ import {
 import { TileEditBatch, cmd } from './commands.js';
 import * as history from './history.js';
 import * as render from './render.js';
-import { markerAt, hitRect } from './markers.js';
+import * as view from './view.js';
+import { markerAt, hitRect, markerColor, drawMarkerGraphic } from './markers.js';
 import { api } from './api.js';
 import { toast } from './ui/dialogs.js';
 
@@ -320,7 +321,26 @@ register({
   },
   drawOverlay(ctx) {
     const c = state.ui.cursor;
-    if (c) render.outlineTileRect(ctx, { tx0: c.tx, ty0: c.ty, tx1: c.tx, ty1: c.ty }, '#46d17a');
+    if (!c) return;
+    const type = state.ui.markerType;
+    const color = markerColor(type);
+    const mockObj = { type, name: type, properties: [{ name: 'kind', value: state.ui.pickupKind }] };
+    const r = hitRect({ type, x: c.wx, y: c.wy, width: 0, height: 0 });
+    const x = view.worldToDevX(r.x);
+    const y = view.worldToDevY(r.y);
+    const w = Math.max(2, Math.round(r.w * view.view.scale));
+    const h = Math.max(2, Math.round(r.h * view.view.scale));
+
+    ctx.save();
+    ctx.fillStyle = color + '22';
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+    ctx.globalAlpha = 0.5;
+    drawMarkerGraphic(ctx, mockObj, x + w / 2, y + h / 2, Math.min(w, h) * 0.75);
+    ctx.restore();
   },
 });
 

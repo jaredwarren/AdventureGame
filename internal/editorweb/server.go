@@ -12,7 +12,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -42,6 +44,9 @@ type Server struct {
 	schema *cachedSchema
 	logger *log.Logger
 	mux    http.Handler
+
+	playMu  sync.Mutex
+	playCmd *exec.Cmd
 }
 
 // New builds a server, deriving and verifying the schema up front.
@@ -113,6 +118,8 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 	infos, _ := s.store.List()
 	s.logger.Printf("map editor: serving %s (%d maps)", s.store.Root, len(infos))
 	s.logger.Printf("map editor: open %s", s.URL())
+
+	defer s.stopPlay()
 
 	errc := make(chan error, 1)
 	go func() { errc <- srv.Serve(ln) }()
