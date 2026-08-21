@@ -220,9 +220,10 @@ func TestPickupEnumMatchesRegistry(t *testing.T) {
 }
 
 // TestDoorSpawnPropsStayStrings guards a subtle round-trip hazard: door
-// spawn_x/spawn_y are Tiled strings parsed with ParseFloat. If the schema
-// advertised them as numbers the client would write numbers back and change the
-// on-disk type.
+// spawn_x/spawn_y are Tiled strings parsed with ParseDoorSpawnCoord (number or
+// "*"). If the schema advertised them as numbers the client would write numbers
+// back and change the on-disk type. They must not be Numeric, because a number
+// input cannot type "*".
 func TestDoorSpawnPropsStayStrings(t *testing.T) {
 	tmpl, _ := probeTemplate("door")
 	for _, f := range deriveFields("door", tmpl) {
@@ -230,10 +231,10 @@ func TestDoorSpawnPropsStayStrings(t *testing.T) {
 			continue
 		}
 		if f.TiledType != "string" {
-			t.Errorf("%s: tiledType %q, want \"string\" (the game parses it with strconv.ParseFloat)", f.Name, f.TiledType)
+			t.Errorf("%s: tiledType %q, want \"string\"", f.Name, f.TiledType)
 		}
-		if !f.Numeric {
-			t.Errorf("%s: should be flagged Numeric so the form shows a number input", f.Name)
+		if f.Numeric {
+			t.Errorf("%s: Numeric should be false so the form is a text field that accepts *", f.Name)
 		}
 	}
 }

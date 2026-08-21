@@ -3,6 +3,9 @@
 // Swatches are plain elements backed by the atlas as a CSS background, so all 53
 // tiles cost zero extra canvases: the background-position is just -gid*size.
 //
+// Family rows show only the root/base tile until expanded, keeping Terrain and
+// Hazards short while still exposing every autotile variant on click.
+//
 // The in-game editor only applies its floor/non-floor filter when layer
 // isolation happens to be on, which is almost certainly unintended. Here the
 // filter is its own checkbox.
@@ -14,9 +17,9 @@ import * as render from '../render.js';
 const SWATCH = 30;
 let host, searchEl, filterEl;
 
-// User-toggled open/closed state, keyed by palette group id. Absent means use
-// the schema default (!group.collapsed). Search does not write here, so clearing
-// the query restores whatever the user last chose.
+// User-toggled open/closed state, keyed by palette group/family id. Absent means
+// use the schema default (!group.collapsed). Families default closed. Search does
+// not write here, so clearing the query restores whatever the user last chose.
 const openById = new Map();
 
 export function initPalette() {
@@ -44,6 +47,19 @@ function groupIsOpen(group) {
   return !group.collapsed;
 }
 
+function familyIsOpen(family, matchedDefs) {
+  if (state.ui.paletteQuery) return matchedDefs.length > 0;
+  if (openById.has(family.id)) return openById.get(family.id);
+  return false;
+}
+
+function bindToggle(details, id) {
+  details.addEventListener('toggle', () => {
+    if (state.ui.paletteQuery) return;
+    openById.set(id, details.open);
+  });
+}
+
 export function renderPalette() {
   if (!host || !state.schema) return;
   const { schema, atlas } = state;
@@ -52,30 +68,43 @@ export function renderPalette() {
   host.style.setProperty('--sheet-size', atlas.swatchSheetSize(SWATCH));
 
   for (const group of schema.palette) {
-    const defs = group.gids
+    const standalone = (group.gids ?? [])
       .map((gid) => atlas.def(gid))
       .filter((d) => d && matchesQuery(d));
-    if (defs.length === 0) continue;
+
+    const families = [];
+    for (const family of group.families ?? []) {
+      const defs = family.gids
+        .map((gid) => atlas.def(gid))
+        .filter((d) => d && matchesQuery(d));
+      if (defs.length > 0) families.push({ family, defs });
+    }
+
+    if (standalone.length === 0 && families.length === 0) continue;
 
     const details = document.createElement('details');
     details.className = 'palette-group';
     details.dataset.groupId = group.id;
     details.open = groupIsOpen(group);
 
+    const tileCount = standalone.length + families.reduce((n, f) => n + f.defs.length, 0);
     const summary = document.createElement('summary');
-    summary.innerHTML = `<span>${group.label}</span><span class="count">${defs.length}</span>`;
+    summary.innerHTML = `<span>${group.label}</span><span class="count">${tileCount}</span>`;
     details.append(summary);
 
-    const grid = document.createElement('div');
-    grid.className = 'swatch-grid';
-    for (const def of defs) grid.append(makeSwatch(def));
-    details.append(grid);
-    host.append(details);
+    if (standalone.length) {
+      const grid = document.createElement('div');
+      grid.className = 'swatch-grid';
+      for (const def of standalone) grid.append(makeSwatch(def));
+      details.append(grid);
+    }
 
-    details.addEventListener('toggle', () => {
-      if (state.ui.paletteQuery) return;
-      openById.set(group.id, details.open);
-    });
+    for (const { family, defs } of families) {
+      details.append(makeFamilyRow(family, defs));
+    }
+
+    host.append(details);
+    bindToggle(details, group.id);
   }
 
   if (!host.children.length) {
@@ -87,6 +116,50 @@ export function renderPalette() {
     host.append(empty);
   }
   updateSelection();
+}
+
+function makeFamilyRow(family, defs) {
+  const details = document.createElement('details');
+  details.className = 'palette-family';
+  details.dataset.familyId = family.id;
+  details.open = familyIsOpen(family, defs);
+
+  const summary = document.createElement('summary');
+  summary.className = 'palette-family-summary';
+
+  const baseDef = state.atlas.def(family.baseGid)
+    ?? defs.find((d) => d.gid === family.baseGid)
+    ?? defs[0];
+  if (baseDef) {
+    const root = makeSwatch(baseDef);
+    root.classList.add('palette-family-root');
+    root.addEventListener('click', (e) => {
+      // Selecting the root brush should not toggle the family open/closed.
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    summary.append(root);
+  }
+
+  const label = document.createElement('span');
+  label.className = 'palette-family-label';
+  label.textContent = family.label;
+  summary.append(label);
+
+  const count = document.createElement('span');
+  count.className = 'count';
+  count.textContent = String(defs.length);
+  summary.append(count);
+
+  details.append(summary);
+
+  const grid = document.createElement('div');
+  grid.className = 'swatch-grid';
+  for (const def of defs) grid.append(makeSwatch(def));
+  details.append(grid);
+
+  bindToggle(details, family.id);
+  return details;
 }
 
 function makeSwatch(def) {
@@ -128,9 +201,11 @@ function updateSelection() {
 /** Cycles through the currently visible palette entries (the , and . keys). */
 export function stepBrush(delta) {
   const visible = [...host.querySelectorAll('.swatch')].map((el) => Number(el.dataset.gid));
-  if (!visible.length) return;
-  const i = visible.indexOf(state.ui.brushGID);
-  const next = visible[(i < 0 ? 0 : i + delta + visible.length) % visible.length];
+  // Deduplicate: family root swatches also appear in the expanded grid.
+  const unique = [...new Set(visible)];
+  if (!unique.length) return;
+  const i = unique.indexOf(state.ui.brushGID);
+  const next = unique[(i < 0 ? 0 : i + delta + unique.length) % unique.length];
   state.ui.brushGID = next;
   emit('ui');
   render.invalidateOverlay();

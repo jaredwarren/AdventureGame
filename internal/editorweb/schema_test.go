@@ -49,14 +49,24 @@ func TestPaletteCoversAllRegisteredGIDs(t *testing.T) {
 	s := testSchema(t)
 
 	group := map[int]string{}
+	claim := func(sectionID, path string, gid int) {
+		if prev, dup := group[gid]; dup {
+			t.Errorf("gid %d is in both %q and %q; palette rules must be mutually exclusive", gid, prev, path)
+			return
+		}
+		group[gid] = path
+		if tile.DefOf(gid).Name == "unknown" {
+			t.Errorf("palette %s lists unregistered gid %d", path, gid)
+		}
+	}
 	for _, g := range s.Palette {
 		for _, gid := range g.GIDs {
-			if prev, dup := group[gid]; dup {
-				t.Errorf("gid %d is in both %q and %q; palette rules must be mutually exclusive", gid, prev, g.ID)
-			}
-			group[gid] = g.ID
-			if tile.DefOf(gid).Name == "unknown" {
-				t.Errorf("palette group %q lists unregistered gid %d", g.ID, gid)
+			claim(g.ID, g.ID, gid)
+		}
+		for _, f := range g.Families {
+			path := g.ID + "/" + f.ID
+			for _, gid := range f.GIDs {
+				claim(g.ID, path, gid)
 			}
 		}
 	}
@@ -71,27 +81,45 @@ func TestPaletteCoversAllRegisteredGIDs(t *testing.T) {
 // rule change is visible in review.
 func TestPaletteGroupsAreStable(t *testing.T) {
 	s := testSchema(t)
-	want := map[string]int{
-		"terrain":     4,
-		"dirt_path":   13,
-		"cobble_path": 13,
-		"hazards":     4,
-		"structures":  5,
-		"water":       13,
-		"wall":        13,
-		"rock":        13,
+	wantStandalone := map[string]int{
+		"terrain":    4,
+		"hazards":    4,
+		"structures": 5,
 	}
-	got := map[string]int{}
+	wantFamilies := map[string][]string{
+		"terrain":    {"dirt_path", "cobble_path", "sand_path", "snow", "dark_grass"},
+		"hazards":    {"mud_path", "lava_shore", "ice", "quicksand"},
+		"water":      {"water", "deep_water", "swamp_water"},
+		"structures": {"wall", "rock"},
+	}
+
+	gotStandalone := map[string]int{}
+	gotFamilies := map[string][]string{}
 	for _, g := range s.Palette {
-		got[g.ID] = len(g.GIDs)
-	}
-	for id, n := range want {
-		if got[id] != n {
-			t.Errorf("palette group %q has %d tiles, want %d", id, got[id], n)
+		gotStandalone[g.ID] = len(g.GIDs)
+		for _, f := range g.Families {
+			gotFamilies[g.ID] = append(gotFamilies[g.ID], f.ID)
+			if len(f.GIDs) != 13 {
+				t.Errorf("family %s/%s has %d tiles, want 13", g.ID, f.ID, len(f.GIDs))
+			}
+			if f.BaseGID == 0 {
+				t.Errorf("family %s/%s missing baseGid", g.ID, f.ID)
+			}
 		}
 	}
-	if len(got) != len(want) {
-		t.Errorf("palette has %d groups, want %d: %v", len(got), len(want), got)
+
+	for id, n := range wantStandalone {
+		if gotStandalone[id] != n {
+			t.Errorf("palette group %q has %d standalone tiles, want %d", id, gotStandalone[id], n)
+		}
+	}
+	for id, families := range wantFamilies {
+		if !slices.Equal(gotFamilies[id], families) {
+			t.Errorf("palette group %q families %v, want %v", id, gotFamilies[id], families)
+		}
+	}
+	if len(gotStandalone) != len(wantFamilies) {
+		t.Errorf("palette has %d groups, want %d: %v", len(gotStandalone), len(wantFamilies), gotStandalone)
 	}
 }
 

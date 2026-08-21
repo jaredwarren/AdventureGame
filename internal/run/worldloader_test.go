@@ -266,6 +266,55 @@ func TestTimeAndItemPersistence(t *testing.T) {
 	}
 }
 
+func TestWarpDoorKeepSpawnAxis(t *testing.T) {
+	assets := &mockAssetCache{mapJSON: tinyMapJSON()}
+	sess := NewSession()
+	if err := EnterMap(assets, sess, "src", MapLoadOpts{}); err != nil {
+		t.Fatalf("EnterMap: %v", err)
+	}
+	cam := render.NewCamera(320, 240)
+	sess.World.Player.X = 48
+	sess.World.Player.Y = 80
+	h := sess.World.Player.H
+	if h <= 0 {
+		h = world.DefaultPlayerHitboxH
+	}
+
+	t.Run("keep X feet", func(t *testing.T) {
+		d := world.Door{TargetMap: "dst", KeepSpawnX: true, SpawnY: 40, SpawnStyle: world.DoorSpawnFeet}
+		if err := WarpDoor(assets, sess, cam, &d); err != nil {
+			t.Fatalf("WarpDoor: %v", err)
+		}
+		if sess.World.Player.X != 48 || sess.World.Player.Y != 40-h {
+			t.Fatalf("got (%v,%v) want (48,%v)", sess.World.Player.X, sess.World.Player.Y, 40-h)
+		}
+		sess.World.Player.X = 48
+		sess.World.Player.Y = 80
+	})
+
+	t.Run("keep Y feet", func(t *testing.T) {
+		d := world.Door{TargetMap: "dst", SpawnX: 16, KeepSpawnY: true, SpawnStyle: world.DoorSpawnFeet}
+		if err := WarpDoor(assets, sess, cam, &d); err != nil {
+			t.Fatalf("WarpDoor: %v", err)
+		}
+		if sess.World.Player.X != 16 || sess.World.Player.Y != 80 {
+			t.Fatalf("got (%v,%v) want (16,80)", sess.World.Player.X, sess.World.Player.Y)
+		}
+		sess.World.Player.X = 48
+		sess.World.Player.Y = 80
+	})
+
+	t.Run("keep Y topleft", func(t *testing.T) {
+		d := world.Door{TargetMap: "dst", SpawnX: 16, KeepSpawnY: true, SpawnStyle: world.DoorSpawnTopLeft}
+		if err := WarpDoor(assets, sess, cam, &d); err != nil {
+			t.Fatalf("WarpDoor: %v", err)
+		}
+		if sess.World.Player.X != 16 || sess.World.Player.Y != 80 {
+			t.Fatalf("got (%v,%v) want (16,80)", sess.World.Player.X, sess.World.Player.Y)
+		}
+	})
+}
+
 func tinyMapWithPropertiesJSON(properties string) []byte {
 	const w, h = 4, 4
 	var b strings.Builder

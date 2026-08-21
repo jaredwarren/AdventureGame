@@ -86,4 +86,31 @@ const (
 
 	// Cobblestone path (occupies 65..77: base + 12 transitions)
 	GIDCobblePath = 65
+
+	// Sand / shoreline family (occupies 78..90: base + 12 transitions)
+	GIDSandPath = 78
+
+	// Snow ground family (occupies 91..103: base + 12 transitions)
+	GIDSnow = 91
+
+	// Mud ground family (occupies 104..116: base + 12 transitions)
+	GIDMudPath = 104
+
+	// Dark grass / forest earth family (occupies 117..129: base + 12 transitions)
+	GIDDarkGrass = 117
+
+	// Deep ocean water family (occupies 130..142: base + 12 transitions)
+	GIDDeepWater = 130
+
+	// Lava / magma shore family (occupies 143..155: base + 12 transitions)
+	GIDLavaShore = 143
+
+	// Swamp / poison murky water family (occupies 156..168: base + 12 transitions)
+	GIDSwampWater = 156
+
+	// Ice & frozen lake family (occupies 169..181: base + 12 transitions)
+	GIDIceFamily = 169
+
+	// Quicksand hazard family (occupies 182..194: base + 12 transitions)
+	GIDQuicksandFamily = 182
 )

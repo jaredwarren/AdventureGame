@@ -7,8 +7,8 @@
 // untouched rather than being eaten.
 //
 // One subtlety worth preserving: a door's spawn_x/spawn_y are Tiled STRINGS that
-// the game parses with strconv.ParseFloat. The schema says so, and the widget
-// shows a number input while still writing a string. Advertising them as numbers
+// the game parses with ParseDoorSpawnCoord (a number or "*"). The schema says so,
+// and the widget is a text field so "*" can be typed. Advertising them as numbers
 // would quietly change the on-disk type.
 
 import { state, emit, subscribe, objProp, mapProp, markerSchema } from '../store.js';

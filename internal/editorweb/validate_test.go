@@ -148,6 +148,18 @@ func TestValidateChecks(t *testing.T) {
 			},
 		},
 		{
+			name: "door spawn keep on both axes",
+			code: "door_spawn_keep_both", sev: SeverityError,
+			mut: func(m *tiled.Map) {
+				addObjects(m, tiled.Object{ID: 2, Type: "door", X: 0, Y: 0, Width: 16, Height: 16,
+					Properties: []tiled.Property{
+						{Name: "target_map", Type: "string", Value: "elsewhere"},
+						{Name: "spawn_x", Type: "string", Value: "*"},
+						{Name: "spawn_y", Type: "string", Value: " * "},
+					}})
+			},
+		},
+		{
 			name: "unrecognized spawn anchor falls back to feet",
 			code: "unknown_spawn_anchor", sev: SeverityWarn,
 			mut: func(m *tiled.Map) {
@@ -313,6 +325,28 @@ func TestValidateCrossMapDoorChecks(t *testing.T) {
 		m := door(p("target_map", "target"), p("spawn_x", "32"), p("spawn_y", "32"))
 		if got := Validate(m, "test", ValidateOpts{ResolveTarget: resolve}); len(got) != 0 {
 			t.Errorf("a valid door produced issues: %v", got)
+		}
+	})
+
+	t.Run("keep axis is not unparseable", func(t *testing.T) {
+		m := door(p("target_map", "target"), p("spawn_x", "*"), p("spawn_y", "32"))
+		got := Validate(m, "test", ValidateOpts{ResolveTarget: resolve})
+		if hasCode(got, "door_spawn_unparseable") || hasCode(got, "door_spawn_keep_both") {
+			t.Fatalf("got %v", codes(got))
+		}
+	})
+
+	t.Run("keep axis skips solid check", func(t *testing.T) {
+		m := door(p("target_map", "target"), p("spawn_x", "*"), p("spawn_y", "4"))
+		if got := Validate(m, "test", ValidateOpts{ResolveTarget: resolve}); hasCode(got, "door_spawn_in_solid") {
+			t.Fatalf("got %v", codes(got))
+		}
+	})
+
+	t.Run("pinned axis still checked for bounds", func(t *testing.T) {
+		m := door(p("target_map", "target"), p("spawn_x", "*"), p("spawn_y", "9999"))
+		if got := Validate(m, "test", ValidateOpts{ResolveTarget: resolve}); !hasCode(got, "door_spawn_out_of_bounds") {
+			t.Fatalf("got %v", codes(got))
 		}
 	})
 

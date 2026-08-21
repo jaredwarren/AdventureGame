@@ -68,6 +68,10 @@ function mk(ev) {
 }
 
 function onPointerDown(ev) {
+  // Adjacency chips live inside #viewport but own their own clicks; capturing
+  // here would swallow the button's click and prevent openMap navigation.
+  if (ev.target instanceof Element && ev.target.closest('.adj')) return;
+
   el.setPointerCapture(ev.pointerId);
   const e = mk(ev);
 

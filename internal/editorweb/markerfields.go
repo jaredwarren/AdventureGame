@@ -19,9 +19,9 @@ import (
 // list against every property key the game actually reads.
 //
 // TiledType is carried separately from Type because the two genuinely differ:
-// door spawn_x is stored as a Tiled "string" and parsed with strconv.ParseFloat
-// at load time. The form shows a number input (Numeric), but writes a string
-// back, because lying about the on-disk type would break round-tripping.
+// door spawn_x is stored as a Tiled "string" and parsed with ParseDoorSpawnCoord
+// (a number or "*"). The form is a text field so authors can type the keep
+// sentinel without changing the on-disk type.
 
 type fieldOption struct {
 	Value string `json:"value"`
@@ -102,12 +102,12 @@ var fieldOverrides = map[string]map[string]fieldOverride{
 	"door": {
 		"target_map": {Label: "Target map", Type: "mapref", Widget: "mapref"},
 		"spawn_x": {
-			Label: "Spawn X", Numeric: true, Step: 1,
-			Note: "stored as a Tiled string; the game parses it with strconv.ParseFloat",
+			Label: "Spawn X",
+			Note:  "number or * (keep this axis from the player); stored as a Tiled string",
 		},
 		"spawn_y": {
-			Label: "Spawn Y", Numeric: true, Step: 1,
-			Note: "stored as a Tiled string; the game parses it with strconv.ParseFloat",
+			Label: "Spawn Y",
+			Note:  "number or * (keep this axis from the player); stored as a Tiled string",
 		},
 	},
 	"sign": {

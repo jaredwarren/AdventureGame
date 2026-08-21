@@ -52,6 +52,15 @@ Per frame:
 | 57–60| `GIDDirtPathNE` / `NW` / `SW` / `SE` | Outer corner dirt path transition tiles (fully walkable) |
 | 61–64| `GIDDirtPath*Inner` | Inner corner dirt path transition tiles (fully walkable) |
 | 65–77| `GIDCobblePath` (65) + 12 transitions | Cobblestone path autotile family (base + 12 transitions, fully walkable) |
+| 78–90| `GIDSandPath` (78) + 12 transitions | Sand & beach autotile family (base + 12 transitions, fully walkable) |
+| 91–103| `GIDSnow` (91) + 12 transitions | Snow & alpine autotile family (base + 12 transitions, fully walkable) |
+| 104–116| `GIDMudPath` (104) + 12 transitions | Mud & swamp autotile family (base + 12 transitions, fully walkable, mud surface) |
+| 117–129| `GIDDarkGrass` (117) + 12 transitions | Dark forest earth autotile family (base + 12 transitions, fully walkable) |
+| 130–142| `GIDDeepWater` (130) + 12 transitions | Deep ocean water autotile family (base + 12 transitions, solid water) |
+| 143–155| `GIDLavaShore` (143) + 12 transitions | Lava & magma shore autotile family (base + 12 transitions, solid hazard water) |
+| 156–168| `GIDSwampWater` (156) + 12 transitions | Murky swamp water autotile family (base + 12 transitions, solid water) |
+| 169–181| `GIDIceFamily` (169) + 12 transitions | Ice & frozen lake autotile family (base + 12 transitions, slippery ice surface) |
+| 182–194| `GIDQuicksandFamily` (182) + 12 transitions | Quicksand hazard autotile family (base + 12 transitions, quicksand surface) |
 
 Per-tile behavior (solid, destroyable-by-what, openable-by-key, fallback swatch color, becomes-what-when-destroyed) is declared in one place: the `tileDefs` registry in `internal/world/tiledef.go`. Adding a new ground tile type is:
 

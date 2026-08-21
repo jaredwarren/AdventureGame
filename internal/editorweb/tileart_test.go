@@ -20,13 +20,19 @@ import (
 // below (and confirm the animation window in tileart.go still covers its
 // period), or the editor will silently render that tile with a stale frame.
 func TestOnlyWaterAndLavaAreAnimated(t *testing.T) {
-	want := map[int]bool{tile.GIDWater: true, tile.GIDLava: true}
+	want := map[int]bool{
+		tile.GIDWater:      true,
+		tile.GIDLava:       true,
+		tile.GIDDeepWater:  true,
+		tile.GIDLavaShore:  true,
+		tile.GIDSwampWater: true,
+	}
 
 	colors := newColorTable()
 	for _, gid := range tile.RegisteredGIDs() {
 		r := newRecorder(colors)
 		tile.DefOf(gid).DrawVector(r, 0, 0, tile.Size, tile.Size)
-		animated := r.usedTick || r.usedGrid
+		animated := r.usedTick
 		if animated != want[gid] {
 			t.Errorf("gid %d (%s): animated=%v, want %v", gid, tile.DefOf(gid).Name, animated, want[gid])
 		}

@@ -9,6 +9,8 @@ import (
 //
 // SpawnX/SpawnY are interpreted using SpawnStyle (default DoorSpawnFeet).
 // Optional Tiled property spawn_anchor: "feet" (default) or "topleft".
+// KeepSpawnX/KeepSpawnY come from authored spawn_x/spawn_y of "*" and copy
+// the matching player axis at warp time.
 type Door struct {
 	ID   EntityID
 	Rect geom.Rect
@@ -16,5 +18,7 @@ type Door struct {
 	TargetMap  string
 	SpawnX     float64
 	SpawnY     float64
+	KeepSpawnX bool
+	KeepSpawnY bool
 	SpawnStyle DoorSpawnStyle
 }

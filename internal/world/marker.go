@@ -177,8 +177,8 @@ func (doorMarker) SpawnFromTiled(w *World, o *tiled.Object, _ string, _ MarkerSp
 	tmap, _ := tiled.ObjProp(o, "target_map")
 	sx, _ := tiled.ObjProp(o, "spawn_x")
 	sy, _ := tiled.ObjProp(o, "spawn_y")
-	fx, _ := strconv.ParseFloat(sx, 64)
-	fy, _ := strconv.ParseFloat(sy, 64)
+	fx, keepX, _ := ParseDoorSpawnCoord(sx)
+	fy, keepY, _ := ParseDoorSpawnCoord(sy)
 	style := doorSpawnStyleFromTiled(o)
 	w.Doors = append(w.Doors, Door{
 		ID:         w.allocID(),
@@ -186,6 +186,8 @@ func (doorMarker) SpawnFromTiled(w *World, o *tiled.Object, _ string, _ MarkerSp
 		TargetMap:  tmap,
 		SpawnX:     fx,
 		SpawnY:     fy,
+		KeepSpawnX: keepX,
+		KeepSpawnY: keepY,
 		SpawnStyle: style,
 	})
 }

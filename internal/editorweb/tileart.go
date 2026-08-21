@@ -135,7 +135,7 @@ func recordTile(gid int, colors *colorTable, opts animOpts) tileArt {
 	def.DrawVector(probe, 0, 0, tile.Size, tile.Size)
 	art.Ops = opList(probe.ops)
 
-	if !probe.usedTick && !probe.usedGrid {
+	if !probe.usedTick {
 		return art
 	}
 

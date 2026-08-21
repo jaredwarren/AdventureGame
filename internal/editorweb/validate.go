@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/jaredwarren/game-test/internal/progression"
@@ -312,21 +311,26 @@ func validateDoor(is *issues, o *tiled.Object, m *tiled.Map) {
 	sx, sxOK := tiled.ObjProp(o, "spawn_x")
 	sy, syOK := tiled.ObjProp(o, "spawn_y")
 	fx, fy := 0.0, 0.0
+	keepX, keepY := false, false
 	if sxOK {
-		v, err := strconv.ParseFloat(sx, 64)
-		if err != nil {
-			iss := is.warnf("door_spawn_unparseable", "door %d has spawn_x=%q, which is not a number; the game parses it with strconv.ParseFloat and silently gets 0", o.ID, sx)
+		v, keep, ok := world.ParseDoorSpawnCoord(sx)
+		if !ok {
+			iss := is.warnf("door_spawn_unparseable", "door %d has spawn_x=%q, which is not a number or *; the game parses it with ParseDoorSpawnCoord and silently gets 0", o.ID, sx)
 			iss.ObjectID, iss.Field = o.ID, "spawn_x"
 		}
-		fx = v
+		fx, keepX = v, keep
 	}
 	if syOK {
-		v, err := strconv.ParseFloat(sy, 64)
-		if err != nil {
-			iss := is.warnf("door_spawn_unparseable", "door %d has spawn_y=%q, which is not a number; the game parses it with strconv.ParseFloat and silently gets 0", o.ID, sy)
+		v, keep, ok := world.ParseDoorSpawnCoord(sy)
+		if !ok {
+			iss := is.warnf("door_spawn_unparseable", "door %d has spawn_y=%q, which is not a number or *; the game parses it with ParseDoorSpawnCoord and silently gets 0", o.ID, sy)
 			iss.ObjectID, iss.Field = o.ID, "spawn_y"
 		}
-		fy = v
+		fy, keepY = v, keep
+	}
+	if keepX && keepY {
+		iss := is.errf("door_spawn_keep_both", "door %d has spawn_x and spawn_y both *; pin at least one axis to a number", o.ID)
+		iss.ObjectID, iss.Field = o.ID, "spawn_x"
 	}
 
 	if anchor, ok := tiled.ObjProp(o, "spawn_anchor"); ok {
@@ -347,14 +351,21 @@ func validateDoor(is *issues, o *tiled.Object, m *tiled.Map) {
 		iss.ObjectID, iss.Field = o.ID, "target_map"
 		return
 	}
-	if outOfBounds(fx, fy, 0, 0, tm) {
+	if keepX && keepY {
+		return
+	}
+	maxX := float64(tm.Width * tile.Size)
+	maxY := float64(tm.Height * tile.Size)
+	oob := (!keepX && (fx < 0 || fx > maxX)) || (!keepY && (fy < 0 || fy > maxY))
+	if oob {
 		iss := is.warnf("door_spawn_out_of_bounds", "door %d spawns at (%g, %g) in %q, which is outside that map's %dx%d tiles", o.ID, fx, fy, target, tm.Width, tm.Height)
 		iss.ObjectID = o.ID
 		return
 	}
 	// "The door drops you inside a wall" is the most common door-graph bug and
-	// is invisible until you walk through it.
-	if solidAtPixel(tm, fx, fy) {
+	// is invisible until you walk through it. Skip when an axis is keep: the
+	// dest tile is not known until warp time.
+	if !keepX && !keepY && solidAtPixel(tm, fx, fy) {
 		iss := is.warnf("door_spawn_in_solid", "door %d spawns at (%g, %g) in %q, which is a solid tile", o.ID, fx, fy, target)
 		iss.ObjectID = o.ID
 	}

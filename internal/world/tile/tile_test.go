@@ -1,6 +1,10 @@
 package tile
 
-import "testing"
+import (
+	"image/color"
+	"strings"
+	"testing"
+)
 
 func TestSolidAt_RegistryRules(t *testing.T) {
 	t.Parallel()
@@ -193,5 +197,187 @@ func TestCobblePathTransitionTiles(t *testing.T) {
 			t.Errorf("gid %d (%s): expected no solid rects (fully walkable), got %v", gid, d.Name, solidRects)
 		}
 		var _ Floorer = d
+	}
+}
+
+func TestFloorFamilyTransitionTiles(t *testing.T) {
+	t.Parallel()
+
+	floorFamilies := []struct {
+		name    string
+		baseGID int
+	}{
+		{"sand_path", GIDSandPath},
+		{"snow", GIDSnow},
+		{"mud_path", GIDMudPath},
+		{"dark_grass", GIDDarkGrass},
+		{"ice", GIDIceFamily},
+		{"quicksand", GIDQuicksandFamily},
+	}
+
+	for _, fam := range floorFamilies {
+		for i := 0; i < int(VariantCount); i++ {
+			gid := fam.baseGID + i
+			d := DefOf(gid)
+			if d.Name == "unknown" {
+				t.Errorf("family %s variant %d (gid %d) is not registered in defs", fam.name, i, gid)
+			}
+			if d.Solid() || d.Wall() || d.Water() || d.WaterShore() || !d.IsFloor() || !d.IsLand() || d.IsWall() || d.IsWater() {
+				t.Errorf("gid %d (%s): expected walkable floor & land, got Solid=%v Wall=%v Water=%v IsFloor=%v IsLand=%v IsWall=%v IsWater=%v",
+					gid, d.Name, d.Solid(), d.Wall(), d.Water(), d.IsFloor(), d.IsLand(), d.IsWall(), d.IsWater())
+			}
+			solidRects := SolidRectsAt(gid, 0, nil, false)
+			if len(solidRects) != 0 {
+				t.Errorf("gid %d (%s): expected no solid rects (fully walkable), got %v", gid, d.Name, solidRects)
+			}
+			var _ Floorer = d
+		}
+	}
+}
+
+func TestWaterHazardFamilyTransitionTiles(t *testing.T) {
+	t.Parallel()
+
+	waterFamilies := []struct {
+		name    string
+		baseGID int
+	}{
+		{"deep_water", GIDDeepWater},
+		{"lava_shore", GIDLavaShore},
+		{"swamp_water", GIDSwampWater},
+	}
+
+	for _, fam := range waterFamilies {
+		for i := 0; i < int(VariantCount); i++ {
+			gid := fam.baseGID + i
+			d := DefOf(gid)
+			if d.Name == "unknown" {
+				t.Errorf("family %s variant %d (gid %d) is not registered in defs", fam.name, i, gid)
+			}
+			if !d.Solid() || !d.Water() || !d.IsWater() || d.IsFloor() || d.IsLand() {
+				t.Errorf("gid %d (%s): expected solid water properties, got Solid=%v Water=%v IsWater=%v IsFloor=%v IsLand=%v",
+					gid, d.Name, d.Solid(), d.Water(), d.IsWater(), d.IsFloor(), d.IsLand())
+			}
+			if i == 0 {
+				if d.WaterShore() {
+					t.Errorf("gid %d (%s): base tile should not be shore", gid, d.Name)
+				}
+			} else {
+				if !d.WaterShore() {
+					t.Errorf("gid %d (%s): transition variant should be shore", gid, d.Name)
+				}
+				solidRects := SolidRectsAt(gid, 0, nil, false)
+				if len(solidRects) == 0 {
+					t.Errorf("gid %d (%s): expected non-empty SolidRects for transition tile", gid, d.Name)
+				}
+			}
+			var _ Waterer = d
+		}
+	}
+}
+
+type testCanvas struct {
+	tx, ty int
+	ops    []string
+}
+
+func (c *testCanvas) Tick() int           { return 0 }
+func (c *testCanvas) GridPos() (int, int) { return c.tx, c.ty }
+func (c *testCanvas) FillRect(x, y, w, h float32, clr color.RGBA) {
+	c.ops = append(c.ops, "fr")
+}
+func (c *testCanvas) StrokeRect(x, y, w, h float32, sw float32, clr color.RGBA) {
+	c.ops = append(c.ops, "sr")
+}
+func (c *testCanvas) StrokeLine(x1, y1, x2, y2 float32, sw float32, clr color.RGBA) {
+	c.ops = append(c.ops, "sl")
+}
+func (c *testCanvas) FillCircle(cx, cy, r float32, clr color.RGBA) {
+	c.ops = append(c.ops, "fc")
+}
+func (c *testCanvas) StrokeCircle(cx, cy, r float32, sw float32, clr color.RGBA) {
+	c.ops = append(c.ops, "sc")
+}
+func (c *testCanvas) DrawPath(p Path, clr color.RGBA, fill bool, sw float32) {
+	c.ops = append(c.ops, "p")
+}
+
+func TestSpatialVariationAndWallUniformity(t *testing.T) {
+	t.Parallel()
+
+	grass := DefOf(GIDGrass)
+	tree := DefOf(GIDTree)
+	water := DefOf(GIDWater)
+	wall := DefOf(GIDWall)
+
+	// Sample 20 grid positions
+	grassVariants := make(map[string]int)
+	treeVariants := make(map[string]int)
+	waterVariants := make(map[string]int)
+	wallVariants := make(map[string]int)
+
+	for tx := 0; tx < 5; tx++ {
+		for ty := 0; ty < 4; ty++ {
+			c1 := &testCanvas{tx: tx, ty: ty}
+			grass.DrawVector(c1, 0, 0, Size, Size)
+			key1 := strings.Join(c1.ops, ",")
+			grassVariants[key1]++
+
+			// Test deterministic repeatability for grass
+			c2 := &testCanvas{tx: tx, ty: ty}
+			grass.DrawVector(c2, 0, 0, Size, Size)
+			key2 := strings.Join(c2.ops, ",")
+			if key1 != key2 {
+				t.Errorf("grass at (%d,%d) is not deterministic", tx, ty)
+			}
+
+			// Tree spatial variation
+			ct1 := &testCanvas{tx: tx, ty: ty}
+			tree.DrawVector(ct1, 0, 0, Size, Size)
+			tkey1 := strings.Join(ct1.ops, ",")
+			treeVariants[tkey1]++
+
+			ct2 := &testCanvas{tx: tx, ty: ty}
+			tree.DrawVector(ct2, 0, 0, Size, Size)
+			tkey2 := strings.Join(ct2.ops, ",")
+			if tkey1 != tkey2 {
+				t.Errorf("tree at (%d,%d) is not deterministic", tx, ty)
+			}
+
+			// Water spatial variation
+			cw1 := &testCanvas{tx: tx, ty: ty}
+			water.DrawVector(cw1, 0, 0, Size, Size)
+			wkey1 := strings.Join(cw1.ops, ",")
+			waterVariants[wkey1]++
+
+			cw2 := &testCanvas{tx: tx, ty: ty}
+			water.DrawVector(cw2, 0, 0, Size, Size)
+			wkey2 := strings.Join(cw2.ops, ",")
+			if wkey1 != wkey2 {
+				t.Errorf("water at (%d,%d) is not deterministic", tx, ty)
+			}
+
+			// Wall uniformity
+			cw := &testCanvas{tx: tx, ty: ty}
+			wall.DrawVector(cw, 0, 0, Size, Size)
+			wallKey := strings.Join(cw.ops, ",")
+			wallVariants[wallKey]++
+		}
+	}
+
+	// Grass, Tree, and Water must produce multiple visual variants
+	if len(grassVariants) < 2 {
+		t.Errorf("grass should produce multiple distinct spatial variations across the grid, got only %d: %v", len(grassVariants), grassVariants)
+	}
+	if len(treeVariants) < 2 {
+		t.Errorf("tree should produce multiple distinct spatial variations across the grid, got only %d: %v", len(treeVariants), treeVariants)
+	}
+	if len(waterVariants) < 2 {
+		t.Errorf("water should produce multiple distinct spatial variations across the grid, got only %d: %v", len(waterVariants), waterVariants)
+	}
+
+	// Wall must produce exactly 1 invariant uniform draw across all grid positions
+	if len(wallVariants) != 1 {
+		t.Errorf("wall must be 100%% static and uniform across all grid positions, got %d variations: %v", len(wallVariants), wallVariants)
 	}
 }

@@ -170,9 +170,9 @@ func playerHitboxH(w *world.World) float64 {
 // current save payload. Returns error on map load failure; on success
 // the new World is live.
 //
-// Player placement uses world.PlayerTopLeftFromDoorSpawn with the door's
-// SpawnStyle (from optional Tiled spawn_anchor) and the outgoing player's
-// hitbox height so door spawns stay aligned with BuildFromTiled "spawn" markers.
+// Player placement uses world.ResolveDoorSpawn so authored "*" axes copy the
+// outgoing player coordinate, then SpawnStyle (Tiled spawn_anchor) and hitbox
+// height keep the result aligned with BuildFromTiled "spawn" markers.
 func WarpDoor(assets services.AssetCache, sess *Session, cam *render.Camera, d *world.Door) error {
 	target := d.TargetMap
 	carry := BuildSave(sess, cam)
@@ -180,7 +180,7 @@ func WarpDoor(assets services.AssetCache, sess *Session, cam *render.Camera, d *
 		return fmt.Errorf("worldloader: warp %q: no world to carry from", target)
 	}
 	ph := playerHitboxH(sess.World)
-	px, py := world.PlayerTopLeftFromDoorSpawn(d.SpawnX, d.SpawnY, d.SpawnStyle, ph)
+	px, py := world.ResolveDoorSpawn(*d, sess.World.Player.X, sess.World.Player.Y, ph)
 	carry.MapID = target
 	carry.PlayerX = px
 	carry.PlayerY = py

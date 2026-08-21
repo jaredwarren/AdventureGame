@@ -214,6 +214,150 @@ func init() {
 		Style:       TileStyle{FillColor: tileCobblePathColor, EdgeColor: tileCobblePathEdgeColor, LineWidth: 1.0, HasDetail: true, DetailColor: tileCobblePebbleColor, BaseDrawer: drawCobblePath},
 		Collapsed:   false,
 	})
+
+	RegisterFamily(FamilyConfig{
+		Name:        "sand_path",
+		Label:       "Sand & Shore",
+		Category:    "sand_path",
+		BaseGID:     GIDSandPath,
+		Kind:        FamilyFloor,
+		FloorWeight: 0.3,
+		Style: TileStyle{
+			FillColor:   color.RGBA{0xe5, 0xd3, 0xa3, 0xff},
+			EdgeColor:   color.RGBA{0xc8, 0xb6, 0x86, 0xff},
+			DetailColor: color.RGBA{0xc8, 0xb6, 0x86, 0xff},
+			LineWidth:   1.0,
+			HasDetail:   true,
+			BaseDrawer:  drawSand,
+		},
+		Collapsed: false,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:        "snow",
+		Label:       "Snow & Alpine",
+		Category:    "snow",
+		BaseGID:     GIDSnow,
+		Kind:        FamilyFloor,
+		FloorWeight: 0.3,
+		Style: TileStyle{
+			FillColor:   color.RGBA{0xf0, 0xf8, 0xff, 0xff},
+			EdgeColor:   color.RGBA{0xb8, 0xd0, 0xe8, 0xff},
+			DetailColor: color.RGBA{0xd4, 0xe4, 0xf4, 0xff},
+			LineWidth:   1.0,
+			HasDetail:   true,
+			BaseDrawer:  drawSnow,
+		},
+		Collapsed: false,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:        "mud_path",
+		Label:       "Mud & Swamp",
+		Category:    "mud_path",
+		BaseGID:     GIDMudPath,
+		Kind:        FamilyFloor,
+		Surface:     MudSurface,
+		FloorWeight: 0.3,
+		Style: TileStyle{
+			FillColor:   color.RGBA{0x6b, 0x4c, 0x35, 0xff},
+			EdgeColor:   color.RGBA{0x4a, 0x32, 0x22, 0xff},
+			DetailColor: color.RGBA{0x4a, 0x32, 0x22, 0xff},
+			LineWidth:   1.0,
+			HasDetail:   true,
+			BaseDrawer:  drawMud,
+		},
+		Collapsed: false,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:        "dark_grass",
+		Label:       "Dark Forest Earth",
+		Category:    "dark_grass",
+		BaseGID:     GIDDarkGrass,
+		Kind:        FamilyFloor,
+		FloorWeight: 0.3,
+		Style: TileStyle{
+			FillColor:   color.RGBA{0x35, 0x5a, 0x35, 0xff},
+			EdgeColor:   color.RGBA{0x22, 0x3d, 0x22, 0xff},
+			DetailColor: color.RGBA{0x45, 0x6e, 0x45, 0xff},
+			LineWidth:   1.0,
+			HasDetail:   true,
+			BaseDrawer:  drawDarkGrass,
+		},
+		Collapsed: false,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:      "deep_water",
+		Label:     "Deep Ocean Water",
+		Category:  "deep_water",
+		BaseGID:   GIDDeepWater,
+		Kind:      FamilyWater,
+		Surface:   waterSurface,
+		Style:     TileStyle{FillColor: color.RGBA{0x18, 0x2a, 0x5a, 0xff}, EdgeColor: color.RGBA{0x3a, 0x6a, 0xba, 0xff}, LineWidth: tileShoreLineWidth, BaseDrawer: drawDeepWater},
+		Collapsed: true,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:      "lava_shore",
+		Label:     "Lava & Magma",
+		Category:  "lava",
+		BaseGID:   GIDLavaShore,
+		Kind:      FamilyWater,
+		Surface:   LavaSurface,
+		Style:     TileStyle{FillColor: color.RGBA{0xd3, 0x54, 0x00, 0xff}, EdgeColor: color.RGBA{0xf3, 0x9c, 0x12, 0xff}, LineWidth: tileShoreLineWidth, BaseDrawer: drawLava},
+		Collapsed: true,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:      "swamp_water",
+		Label:     "Murky Swamp Water",
+		Category:  "swamp_water",
+		BaseGID:   GIDSwampWater,
+		Kind:      FamilyWater,
+		Surface:   waterSurface,
+		Style:     TileStyle{FillColor: color.RGBA{0x32, 0x44, 0x2e, 0xff}, EdgeColor: color.RGBA{0x5c, 0x7a, 0x44, 0xff}, LineWidth: tileShoreLineWidth, BaseDrawer: drawSwampWater},
+		Collapsed: true,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:        "ice",
+		Label:       "Ice & Frozen Lake",
+		Category:    "ice",
+		BaseGID:     GIDIceFamily,
+		Kind:        FamilyFloor,
+		Surface:     IceSurface,
+		FloorWeight: 0.3,
+		Style: TileStyle{
+			FillColor:   color.RGBA{0xa0, 0xd8, 0xef, 0xff},
+			EdgeColor:   color.RGBA{0x7a, 0xb8, 0xd4, 0xff},
+			DetailColor: color.RGBA{0xff, 0xff, 0xff, 0xff},
+			LineWidth:   1.0,
+			HasDetail:   true,
+			BaseDrawer:  drawIce,
+		},
+		Collapsed: false,
+	})
+
+	RegisterFamily(FamilyConfig{
+		Name:        "quicksand",
+		Label:       "Quicksand",
+		Category:    "quicksand",
+		BaseGID:     GIDQuicksandFamily,
+		Kind:        FamilyFloor,
+		Surface:     QuicksandSurface,
+		FloorWeight: 0.3,
+		Style: TileStyle{
+			FillColor:   color.RGBA{0xdf, 0xc7, 0x94, 0xff},
+			EdgeColor:   color.RGBA{0xb8, 0x9e, 0x6a, 0xff},
+			DetailColor: color.RGBA{0xb8, 0x9e, 0x6a, 0xff},
+			LineWidth:   1.0,
+			HasDetail:   true,
+			BaseDrawer:  drawQuicksand,
+		},
+		Collapsed: false,
+	})
 }
 
 // DefOf returns the registered definition for a GID.
