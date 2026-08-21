@@ -1,0 +1,325 @@
+{
+  "gid": 65,
+  "name": "cobble_path",
+  "size": 16,
+  "layers": [
+    {
+      "id": "mortar",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16,
+      "fill": "#545760"
+    }
+  ],
+  "spatial": {
+    "mode": "gridHash",
+    "variants": [
+      {
+        "id": "five_paver",
+        "weight": 40,
+        "layers": [
+          {
+            "id": "s1",
+            "type": "circle",
+            "cx": 4.8,
+            "cy": 4.8,
+            "r": 3.52,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h1",
+            "type": "circle",
+            "cx": 4.16,
+            "cy": 4.16,
+            "r": 1.28,
+            "fill": "#828793"
+          },
+          {
+            "id": "s2",
+            "type": "circle",
+            "cx": 12,
+            "cy": 4,
+            "r": 3.04,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h2",
+            "type": "circle",
+            "cx": 11.52,
+            "cy": 3.52,
+            "r": 0.96,
+            "fill": "#828793"
+          },
+          {
+            "id": "s3",
+            "type": "circle",
+            "cx": 4.16,
+            "cy": 11.84,
+            "r": 2.88,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h3",
+            "type": "circle",
+            "cx": 3.84,
+            "cy": 11.36,
+            "r": 0.96,
+            "fill": "#828793"
+          },
+          {
+            "id": "s4",
+            "type": "circle",
+            "cx": 11.52,
+            "cy": 11.52,
+            "r": 3.68,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h4",
+            "type": "circle",
+            "cx": 10.88,
+            "cy": 10.88,
+            "r": 1.44,
+            "fill": "#828793"
+          },
+          {
+            "id": "s5",
+            "type": "circle",
+            "cx": 8,
+            "cy": 8,
+            "r": 1.76,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          }
+        ]
+      },
+      {
+        "id": "four_paver",
+        "weight": 25,
+        "layers": [
+          {
+            "id": "s1",
+            "type": "circle",
+            "cx": 8,
+            "cy": 4.16,
+            "r": 3.68,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h1",
+            "type": "circle",
+            "cx": 7.36,
+            "cy": 3.52,
+            "r": 1.28,
+            "fill": "#828793"
+          },
+          {
+            "id": "s2",
+            "type": "circle",
+            "cx": 3.52,
+            "cy": 10.4,
+            "r": 3.04,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h2",
+            "type": "circle",
+            "cx": 3.2,
+            "cy": 9.92,
+            "r": 0.96,
+            "fill": "#828793"
+          },
+          {
+            "id": "s3",
+            "type": "circle",
+            "cx": 12.48,
+            "cy": 9.6,
+            "r": 3.2,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h3",
+            "type": "circle",
+            "cx": 12,
+            "cy": 9.12,
+            "r": 1.12,
+            "fill": "#828793"
+          },
+          {
+            "id": "s4",
+            "type": "circle",
+            "cx": 7.68,
+            "cy": 13.12,
+            "r": 2.56,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "h4",
+            "type": "circle",
+            "cx": 7.36,
+            "cy": 12.8,
+            "r": 0.8,
+            "fill": "#828793"
+          }
+        ]
+      },
+      {
+        "id": "mosaic",
+        "weight": 20,
+        "layers": [
+          {
+            "id": "s1",
+            "type": "circle",
+            "cx": 4,
+            "cy": 4,
+            "r": 2.72,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s2",
+            "type": "circle",
+            "cx": 11.52,
+            "cy": 3.52,
+            "r": 2.4,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s3",
+            "type": "circle",
+            "cx": 5.6,
+            "cy": 8.8,
+            "r": 2.88,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s4",
+            "type": "circle",
+            "cx": 12,
+            "cy": 8.8,
+            "r": 2.72,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s5",
+            "type": "circle",
+            "cx": 3.52,
+            "cy": 13.12,
+            "r": 2.24,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s6",
+            "type": "circle",
+            "cx": 10.4,
+            "cy": 13.6,
+            "r": 2.56,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          }
+        ]
+      },
+      {
+        "id": "mossy",
+        "weight": 15,
+        "layers": [
+          {
+            "id": "s1",
+            "type": "circle",
+            "cx": 4.8,
+            "cy": 4.8,
+            "r": 3.52,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s2",
+            "type": "circle",
+            "cx": 12,
+            "cy": 4,
+            "r": 3.04,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s3",
+            "type": "circle",
+            "cx": 4.16,
+            "cy": 11.84,
+            "r": 2.88,
+            "fill": "#656974",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s4",
+            "type": "circle",
+            "cx": 11.52,
+            "cy": 11.52,
+            "r": 3.68,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "s5",
+            "type": "circle",
+            "cx": 8,
+            "cy": 8,
+            "r": 1.76,
+            "fill": "#727682",
+            "stroke": "#545760",
+            "strokeWidth": 1
+          },
+          {
+            "id": "m1",
+            "type": "circle",
+            "cx": 8.32,
+            "cy": 5.44,
+            "r": 1.2,
+            "fill": "#526854"
+          },
+          {
+            "id": "m2",
+            "type": "circle",
+            "cx": 7.68,
+            "cy": 10.56,
+            "r": 1.2,
+            "fill": "#526854"
+          }
+        ]
+      }
+    ]
+  }
+}

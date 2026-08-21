@@ -1,0 +1,197 @@
+{
+  "gid": 1,
+  "name": "grass",
+  "size": 16,
+  "layers": [
+    {
+      "id": "fill",
+      "type": "rect",
+      "x": 0,
+      "y": 0,
+      "w": 16,
+      "h": 16,
+      "fill": "#558855"
+    }
+  ],
+  "spatial": {
+    "mode": "gridHash",
+    "variants": [
+      {
+        "id": "double_tuft",
+        "weight": 40,
+        "layers": [
+          {
+            "id": "b1",
+            "type": "line",
+            "x1": 4.8,
+            "y1": 11.2,
+            "x2": 4.8,
+            "y2": 6.4,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b2",
+            "type": "line",
+            "x1": 4.8,
+            "y1": 11.2,
+            "x2": 7.2,
+            "y2": 8,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b3",
+            "type": "line",
+            "x1": 11.2,
+            "y1": 8,
+            "x2": 11.2,
+            "y2": 3.2,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b4",
+            "type": "line",
+            "x1": 11.2,
+            "y1": 8,
+            "x2": 12.8,
+            "y2": 4.8,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          }
+        ]
+      },
+      {
+        "id": "tall_cluster",
+        "weight": 30,
+        "layers": [
+          {
+            "id": "b1",
+            "type": "line",
+            "x1": 8,
+            "y1": 12,
+            "x2": 8,
+            "y2": 5.6,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b2",
+            "type": "line",
+            "x1": 8,
+            "y1": 12,
+            "x2": 10.4,
+            "y2": 7.2,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b3",
+            "type": "line",
+            "x1": 8,
+            "y1": 12,
+            "x2": 5.6,
+            "y2": 8,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          }
+        ]
+      },
+      {
+        "id": "sparse",
+        "weight": 18,
+        "layers": [
+          {
+            "id": "b1",
+            "type": "line",
+            "x1": 4,
+            "y1": 6.4,
+            "x2": 4,
+            "y2": 4,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b2",
+            "type": "line",
+            "x1": 12,
+            "y1": 12.8,
+            "x2": 12,
+            "y2": 10.4,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          }
+        ]
+      },
+      {
+        "id": "wildflower_yellow",
+        "weight": 6,
+        "layers": [
+          {
+            "id": "b1",
+            "type": "line",
+            "x1": 6.4,
+            "y1": 11.2,
+            "x2": 6.4,
+            "y2": 6.4,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b2",
+            "type": "line",
+            "x1": 6.4,
+            "y1": 11.2,
+            "x2": 8.8,
+            "y2": 8,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "flower",
+            "type": "circle",
+            "cx": 6.4,
+            "cy": 5.6,
+            "r": 1.2,
+            "fill": "#f1c40f"
+          }
+        ]
+      },
+      {
+        "id": "wildflower_white",
+        "weight": 6,
+        "layers": [
+          {
+            "id": "b1",
+            "type": "line",
+            "x1": 6.4,
+            "y1": 11.2,
+            "x2": 6.4,
+            "y2": 6.4,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "b2",
+            "type": "line",
+            "x1": 6.4,
+            "y1": 11.2,
+            "x2": 8.8,
+            "y2": 8,
+            "stroke": "#3e6e3e",
+            "strokeWidth": 1
+          },
+          {
+            "id": "flower",
+            "type": "circle",
+            "cx": 6.4,
+            "cy": 5.6,
+            "r": 1.2,
+            "fill": "#f8f9fa"
+          }
+        ]
+      }
+    ]
+  }
+}

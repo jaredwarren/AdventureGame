@@ -16,6 +16,7 @@ func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /", s.indexHandler())
+	mux.Handle("GET /tiles", s.tilesPageHandler())
 	mux.Handle("GET /static/", s.staticHandler())
 
 	mux.HandleFunc("GET /api/health", s.handleHealth)
@@ -25,6 +26,10 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("GET /api/maps", s.handleMapList)
 	mux.HandleFunc("GET /api/maps/{id...}", s.handleMapLoad)
 	mux.HandleFunc("PUT /api/maps/{id...}", s.handleMapSave)
+
+	mux.HandleFunc("GET /api/tiles", s.handleTileList)
+	mux.HandleFunc("GET /api/tiles/{gid}", s.handleTileLoad)
+	mux.HandleFunc("PUT /api/tiles/{gid}", s.handleTileSave)
 
 	mux.HandleFunc("GET /api/thumbs/{id...}", s.handleThumb)
 

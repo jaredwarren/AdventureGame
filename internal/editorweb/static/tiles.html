@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-token="{{.Token}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tile art editor</title>
+  <link rel="stylesheet" href="/static/editor.css">
+  <link rel="stylesheet" href="/static/tiles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23558855'/><circle cx='8' cy='6' r='4' fill='%232d7a2a'/></svg>">
+</head>
+<body class="tile-editor">
+
+<div id="boot"><h1>Tile art editor</h1><p>Loading…</p></div>
+
+<div id="app" hidden>
+  <header id="toolbar">
+    <div class="toolbar-row">
+      <strong>Tile art</strong>
+      <a class="btn" href="/?t={{.Token}}">Maps</a>
+      <span class="sep"></span>
+      <button id="btn-save" class="btn btn-primary">Save</button>
+      <button id="btn-undo" class="btn icon-btn" title="Undo">↶</button>
+      <button id="btn-redo" class="btn icon-btn" title="Redo">↷</button>
+      <span id="dirty-dot" class="dot" hidden>●</span>
+      <span class="spacer"></span>
+      <span id="tiles-root" class="muted" title="Tiles directory">{{.TilesDir}}</span>
+    </div>
+    <div class="toolbar-row">
+      <div class="tool-group" id="shape-tools">
+        <button class="btn" data-tool="select" aria-pressed="true">Select</button>
+        <button class="btn" data-tool="rect">Rect</button>
+        <button class="btn" data-tool="line">Line</button>
+        <button class="btn" data-tool="circle">Circle</button>
+      </div>
+      <button id="btn-delete" class="btn" title="Delete selected">Delete</button>
+      <span class="muted" style="margin-left:8px">Alt+click cycles stack · drag handles to edit</span>
+      <span class="sep"></span>
+      <label class="check"><input type="checkbox" id="toggle-spatial"> spatial variants</label>
+      <span class="spacer"></span>
+      <label>zoom
+        <select id="zoom-select">
+          <option value="16">16×</option>
+          <option value="24">24×</option>
+          <option value="32" selected>32×</option>
+          <option value="48">48×</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <aside id="left-panel">
+    <div class="panel-head">
+      <input type="search" id="tile-search" placeholder="Filter tiles…" aria-label="Filter tiles">
+    </div>
+    <div id="tile-list" class="tile-list"></div>
+  </aside>
+
+  <main id="center">
+    <div id="variant-tabs" class="variant-tabs" hidden></div>
+    <div id="canvas-wrap">
+      <canvas id="edit-canvas" width="512" height="512"></canvas>
+    </div>
+    <div id="preview-strip" class="preview-strip">
+      <span class="muted">GridPos preview</span>
+      <canvas id="preview-canvas" width="320" height="64"></canvas>
+    </div>
+  </main>
+
+  <aside id="right-panel">
+    <div class="panel-head"><strong id="tile-title">—</strong></div>
+    <div class="panel-body props">
+      <label>Fill <input type="color" id="prop-fill" value="#558855"></label>
+      <label>Stroke <input type="color" id="prop-stroke" value="#3e6e3e"></label>
+      <label>Stroke width <input type="number" id="prop-sw" min="0.5" max="8" step="0.5" value="1"></label>
+      <div id="weight-row" hidden>
+        <label>Variant weight <input type="number" id="prop-weight" min="1" max="100" value="25"></label>
+        <button id="btn-add-variant" class="btn">Add variant</button>
+      </div>
+      <h3>Shapes</h3>
+      <ul id="shape-list" class="shape-list"></ul>
+      <div class="shape-order">
+        <button id="btn-shape-up" class="btn">Up</button>
+        <button id="btn-shape-down" class="btn">Down</button>
+      </div>
+    </div>
+  </aside>
+
+  <footer id="statusbar">
+    <span id="status-msg">Select a tile</span>
+  </footer>
+</div>
+
+<script type="module" src="/static/js/tiles/main.js"></script>
+</body>
+</html>

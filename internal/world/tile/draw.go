@@ -25,6 +25,7 @@ func drawEmpty(c Canvas, x, y, w, h float32) {
 }
 
 func drawGrass(c Canvas, x, y, w, h float32) {
+	// Prefer assets/tiles/1_grass.tile.json when loaded via LoadArtFS/ApplyArt.
 	c.FillRect(x, y, w, h, tileGrassColor)
 
 	tx, ty := c.GridPos()

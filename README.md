@@ -64,6 +64,8 @@ When reporting a bug:
 
 **Web editor (recommended):** `make mapeditor` (or `go run ./cmd/mapeditor -open`) serves a local editor at `http://127.0.0.1:7777` with a per-launch access token. It edits the same `assets/maps/*.tmj` files on disk, and everything it draws — tile art, marker hit boxes, default properties, validation rules — is derived from `internal/world` at startup, so it cannot drift from the game.
 
+**Tile art editor:** `make tileeditor` (or `go run ./cmd/mapeditor -open-tiles`) opens the same server on `/tiles` for a WYSIWYG vector editor. Art is stored as `assets/tiles/{gid}_{name}.tile.json` (spatial variants included) and loaded by the game at startup. Grass, tree, dirt path, and cobble path bases are data-driven; other GIDs can be synthesized from their Go drawers and saved.
+
 Over the in-engine editor it adds undo/redo, rectangle and flood fill, mouse-wheel zoom, a **property panel** for enemy stats, door targets, sign text and pickup kinds (previously only editable by hand-editing JSON), a **validation panel**, and a world-grid browser for jumping between adjacent cells. It preserves each file's own formatting, so opening a map and saving it unchanged leaves no diff.
 
 **In-engine editor (dev):** `go run ./cmd/game -edit field1` (or `make edit field1`, `make edit MAP=field2`, or `make edit-field2`) loads `assets/maps/<id>.tmj` from **disk** (not the embed), lets you paint the `ground` layer and add/move/delete `markers` objects with the same Ebiten renderer as play mode, and writes the file with **Ctrl+S**. Run the game again (or rebuild) so embedded maps match what you saved.

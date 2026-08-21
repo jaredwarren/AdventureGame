@@ -32,6 +32,7 @@ import (
 	"github.com/jaredwarren/game-test/internal/input"
 	ebitenplat "github.com/jaredwarren/game-test/internal/platform/ebiten"
 	"github.com/jaredwarren/game-test/internal/services"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // configSubdir is the directory under os.UserConfigDir() where per-user
@@ -43,6 +44,10 @@ func main() {
 	balancePath := flag.String("balance", "", "path to optional balance.json overlay file for dev playtesting")
 	touchControls := flag.Bool("touch", runtime.GOOS == "js", "show on-screen virtual buttons (default on WASM)")
 	flag.Parse()
+
+	if err := tile.LoadArtFS(assets.TileArtFS); err != nil {
+		log.Printf("[tiles] load art: %v", err)
+	}
 
 	if *balancePath != "" {
 		data, err := os.ReadFile(*balancePath)

@@ -1,0 +1,208 @@
+{
+  "gid": 8,
+  "name": "tree",
+  "size": 16,
+  "layers": [],
+  "spatial": {
+    "mode": "gridHash",
+    "variants": [
+      {
+        "id": "round_oak",
+        "weight": 40,
+        "layers": [
+          {
+            "id": "trunk",
+            "type": "rect",
+            "x": 6.72,
+            "y": 9.6,
+            "w": 2.56,
+            "h": 5.12,
+            "fill": "#6b4a2a"
+          },
+          {
+            "id": "canopy",
+            "type": "circle",
+            "cx": 8,
+            "cy": 6.08,
+            "r": 5.12,
+            "fill": "#2d7a2a",
+            "stroke": "#1d5a1a",
+            "strokeWidth": 1
+          },
+          {
+            "id": "hi",
+            "type": "circle",
+            "cx": 6.72,
+            "cy": 4.8,
+            "r": 2.24,
+            "fill": "#3e963b"
+          }
+        ]
+      },
+      {
+        "id": "multi_lobe",
+        "weight": 30,
+        "layers": [
+          {
+            "id": "trunk",
+            "type": "rect",
+            "x": 6.4,
+            "y": 9.92,
+            "w": 3.2,
+            "h": 4.8,
+            "fill": "#6b4a2a"
+          },
+          {
+            "id": "l1",
+            "type": "circle",
+            "cx": 6.08,
+            "cy": 6.72,
+            "r": 3.84,
+            "fill": "#2d7a2a"
+          },
+          {
+            "id": "l2",
+            "type": "circle",
+            "cx": 9.92,
+            "cy": 6.72,
+            "r": 3.84,
+            "fill": "#2d7a2a"
+          },
+          {
+            "id": "l3",
+            "type": "circle",
+            "cx": 8,
+            "cy": 5.12,
+            "r": 4.16,
+            "fill": "#2d7a2a"
+          },
+          {
+            "id": "outline",
+            "type": "circle",
+            "cx": 8,
+            "cy": 6.08,
+            "r": 5.44,
+            "stroke": "#1d5a1a",
+            "strokeWidth": 1
+          },
+          {
+            "id": "hi1",
+            "type": "circle",
+            "cx": 7.68,
+            "cy": 4.16,
+            "r": 1.92,
+            "fill": "#3e963b"
+          },
+          {
+            "id": "hi2",
+            "type": "circle",
+            "cx": 9.92,
+            "cy": 6.08,
+            "r": 1.6,
+            "fill": "#3e963b"
+          }
+        ]
+      },
+      {
+        "id": "slender",
+        "weight": 15,
+        "layers": [
+          {
+            "id": "trunk",
+            "type": "rect",
+            "x": 7.04,
+            "y": 9.28,
+            "w": 1.92,
+            "h": 5.44,
+            "fill": "#6b4a2a"
+          },
+          {
+            "id": "root",
+            "type": "line",
+            "x1": 6.08,
+            "y1": 14.4,
+            "x2": 9.92,
+            "y2": 14.4,
+            "stroke": "#6b4a2a",
+            "strokeWidth": 1
+          },
+          {
+            "id": "canopy",
+            "type": "circle",
+            "cx": 8,
+            "cy": 5.44,
+            "r": 4.48,
+            "fill": "#2d7a2a",
+            "stroke": "#1d5a1a",
+            "strokeWidth": 1
+          },
+          {
+            "id": "hi",
+            "type": "circle",
+            "cx": 7.04,
+            "cy": 4.48,
+            "r": 1.92,
+            "fill": "#3e963b"
+          }
+        ]
+      },
+      {
+        "id": "berry",
+        "weight": 15,
+        "layers": [
+          {
+            "id": "trunk",
+            "type": "rect",
+            "x": 6.72,
+            "y": 9.6,
+            "w": 2.56,
+            "h": 5.12,
+            "fill": "#6b4a2a"
+          },
+          {
+            "id": "canopy",
+            "type": "circle",
+            "cx": 8,
+            "cy": 6.08,
+            "r": 5.12,
+            "fill": "#2d7a2a",
+            "stroke": "#1d5a1a",
+            "strokeWidth": 1
+          },
+          {
+            "id": "hi",
+            "type": "circle",
+            "cx": 6.72,
+            "cy": 4.8,
+            "r": 2.24,
+            "fill": "#3e963b"
+          },
+          {
+            "id": "f1",
+            "type": "circle",
+            "cx": 5.76,
+            "cy": 6.08,
+            "r": 1.1,
+            "fill": "#d63031"
+          },
+          {
+            "id": "f2",
+            "type": "circle",
+            "cx": 9.92,
+            "cy": 5.44,
+            "r": 1.1,
+            "fill": "#d63031"
+          },
+          {
+            "id": "f3",
+            "type": "circle",
+            "cx": 8,
+            "cy": 7.68,
+            "r": 1.1,
+            "fill": "#d63031"
+          }
+        ]
+      }
+    ]
+  }
+}

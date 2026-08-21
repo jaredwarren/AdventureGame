@@ -13,15 +13,21 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jaredwarren/game-test/assets"
+	"github.com/jaredwarren/game-test/internal/world/tile"
 )
 
 // Options configures a map editor server.
 type Options struct {
 	// MapsDir is the directory holding the .tmj files. Required.
 	MapsDir string
+	// TilesDir holds editable *.tile.json art. Defaults to <MapsDir>/../tiles.
+	TilesDir string
 	// Addr is the listen address. Defaults to 127.0.0.1:7777.
 	Addr string
 	// Token authenticates API calls. Generated per launch when empty.
@@ -72,6 +78,17 @@ func New(opts Options) (*Server, error) {
 		opts.Token = tok
 	}
 
+	if opts.TilesDir == "" {
+		opts.TilesDir = filepath.Clean(filepath.Join(opts.MapsDir, "..", "tiles"))
+	}
+	// Embed first, then overlay on-disk edits from the editor.
+	if err := tile.LoadArtFS(assets.TileArtFS); err != nil {
+		opts.Logger.Printf("tile art embed: %v", err)
+	}
+	if err := tile.LoadArtDir(opts.TilesDir); err != nil && !os.IsNotExist(err) {
+		opts.Logger.Printf("tile art dir %s: %v", opts.TilesDir, err)
+	}
+
 	store, err := NewMapStore(opts.MapsDir)
 	if err != nil {
 		return nil, err
@@ -101,6 +118,15 @@ func (s *Server) URL() string {
 	return fmt.Sprintf("http://%s/?t=%s", host, s.opts.Token)
 }
 
+// TilesURL is the tile art editor address with the per-launch token.
+func (s *Server) TilesURL() string {
+	host := s.opts.Addr
+	if strings.HasPrefix(host, "0.0.0.0:") {
+		host = "127.0.0.1:" + strings.TrimPrefix(host, "0.0.0.0:")
+	}
+	return fmt.Sprintf("http://%s/tiles?t=%s", host, s.opts.Token)
+}
+
 // ListenAndServe runs until ctx is cancelled, then shuts down gracefully.
 func (s *Server) ListenAndServe(ctx context.Context) error {
 	srv := &http.Server{
@@ -118,6 +144,7 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 	infos, _ := s.store.List()
 	s.logger.Printf("map editor: serving %s (%d maps)", s.store.Root, len(infos))
 	s.logger.Printf("map editor: open %s", s.URL())
+	s.logger.Printf("tile art editor: %s", s.TilesURL())
 
 	defer s.stopPlay()
 

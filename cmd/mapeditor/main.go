@@ -1,10 +1,12 @@
-// Command mapeditor serves a local web-based editor for the game's .tmj maps.
+// Command mapeditor serves a local web-based editor for the game's .tmj maps
+// and vector tile art (assets/tiles/*.tile.json).
 //
 // It is a second editor, not a replacement: the in-engine editor
-// (`go run ./cmd/game -edit F-5`) still works and edits the same files.
+// (`go run ./cmd/game -edit F-5`) still works and edits the same map files.
 //
 //	go run ./cmd/mapeditor            # serve, print a tokenized URL
-//	go run ./cmd/mapeditor -open      # ... and open a browser
+//	go run ./cmd/mapeditor -open      # ... and open the map editor
+//	go run ./cmd/mapeditor -open-tiles # ... and open the tile art editor
 //	go run ./cmd/mapeditor -check     # validate every map, exit 1 on errors
 //
 // Everything the browser draws — tile art, marker hit boxes, default properties,
@@ -34,7 +36,8 @@ func main() {
 	var (
 		mapsDir     = flag.String("maps", "", "maps directory (default: assets/maps under the module root, or $GAME_MAPS_DIR)")
 		addr        = flag.String("addr", "127.0.0.1:7777", "listen address")
-		open        = flag.Bool("open", false, "open the editor in the default browser")
+		open        = flag.Bool("open", false, "open the map editor in the default browser")
+		openTiles   = flag.Bool("open-tiles", false, "open the tile art editor in the default browser")
 		check       = flag.Bool("check", false, "validate every map, print a report, and exit non-zero on errors")
 		strict      = flag.Bool("strict", false, "treat missing door targets as errors")
 		token       = flag.String("token", "", "override the per-launch access token (for scripted testing)")
@@ -66,7 +69,9 @@ func main() {
 		os.Exit(runCheck(srv))
 	}
 
-	if *open {
+	if *openTiles {
+		go openBrowser(srv.TilesURL())
+	} else if *open {
 		go openBrowser(srv.URL())
 	}
 

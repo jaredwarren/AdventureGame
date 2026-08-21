@@ -1,4 +1,4 @@
-.PHONY: run test fmt vet check clean maps-check maps-validate mapeditor mapeditor-headless build edit edit-% gentmj world-grid world-grid-stamp wasm wasm-clean wasm-rebuild wasm-serve wasm-serve-lan
+.PHONY: run test fmt vet check clean maps-check maps-validate mapeditor mapeditor-headless tileeditor build edit edit-% gentmj world-grid world-grid-stamp wasm wasm-clean wasm-rebuild wasm-serve wasm-serve-lan
 
 # Map id for the in-engine editor (assets/maps/$(MAP).tmj).
 MAP ?= F-5
@@ -38,6 +38,10 @@ mapeditor:
 # Same, without opening a browser (for tmux, remote shells, or a second window).
 mapeditor-headless:
 	go run ./cmd/mapeditor
+
+# Web tile art editor (vector WYSIWYG for assets/tiles/*.tile.json).
+tileeditor:
+	go run ./cmd/mapeditor -open-tiles
 
 sprite:
 	go run ./scripts/pickup_atlas_editor

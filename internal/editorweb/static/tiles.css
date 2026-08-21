@@ -1,0 +1,173 @@
+/* Tile art editor layout extensions on top of editor.css */
+
+body.tile-editor #app {
+  grid-template-areas:
+    "tb tb tb"
+    "left center right"
+    "sb sb sb";
+}
+
+.tile-list {
+  overflow: auto;
+  height: calc(100% - 44px);
+  padding: 4px;
+}
+
+.tile-list button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.tile-list button:hover { background: var(--panel-2); }
+.tile-list button.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.tile-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.tile-meta { font-size: 11px; color: var(--muted); }
+
+#canvas-wrap {
+  display: grid;
+  place-content: center;
+  flex: 1;
+  background:
+    linear-gradient(45deg, #1a1d26 25%, transparent 25%),
+    linear-gradient(-45deg, #1a1d26 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1a1d26 75%),
+    linear-gradient(-45deg, transparent 75%, #1a1d26 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-color: #151820;
+  min-height: 0;
+  overflow: auto;
+}
+
+body.tile-editor #center {
+  display: flex;
+  flex-direction: column;
+  grid-area: center;
+  min-height: 0;
+}
+
+#edit-canvas {
+  image-rendering: pixelated;
+  cursor: crosshair;
+  box-shadow: 0 0 0 1px var(--line);
+  background: #000;
+}
+
+.variant-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.variant-tabs button {
+  font: inherit;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.variant-tabs button.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.preview-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+#preview-canvas {
+  image-rendering: pixelated;
+  border: 1px solid var(--line);
+}
+
+.shape-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.shape-list li {
+  padding: 4px 6px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.shape-list li:hover { background: var(--panel-2); }
+.shape-list li.selected { background: var(--accent-dim); }
+
+.props label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.props input[type="color"] {
+  width: 48px;
+  height: 28px;
+  border: none;
+  background: transparent;
+}
+
+.props input[type="number"] {
+  width: 72px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 3px;
+}
+
+.shape-order { display: flex; gap: 6px; margin-top: 8px; }
+
+#statusbar {
+  grid-area: sb;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  padding: 2px 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+a.btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}

@@ -19,6 +19,7 @@ var staticFS embed.FS
 // memory and sends it as X-Editor-Token on every API call, so the token never
 // has to sit in a query string after the first load.
 var indexTemplate = template.Must(template.New("index").Parse(mustReadStatic("static/index.html")))
+var tilesTemplate = template.Must(template.New("tiles").Parse(mustReadStatic("static/tiles.html")))
 
 func mustReadStatic(name string) string {
 	b, err := staticFS.ReadFile(name)
@@ -40,6 +41,21 @@ func (s *Server) indexHandler() http.Handler {
 		if err := indexTemplate.Execute(&buf, map[string]any{
 			"Token": s.opts.Token,
 			"Root":  s.store.Root,
+		}); err != nil {
+			writeErr(w, http.StatusInternalServerError, "template", "%v", err)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(buf.Bytes())
+	})
+}
+
+func (s *Server) tilesPageHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var buf bytes.Buffer
+		if err := tilesTemplate.Execute(&buf, map[string]any{
+			"Token":    s.opts.Token,
+			"TilesDir": s.opts.TilesDir,
 		}); err != nil {
 			writeErr(w, http.StatusInternalServerError, "template", "%v", err)
 			return
