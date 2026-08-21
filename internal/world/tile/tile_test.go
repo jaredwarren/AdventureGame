@@ -197,6 +197,36 @@ func TestCobblePathTransitionTiles(t *testing.T) {
 			t.Errorf("gid %d (%s): expected no solid rects (fully walkable), got %v", gid, d.Name, solidRects)
 		}
 		var _ Floorer = d
+
+		// Test vector drawing runs and outputs draw operations
+		c := &testCanvas{}
+		d.DrawVector(c, 0, 0, Size, Size)
+		if len(c.ops) == 0 {
+			t.Errorf("cobble_path variant %d (gid %d) produced 0 draw operations", i, gid)
+		}
+	}
+}
+
+func TestDirtPathTransitionDrawing(t *testing.T) {
+	t.Parallel()
+
+	dirtGIDs := [13]int{
+		GIDDirtPath,
+		GIDDirtPathTop, GIDDirtPathBottom, GIDDirtPathLeft, GIDDirtPathRight,
+		GIDDirtPathNE, GIDDirtPathNW, GIDDirtPathSW, GIDDirtPathSE,
+		GIDDirtPathNEInner, GIDDirtPathNWInner, GIDDirtPathSWInner, GIDDirtPathSEInner,
+	}
+
+	for i, gid := range dirtGIDs {
+		d := DefOf(gid)
+		if d.Name == "unknown" {
+			t.Errorf("dirt_path variant %d (gid %d) not registered", i, gid)
+		}
+		c := &testCanvas{}
+		d.DrawVector(c, 0, 0, Size, Size)
+		if len(c.ops) == 0 {
+			t.Errorf("dirt_path variant %d (gid %d) produced 0 draw operations", i, gid)
+		}
 	}
 }
 
@@ -308,12 +338,16 @@ func TestSpatialVariationAndWallUniformity(t *testing.T) {
 	grass := DefOf(GIDGrass)
 	tree := DefOf(GIDTree)
 	water := DefOf(GIDWater)
+	dirtPath := DefOf(GIDDirtPath)
+	cobblePath := DefOf(GIDCobblePath)
 	wall := DefOf(GIDWall)
 
 	// Sample 20 grid positions
 	grassVariants := make(map[string]int)
 	treeVariants := make(map[string]int)
 	waterVariants := make(map[string]int)
+	dirtVariants := make(map[string]int)
+	cobbleVariants := make(map[string]int)
 	wallVariants := make(map[string]int)
 
 	for tx := 0; tx < 5; tx++ {
@@ -357,6 +391,32 @@ func TestSpatialVariationAndWallUniformity(t *testing.T) {
 				t.Errorf("water at (%d,%d) is not deterministic", tx, ty)
 			}
 
+			// Dirt path spatial variation
+			cd1 := &testCanvas{tx: tx, ty: ty}
+			dirtPath.DrawVector(cd1, 0, 0, Size, Size)
+			dkey1 := strings.Join(cd1.ops, ",")
+			dirtVariants[dkey1]++
+
+			cd2 := &testCanvas{tx: tx, ty: ty}
+			dirtPath.DrawVector(cd2, 0, 0, Size, Size)
+			dkey2 := strings.Join(cd2.ops, ",")
+			if dkey1 != dkey2 {
+				t.Errorf("dirtPath at (%d,%d) is not deterministic", tx, ty)
+			}
+
+			// Cobblestone path spatial variation
+			cc1 := &testCanvas{tx: tx, ty: ty}
+			cobblePath.DrawVector(cc1, 0, 0, Size, Size)
+			ckey1 := strings.Join(cc1.ops, ",")
+			cobbleVariants[ckey1]++
+
+			cc2 := &testCanvas{tx: tx, ty: ty}
+			cobblePath.DrawVector(cc2, 0, 0, Size, Size)
+			ckey2 := strings.Join(cc2.ops, ",")
+			if ckey1 != ckey2 {
+				t.Errorf("cobblePath at (%d,%d) is not deterministic", tx, ty)
+			}
+
 			// Wall uniformity
 			cw := &testCanvas{tx: tx, ty: ty}
 			wall.DrawVector(cw, 0, 0, Size, Size)
@@ -365,7 +425,7 @@ func TestSpatialVariationAndWallUniformity(t *testing.T) {
 		}
 	}
 
-	// Grass, Tree, and Water must produce multiple visual variants
+	// Grass, Tree, Water, Dirt, and Cobble must produce multiple visual variants
 	if len(grassVariants) < 2 {
 		t.Errorf("grass should produce multiple distinct spatial variations across the grid, got only %d: %v", len(grassVariants), grassVariants)
 	}
@@ -374,6 +434,12 @@ func TestSpatialVariationAndWallUniformity(t *testing.T) {
 	}
 	if len(waterVariants) < 2 {
 		t.Errorf("water should produce multiple distinct spatial variations across the grid, got only %d: %v", len(waterVariants), waterVariants)
+	}
+	if len(dirtVariants) < 2 {
+		t.Errorf("dirtPath should produce multiple distinct spatial variations across the grid, got only %d: %v", len(dirtVariants), dirtVariants)
+	}
+	if len(cobbleVariants) < 2 {
+		t.Errorf("cobblePath should produce multiple distinct spatial variations across the grid, got only %d: %v", len(cobbleVariants), cobbleVariants)
 	}
 
 	// Wall must produce exactly 1 invariant uniform draw across all grid positions

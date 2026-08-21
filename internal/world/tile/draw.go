@@ -14,8 +14,8 @@ var (
 	tileRockColor         = color.RGBA{0x8b, 0x4d, 0x3a, 0xff}
 	tileRockEdgeColor     = color.RGBA{0x5a, 0x2a, 0x1d, 0xff}
 	tileDirtPathColor     = color.RGBA{0x8b, 0x6a, 0x3a, 0xff}
-	tileDirtPathEdgeColor = color.RGBA{0x6b, 0x4e, 0x28, 0xff}
-	tileDirtPebbleColor   = color.RGBA{0xa8, 0x8a, 0x58, 0xff}
+	tileDirtPathEdgeColor = color.RGBA{0x7a, 0x5c, 0x33, 0xff} // Soft natural soil rut / shadow line
+	tileDirtPebbleColor   = color.RGBA{0x9c, 0x7b, 0x4a, 0xff} // Soft warm pebble highlight
 )
 
 const tileShoreLineWidth float32 = 2.0
@@ -81,47 +81,352 @@ func drawRock(c Canvas, x, y, w, h float32) {
 
 func drawDirtPath(c Canvas, x, y, w, h float32) {
 	c.FillRect(x, y, w, h, tileDirtPathColor)
-	c.StrokeLine(x, y+h*0.35, x+w, y+h*0.35, 1, tileDirtPathEdgeColor)
-	c.StrokeLine(x, y+h*0.65, x+w, y+h*0.65, 1, tileDirtPathEdgeColor)
-	c.FillRect(x+w*0.2, y+h*0.2, 2, 2, tileDirtPebbleColor)
-	c.FillRect(x+w*0.7, y+h*0.5, 2, 2, tileDirtPebbleColor)
-	c.FillRect(x+w*0.45, y+h*0.75, 2, 2, tileDirtPebbleColor)
+
+	tx, ty := c.GridPos()
+	// Deterministic spatial hash for natural dirt road variation
+	hash := uint32(tx*374761393+ty*668265263) ^ 0x5bf03635
+	variant := hash % 100
+
+	switch {
+	case variant < 40: // 40%: Standard trail with gentle wheel ruts & 3 pebbles
+		c.StrokeLine(x, y+h*0.35, x+w, y+h*0.35, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x, y+h*0.65, x+w, y+h*0.65, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.2, y+h*0.2, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.7, y+h*0.5, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.45, y+h*0.75, 2, 2, tileDirtPebbleColor)
+
+	case variant < 65: // 25%: Gravel-rich rocky trail (5 scattered pebbles)
+		c.StrokeLine(x, y+h*0.4, x+w, y+h*0.4, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.15, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.20, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.45, y+h*0.55, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.20, y+h*0.80, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.80, y+h*0.75, 2, 2, tileDirtPebbleColor)
+
+	case variant < 85: // 20%: Earth crack / rut branching
+		c.StrokeLine(x, y+h*0.3, x+w, y+h*0.3, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x+w*0.3, y+h*0.3, x+w*0.6, y+h*0.7, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x, y+h*0.7, x+w, y+h*0.7, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.75, y+h*0.45, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.25, y+h*0.55, 2, 2, tileDirtPebbleColor)
+
+	default: // 15%: Weathered trail with emerging blade of grass tuft
+		c.StrokeLine(x, y+h*0.35, x+w, y+h*0.35, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x, y+h*0.65, x+w, y+h*0.65, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.25, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.70, y+h*0.75, 2, 2, tileDirtPebbleColor)
+		c.StrokeLine(x+w*0.5, y+h*0.55, x+w*0.5, y+h*0.4, 1, color.RGBA{0x5a, 0x75, 0x4a, 0xff})
+		c.StrokeLine(x+w*0.5, y+h*0.55, x+w*0.6, y+h*0.45, 1, color.RGBA{0x5a, 0x75, 0x4a, 0xff})
+	}
 }
 
 var (
 	tileCobblePathColor     = color.RGBA{0x72, 0x76, 0x82, 0xff} // Primary round stone color
-	tileCobblePathEdgeColor = color.RGBA{0x3a, 0x3d, 0x45, 0xff} // Dark mortar / gap color
-	tileCobblePebbleColor   = color.RGBA{0x92, 0x98, 0xa6, 0xff} // Top highlight on stones
-	tileCobbleDarkStone     = color.RGBA{0x5e, 0x62, 0x6e, 0xff} // Darker stone variant
+	tileCobblePathEdgeColor = color.RGBA{0x54, 0x57, 0x60, 0xff} // Soft slate mortar / gap color
+	tileCobblePebbleColor   = color.RGBA{0x82, 0x87, 0x93, 0xff} // Soft sheen highlight on stones
+	tileCobbleDarkStone     = color.RGBA{0x65, 0x69, 0x74, 0xff} // Subtle darker stone variant
 )
 
 func drawCobblePath(c Canvas, x, y, w, h float32) {
 	// Dark mortar background
 	c.FillRect(x, y, w, h, tileCobblePathEdgeColor)
 
-	// Round stone 1 (Top-Left, medium-large)
-	c.FillCircle(x+w*0.30, y+h*0.30, w*0.22, tileCobblePathColor)
-	c.StrokeCircle(x+w*0.30, y+h*0.30, w*0.22, 1, tileCobblePathEdgeColor)
-	c.FillCircle(x+w*0.26, y+h*0.26, w*0.08, tileCobblePebbleColor)
+	tx, ty := c.GridPos()
+	// Deterministic spatial hash for natural cobblestone street variation
+	hash := uint32(tx*374761393+ty*668265263) ^ 0x5bf03635
+	variant := hash % 100
 
-	// Round stone 2 (Top-Right, darker varied round stone)
-	c.FillCircle(x+w*0.75, y+h*0.25, w*0.19, tileCobbleDarkStone)
-	c.StrokeCircle(x+w*0.75, y+h*0.25, w*0.19, 1, tileCobblePathEdgeColor)
-	c.FillCircle(x+w*0.72, y+h*0.22, w*0.06, tileCobblePebbleColor)
+	switch {
+	case variant < 40: // 40%: Standard 5-paver cluster
+		// Stone 1 (Top-Left)
+		c.FillCircle(x+w*0.30, y+h*0.30, w*0.22, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.30, y+h*0.30, w*0.22, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.26, y+h*0.26, w*0.08, tileCobblePebbleColor)
+		// Stone 2 (Top-Right)
+		c.FillCircle(x+w*0.75, y+h*0.25, w*0.19, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.75, y+h*0.25, w*0.19, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.72, y+h*0.22, w*0.06, tileCobblePebbleColor)
+		// Stone 3 (Bottom-Left)
+		c.FillCircle(x+w*0.26, y+h*0.74, w*0.18, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.26, y+h*0.74, w*0.18, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.24, y+h*0.71, w*0.06, tileCobblePebbleColor)
+		// Stone 4 (Bottom-Right)
+		c.FillCircle(x+w*0.72, y+h*0.72, w*0.23, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.72, y+h*0.72, w*0.23, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.68, y+h*0.68, w*0.09, tileCobblePebbleColor)
+		// Stone 5 (Center filler)
+		c.FillCircle(x+w*0.50, y+h*0.50, w*0.11, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.50, y+h*0.50, w*0.11, 1, tileCobblePathEdgeColor)
 
-	// Round stone 3 (Bottom-Left, medium)
-	c.FillCircle(x+w*0.26, y+h*0.74, w*0.18, tileCobbleDarkStone)
-	c.StrokeCircle(x+w*0.26, y+h*0.74, w*0.18, 1, tileCobblePathEdgeColor)
-	c.FillCircle(x+w*0.24, y+h*0.71, w*0.06, tileCobblePebbleColor)
+	case variant < 65: // 25%: Offset staggered 4-paver layout (interlocking look)
+		// Stone 1 (Top-center large stone)
+		c.FillCircle(x+w*0.50, y+h*0.26, w*0.23, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.50, y+h*0.26, w*0.23, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.46, y+h*0.22, w*0.08, tileCobblePebbleColor)
+		// Stone 2 (Left mid stone)
+		c.FillCircle(x+w*0.22, y+h*0.65, w*0.19, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.22, y+h*0.65, w*0.19, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.20, y+h*0.62, w*0.06, tileCobblePebbleColor)
+		// Stone 3 (Right mid stone)
+		c.FillCircle(x+w*0.78, y+h*0.60, w*0.20, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.78, y+h*0.60, w*0.20, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.75, y+h*0.57, w*0.07, tileCobblePebbleColor)
+		// Stone 4 (Bottom-center stone)
+		c.FillCircle(x+w*0.48, y+h*0.82, w*0.16, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.48, y+h*0.82, w*0.16, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.46, y+h*0.80, w*0.05, tileCobblePebbleColor)
 
-	// Round stone 4 (Bottom-Right, large round stone)
-	c.FillCircle(x+w*0.72, y+h*0.72, w*0.23, tileCobblePathColor)
-	c.StrokeCircle(x+w*0.72, y+h*0.72, w*0.23, 1, tileCobblePathEdgeColor)
-	c.FillCircle(x+w*0.68, y+h*0.68, w*0.09, tileCobblePebbleColor)
+	case variant < 85: // 20%: Mosaic 6-stone cluster (denser cobblestones)
+		c.FillCircle(x+w*0.25, y+h*0.25, w*0.17, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.25, y+h*0.25, w*0.17, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.72, y+h*0.22, w*0.15, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.72, y+h*0.22, w*0.15, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.35, y+h*0.55, w*0.18, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.35, y+h*0.55, w*0.18, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.75, y+h*0.55, w*0.17, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.75, y+h*0.55, w*0.17, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.22, y+h*0.82, w*0.14, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.22, y+h*0.82, w*0.14, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.65, y+h*0.85, w*0.16, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.65, y+h*0.85, w*0.16, 1, tileCobblePathEdgeColor)
 
-	// Round stone 5 (Center filler pebble)
-	c.FillCircle(x+w*0.50, y+h*0.50, w*0.11, tileCobblePathColor)
-	c.StrokeCircle(x+w*0.50, y+h*0.50, w*0.11, 1, tileCobblePathEdgeColor)
+	default: // 15%: Mossy / Lichen-Encrusted Cobblestone
+		c.FillCircle(x+w*0.30, y+h*0.30, w*0.22, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.30, y+h*0.30, w*0.22, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.75, y+h*0.25, w*0.19, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.75, y+h*0.25, w*0.19, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.26, y+h*0.74, w*0.18, tileCobbleDarkStone)
+		c.StrokeCircle(x+w*0.26, y+h*0.74, w*0.18, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.72, y+h*0.72, w*0.23, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.72, y+h*0.72, w*0.23, 1, tileCobblePathEdgeColor)
+		c.FillCircle(x+w*0.50, y+h*0.50, w*0.11, tileCobblePathColor)
+		c.StrokeCircle(x+w*0.50, y+h*0.50, w*0.11, 1, tileCobblePathEdgeColor)
+		mossColor := color.RGBA{0x52, 0x68, 0x54, 0xff}
+		c.FillCircle(x+w*0.52, y+h*0.34, 1.2, mossColor)
+		c.FillCircle(x+w*0.48, y+h*0.66, 1.2, mossColor)
+	}
+}
+
+func drawCobblePaver(c Canvas, cx, cy, r float32, clr color.RGBA) {
+	c.FillCircle(cx, cy, r, clr)
+	c.StrokeCircle(cx, cy, r, 1, tileCobblePathEdgeColor)
+	c.FillCircle(cx-r*0.2, cy-r*0.2, r*0.35, tileCobblePebbleColor)
+}
+
+var cobblePathVariantDrawers = [VariantCount]func(c Canvas, x, y, w, h float32){
+	VariantBase: drawCobblePath,
+	VariantTop: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y+h*0.5, w, h*0.5, tileCobblePathEdgeColor)
+		c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileCobblePathEdgeColor)
+		drawCobblePaver(c, x+w*0.28, y+h*0.75, w*0.19, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.74, y+h*0.75, w*0.21, tileCobbleDarkStone)
+		c.FillCircle(x+w*0.50, y+h*0.62, w*0.09, tileCobblePathColor)
+	},
+	VariantBottom: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w, h*0.5, tileCobblePathEdgeColor)
+		c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileCobblePathEdgeColor)
+		drawCobblePaver(c, x+w*0.30, y+h*0.25, w*0.20, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.72, y+h*0.25, w*0.19, tileCobbleDarkStone)
+		c.FillCircle(x+w*0.50, y+h*0.38, w*0.09, tileCobblePathColor)
+	},
+	VariantLeft: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h, tileCobblePathEdgeColor)
+		c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileCobblePathEdgeColor)
+		drawCobblePaver(c, x+w*0.75, y+h*0.28, w*0.19, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.75, y+h*0.74, w*0.21, tileCobbleDarkStone)
+		c.FillCircle(x+w*0.62, y+h*0.50, w*0.09, tileCobblePathColor)
+	},
+	VariantRight: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h, tileCobblePathEdgeColor)
+		c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileCobblePathEdgeColor)
+		drawCobblePaver(c, x+w*0.25, y+h*0.28, w*0.21, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.25, y+h*0.74, w*0.19, tileCobbleDarkStone)
+		c.FillCircle(x+w*0.38, y+h*0.50, w*0.09, tileCobblePathColor)
+	},
+	VariantNE: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y+h)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.25, y+h*0.75, w*0.19, tileCobblePathColor)
+	},
+	VariantNW: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w, y+h*0.5)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.75, y+h*0.75, w*0.19, tileCobblePathColor)
+	},
+	VariantSW: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.75, y+h*0.25, w*0.19, tileCobblePathColor)
+	},
+	VariantSE: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x, y+h*0.5)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.25, y+h*0.25, w*0.19, tileCobblePathColor)
+	},
+	VariantNEInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h, tileCobblePathEdgeColor)
+		c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w, y+h*0.5)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.25, y+h*0.28, w*0.19, tileCobbleDarkStone)
+		drawCobblePaver(c, x+w*0.26, y+h*0.74, w*0.20, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.74, y+h*0.74, w*0.21, tileCobblePathColor)
+	},
+	VariantNWInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h, tileCobblePathEdgeColor)
+		c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.75, y+h*0.28, w*0.19, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.28, y+h*0.75, w*0.19, tileCobbleDarkStone)
+		drawCobblePaver(c, x+w*0.74, y+h*0.74, w*0.21, tileCobblePathColor)
+	},
+	VariantSWInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h, tileCobblePathEdgeColor)
+		c.FillRect(x, y, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y+h)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.28, y+h*0.26, w*0.20, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.74, y+h*0.26, w*0.21, tileCobbleDarkStone)
+		drawCobblePaver(c, x+w*0.75, y+h*0.74, w*0.19, tileCobblePathColor)
+	},
+	VariantSEInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h, tileCobblePathEdgeColor)
+		c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileCobblePathEdgeColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y+h)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
+		c.DrawPath(lp, tileCobblePathEdgeColor, false, 1)
+		drawCobblePaver(c, x+w*0.26, y+h*0.26, w*0.20, tileCobblePathColor)
+		drawCobblePaver(c, x+w*0.74, y+h*0.26, w*0.19, tileCobbleDarkStone)
+		drawCobblePaver(c, x+w*0.26, y+h*0.74, w*0.20, tileCobbleDarkStone)
+	},
+}
+
+var dirtPathVariantDrawers = [VariantCount]func(c Canvas, x, y, w, h float32){
+	VariantBase: drawDirtPath,
+	VariantTop: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y+h*0.5, w, h*0.5, tileDirtPathColor)
+		c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x, y+h*0.75, x+w, y+h*0.75, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.25, y+h*0.75, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.70, 2, 2, tileDirtPebbleColor)
+	},
+	VariantBottom: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w, h*0.5, tileDirtPathColor)
+		c.StrokeLine(x, y+h*0.5, x+w, y+h*0.5, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x, y+h*0.25, x+w, y+h*0.25, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.30, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.70, y+h*0.20, 2, 2, tileDirtPebbleColor)
+	},
+	VariantLeft: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h, tileDirtPathColor)
+		c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x+w*0.75, y, x+w*0.75, y+h, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.75, y+h*0.30, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.70, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantRight: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h, tileDirtPathColor)
+		c.StrokeLine(x+w*0.5, y, x+w*0.5, y+h, 1, tileDirtPathEdgeColor)
+		c.StrokeLine(x+w*0.25, y, x+w*0.25, y+h, 1, tileDirtPathEdgeColor)
+		c.FillRect(x+w*0.25, y+h*0.30, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.20, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantNE: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y+h)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.20, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantNW: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w, y+h*0.5)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y+h)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.75, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantSW: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.75, y+h*0.25, 2, 2, tileDirtPebbleColor)
+	},
+	VariantSE: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x, y+h*0.5)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.25, y+h*0.25, 2, 2, tileDirtPebbleColor)
+	},
+	VariantNEInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h, tileDirtPathColor)
+		c.FillRect(x+w*0.5, y+h*0.5, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w, y+h*0.5)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w*0.5, y)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.25, y+h*0.30, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.25, y+h*0.75, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantNWInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h, tileDirtPathColor)
+		c.FillRect(x, y+h*0.5, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.75, y+h*0.30, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.25, y+h*0.75, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantSWInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x+w*0.5, y, w*0.5, h, tileDirtPathColor)
+		c.FillRect(x, y, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y+h)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x, y+h*0.5)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.25, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
+	VariantSEInner: func(c Canvas, x, y, w, h float32) {
+		c.FillRect(x, y, w*0.5, h, tileDirtPathColor)
+		c.FillRect(x+w*0.5, y, w*0.5, h*0.5, tileDirtPathColor)
+		var lp Path
+		lp.MoveTo(x+w*0.5, y+h)
+		lp.QuadTo(x+w*0.5, y+h*0.5, x+w, y+h*0.5)
+		c.DrawPath(lp, tileDirtPathEdgeColor, false, 1)
+		c.FillRect(x+w*0.25, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.75, y+h*0.25, 2, 2, tileDirtPebbleColor)
+		c.FillRect(x+w*0.25, y+h*0.75, 2, 2, tileDirtPebbleColor)
+	},
 }
 
 func drawCracked(c Canvas, x, y, w, h float32) {

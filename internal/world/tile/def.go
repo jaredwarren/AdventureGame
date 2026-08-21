@@ -198,21 +198,23 @@ func init() {
 			GIDDirtPathNE, GIDDirtPathNW, GIDDirtPathSW, GIDDirtPathSE,
 			GIDDirtPathNEInner, GIDDirtPathNWInner, GIDDirtPathSWInner, GIDDirtPathSEInner,
 		},
-		Kind:        FamilyFloor,
-		FloorWeight: 0.3,
-		Style:       TileStyle{FillColor: dirtColor, EdgeColor: tileDirtPathEdgeColor, LineWidth: 1.0, HasDetail: true, DetailColor: tileDirtPebbleColor, BaseDrawer: drawDirtPath},
-		Collapsed:   false,
+		Kind:           FamilyFloor,
+		FloorWeight:    0.3,
+		Style:          TileStyle{FillColor: dirtColor, EdgeColor: tileDirtPathEdgeColor, LineWidth: 1.0, HasDetail: true, DetailColor: tileDirtPebbleColor, BaseDrawer: drawDirtPath},
+		VariantDrawers: dirtPathVariantDrawers,
+		Collapsed:      false,
 	})
 
 	RegisterFamily(FamilyConfig{
-		Name:        "cobble_path",
-		Label:       "Cobblestone Path",
-		Category:    "cobble_path",
-		BaseGID:     GIDCobblePath,
-		Kind:        FamilyFloor,
-		FloorWeight: 0.3,
-		Style:       TileStyle{FillColor: tileCobblePathColor, EdgeColor: tileCobblePathEdgeColor, LineWidth: 1.0, HasDetail: true, DetailColor: tileCobblePebbleColor, BaseDrawer: drawCobblePath},
-		Collapsed:   false,
+		Name:           "cobble_path",
+		Label:          "Cobblestone Path",
+		Category:       "cobble_path",
+		BaseGID:        GIDCobblePath,
+		Kind:           FamilyFloor,
+		FloorWeight:    0.3,
+		Style:          TileStyle{FillColor: tileCobblePathColor, EdgeColor: tileCobblePathEdgeColor, LineWidth: 1.0, HasDetail: true, DetailColor: tileCobblePebbleColor, BaseDrawer: drawCobblePath},
+		VariantDrawers: cobblePathVariantDrawers,
+		Collapsed:      false,
 	})
 
 	RegisterFamily(FamilyConfig{

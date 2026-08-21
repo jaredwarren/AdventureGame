@@ -55,18 +55,19 @@ const (
 
 // FamilyConfig declares the full properties for registering a 13-tile transition family.
 type FamilyConfig struct {
-	Name          string
-	Label         string
-	Category      string
-	BaseGID       int
-	ExplicitGIDs  [VariantCount]int
-	ExplicitNames [VariantCount]string
-	Kind          FamilyKind
-	Surface       SurfaceDef
-	DamageKinds   []DamageKind
-	Style         TileStyle
-	FloorWeight   float64
-	Collapsed     bool
+	Name           string
+	Label          string
+	Category       string
+	BaseGID        int
+	ExplicitGIDs   [VariantCount]int
+	ExplicitNames  [VariantCount]string
+	Kind           FamilyKind
+	Surface        SurfaceDef
+	DamageKinds    []DamageKind
+	Style          TileStyle
+	FloorWeight    float64
+	Collapsed      bool
+	VariantDrawers [VariantCount]func(c Canvas, x, y, w, h float32)
 }
 
 // FamilyInfo contains metadata about a registered family for editor menus and palettes.
@@ -153,6 +154,9 @@ func RegisterFamily(cfg FamilyConfig) {
 		}
 
 		drawer := variantDrawer(v, cfg.Style)
+		if cfg.VariantDrawers[i] != nil {
+			drawer = cfg.VariantDrawers[i]
+		}
 
 		swatchColor := cfg.Style.FillColor
 		if swatchColor.A == 0 {
